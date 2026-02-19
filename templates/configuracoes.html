@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações do Escritório | ADVtools{% endblock %}
+
+{% block content %}
+<div class="container-gestao bg-white rounded shadow-sm p-4">
+    <div class="header-gestao d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <h3 class="fw-bold" style="color: #002b5b;">
+                <i class="fas fa-cogs me-2"></i> Configurações do Escritório
+            </h3>
+            <small class="text-muted">Gerencie os dados e preferências da sua advocacia.</small>
+        </div>
+    </div>
+
+    <form action="/configuracoes/salvar" method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+            <div class="col-md-12">
+                <h5 class="text-secondary mb-3"><i class="fas fa-building me-2"></i> Dados da Empresa</h5>
+            </div>
+
+            <div class="col-md-12 mb-3 text-center">
+                {% if escritorio.logo_path %}
+                <img src="{{ url_for('static', filename=escritorio.logo_path) }}" alt="Logo" class="img-fluid mb-2"
+                    style="max-height: 100px;">
+                {% endif %}
+                <label class="form-label d-block text-start">Logotipo do Escritório</label>
+                <input type="file" name="logo" class="form-control" accept="image/*">
+                <small class="text-muted">Recomendado: PNG ou JPG, fundo transparente.</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Nome do Escritório</label>
+                <input type="text" name="nome" class="form-control" value="{{ escritorio.nome }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">CNPJ / OAB Principal</label>
+                <input type="text" name="documento" class="form-control mask-document"
+                    value="{{ escritorio.documento or '' }}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Email Principal</label>
+                <input type="email" name="email" class="form-control" value="{{ escritorio.email or '' }}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Telefone / WhatsApp</label>
+                <input type="text" name="telefone" class="form-control mask-phone"
+                    value="{{ escritorio.telefone or '' }}">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Endereço Completo</label>
+                <input type="text" name="endereco" class="form-control" value="{{ escritorio.endereco or '' }}">
+            </div>
+
+            <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save me-2"></i> Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

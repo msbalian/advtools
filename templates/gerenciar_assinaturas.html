@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Assinaturas - ADVtools</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .signer-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .signer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .badge-pendente {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-assinado {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-visualizado {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .link-box {
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: monospace;
+            word-break: break-all;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .back-link {
+            color: var(--secondary);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <a href="/clientes" class="back-link">← Voltar para Clientes</a>
+
+        <div class="card">
+            <div class="header">
+                <div>
+                    <h1>Gestão de Assinaturas</h1>
+                    <p style="color: #64748b;">Documento: <strong>{{ doc['nome_arquivo'] }}</strong></p>
+                </div>
+                <div class="status-doc" style="text-align: right;">
+                    Status: <strong>{{ doc['status'] }}</strong><br>
+
+                    {% if doc['status'] == 'Concluido' %}
+                    <a href="/documentos/{{ doc['id'] }}/baixar" class="btn btn-primary"
+                        style="margin-top: 10px; font-size: 0.9em;">
+                        <i class="fas fa-file-pdf"></i> Baixar Documento Final
+                    </a>
+                    {% else %}
+                    <!-- Verifica se todos assinaram para liberar o botão de processamento manual -->
+                    {% set total = signatarios|length %}
+                    {% set assinados = signatarios | selectattr("status", "equalto", "Assinado") | list | length %}
+
+                    {% if total > 0 and total == assinados %}
+                    <form action="/documentos/{{ doc['id'] }}/finalizar" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-primary" style="margin-top: 10px;"
+                            title="Clique para gerar o documento final">
+                            <i class="fas fa-sync-alt"></i> Processar Finalização
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div style="background: #dbeafe; color: #1e40af; padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+                {{ messages[0] }}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div style="display: flex; gap: 20px;">
+                <!-- Coluna de Adição -->
+                <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 20px;">
+                    <h2>Adicionar Signatário</h2>
+                    <form action="/documentos/{{ doc['id'] }}/signatarios/adicionar" method="POST">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <input type="text" name="nome" required placeholder="Ex: João da Silva">
+                        </div>
+                        <div class="form-group">
+                            <label>CPF (Opcional - Para preenchimento automático)</label>
+                            <input type="text" name="cpf" placeholder="000.000.000-00">
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <input type="email" name="email" required placeholder="Ex: joao@email.com">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Adicionar Signatário</button>
+                    </form>
+                </div>
+
+                <!-- Lista de Signatários -->
+                <div style="flex: 2;">
+                    <h2>Signatários Atuais</h2>
+                    {% if not signatarios %}
+                    <p style="color: #94a3b8; text-align: center; margin-top: 40px;">Nenhum signatário adicionado ainda.
+                    </p>
+                    {% else %}
+                    <ul class="signer-list">
+                        {% for sig in signatarios %}
+                        <li class="signer-item">
+                            <div style="flex: 1;">
+                                <strong>{{ sig['nome'] }}</strong> <span style="color: #64748b; font-size: 0.9em;">({{
+                                    sig['email'] }})</span> <br>
+                                <span class="badge badge-{{ sig['status'].lower() }}">{{ sig['status'] }}</span>
+
+                                <div class="link-box" onclick="copiarLink(this)" title="Clique para copiar">
+                                    {{ host }}assinar/{{ sig['token_acesso'] }}
+                                </div>
+                                <div style="margin-top: 8px; display: flex; gap: 5px;">
+                                    <a href="https://wa.me/?text=Olá {{ sig['nome'].split()[0] }}, aqui está o link para assinar o documento {{ doc['nome_arquivo'] }}: {{ host }}assinar/{{ sig['token_acesso'] }}"
+                                        target="_blank" class="btn btn-outline"
+                                        style="padding: 4px 8px; font-size: 0.8em; color: #25d366; border-color: #25d366;">
+                                        <i class="fab fa-whatsapp"></i> WhatsApp
+                                    </a>
+                                    <a href="mailto:{{ sig['email'] }}?subject=Assinatura de Documento: {{ doc['nome_arquivo'] }}&body=Olá {{ sig['nome'] }},%0D%0A%0D%0APor favor, assine o documento no link abaixo:%0D%0A{{ host }}assinar/{{ sig['token_acesso'] }}"
+                                        class="btn btn-outline"
+                                        style="padding: 4px 8px; font-size: 0.8em; color: #64748b; border-color: #cbd5e1;">
+                                        <i class="fas fa-envelope"></i> E-mail
+                                    </a>
+                                </div>
+                            </div>
+                            <div style="margin-left: 10px;">
+                                {% if sig['status'] != 'Assinado' %}
+                                <a href="/documentos/{{ doc['id'] }}/signatarios/remover/{{ sig['id'] }}"
+                                    class="btn btn-danger" style="font-size: 0.8em; padding: 5px 10px;">X</a>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copiarLink(element) {
+            const text = element.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = element.style.background;
+                element.style.background = "#dcfce7";
+                element.innerText = "Copiado!";
+                setTimeout(() => {
+                    element.style.background = original;
+                    element.innerText = text;
+                }, 1000);
+            });
+        }
+    </script>
+
+</body>
+
+</html>

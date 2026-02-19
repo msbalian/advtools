@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Equipe | ADVtools{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- LISTA DE MEMBROS -->
+    <div class="col-md-8">
+        <div class="card-cadastro bg-white p-4 shadow-sm rounded">
+            <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-users me-2"></i>Minha Equipe</h5>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in membros %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ m.nome }}</div>
+                                {% if m.id == session['usuario_id'] %}<small class="text-muted">(Você)</small>{% endif
+                                %}
+                            </td>
+                            <td>{{ m.email }}</td>
+                            <td>
+                                <span
+                                    class="badge {% if m.perfil == 'Admin' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ m.perfil }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if m.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Aguardando
+                                    Aprovação</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULÁRIO DE CADASTRO -->
+    <div class="col-md-4">
+        <div class="card-cadastro bg-light p-4 shadow-sm rounded border border-dashed">
+            <h6 class="fw-bold mb-3 text-success"><i class="fas fa-user-plus me-2"></i>Adicionar Membro</h6>
+            <div class="alert alert-info small p-2">
+                Novos membros precisarão ser aprovados pelo Suporte antes de acessar.
+            </div>
+
+            <form action="/equipe" method="POST">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Nome</label>
+                    <input type="text" name="nome" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Senha Inicial</label>
+                    <input type="text" name="senha" class="form-control" placeholder="Ex: Mudar123" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Perfil</label>
+                    <select name="perfil" class="form-select">
+                        <option value="Colaborador">Colaborador (Acesso Padrão)</option>
+                        <option value="Admin">Administrador (Gestão Total)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 fw-bold">
+                    <i class="fas fa-save me-1"></i> Cadastrar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Clientes | ADVtools SAAS{% endblock %}
+
+{% block content %}
+<div class="container-gestao bg-white rounded shadow-sm p-4">
+    <div
+        class="header-gestao d-flex flex-wrap justify-content-between align-items-center mb-4 border-bottom pb-3 gap-3">
+        <div>
+            <h3 class="fw-bold" style="color: #002b5b;"><i class="fas fa-address-book me-2"></i> CRM de Clientes</h3>
+            <small class="text-muted">Total de Clientes: <strong>{{ total_clientes }}</strong></small>
+        </div>
+        <button class="btn btn-primary btn-sm ms-auto ms-md-0" type="button" data-bs-toggle="collapse"
+            data-bs-target="#form-card" aria-expanded="false" aria-controls="form-card">
+            <i class="fas fa-plus me-1"></i> Novo Cliente
+        </button>
+    </div>
+
+    <form method="GET" action="/clientes"
+        class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h5 class="text-secondary m-0 text-nowrap">Meus Clientes</h5>
+        <div class="d-flex gap-2 flex-grow-1 justify-content-end">
+            <input type="text" name="busca" class="form-control form-control-sm" value="{{ busca if busca else '' }}"
+                placeholder="Buscar por Nome ou CPF..." style="max-width: 250px; width: 100%;">
+            <button class="btn btn-primary btn-sm text-nowrap" type="submit">
+                <i class="fas fa-search me-1"></i> Buscar
+            </button>
+            {% if busca %}
+            <a href="/clientes" class="btn btn-outline-secondary btn-sm text-nowrap">
+                <i class="fas fa-times me-1"></i> Limpar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div id="listaClientes">
+        <div class="table-responsive">
+            <table class="table align-middle table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome / Razão Social</th>
+                        <th>CPF / CNPJ</th>
+                        <th>Contato</th>
+                        <th>Cadastro</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in clientes %}
+                    <tr style="cursor: pointer;" onclick="window.location='/clientes/{{ c.id }}'">
+                        <td class="fw-bold text-primary"><i class="fas fa-search-plus me-1 small"></i> {{ c.nome }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ c.documento or '-' }}</span></td>
+                        <td class="small">
+                            <div><i class="fas fa-envelope me-1 text-muted"></i> {{ c.email or '-' }}</div>
+                            <div><i class="fas fa-phone me-1 text-muted"></i> {{ c.telefone or '-' }}</div>
+                        </td>
+                        <td class="small text-muted">{{ c.data_fmt }}</td>
+                        <td class="text-end">
+                            <a href="/clientes/excluir/{{ c.id }}" class="btn btn-sm btn-outline-danger ms-1"
+                                title="Excluir" onclick="return confirm('Tem certeza?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">Nenhum cliente cadastrado ainda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="collapse card-cadastro border-dashed p-4 mt-4 bg-light rounded" id="form-card"
+        style="border: 2px dashed #d1d9e6;">
+        <h6 class="fw-bold text-primary mb-3"><i class="fas fa-user-plus me-1"></i> Cadastrar Novo Cliente</h6>
+        <form action="/clientes/salvar" method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted mb-1">Nome Completo / Razão Social</label>
+                    <input type="text" name="nome" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted mb-1">CPF / CNPJ</label>
+                    <input type="text" name="documento" class="form-control mask-document" placeholder="000.000.000-00">
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted mb-1">Telefone / WhatsApp</label>
+                    <input type="text" name="telefone" class="form-control mask-phone" placeholder="(00) 00000-0000">
+                </div>
+
+                <label class="small text-muted mb-1">Email</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+
+            <!-- Novos Campos Fase 11 -->
+            <div class="col-md-3">
+                <label class="small text-muted mb-1">RG</label>
+                <input type="text" name="rg" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted mb-1">Data Nascimento</label>
+                <input type="date" name="data_nascimento" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted mb-1">Nacionalidade</label>
+                <input type="text" name="nacionalidade" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted mb-1">Estado Civil</label>
+                <select name="estado_civil" class="form-select">
+                    <option value="">Selecione...</option>
+                    <option value="Solteiro(a)">Solteiro(a)</option>
+                    <option value="Casado(a)">Casado(a)</option>
+                    <option value="Divorciado(a)">Divorciado(a)</option>
+                    <option value="Viúvo(a)">Viúvo(a)</option>
+                    <option value="União Estável">União Estável</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted mb-1">Profissão</label>
+                <input type="text" name="profissao" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+                <label class="small text-muted mb-1">CEP</label>
+                <input type="text" name="cep" class="form-control mask-cep" placeholder="00000-000">
+            </div>
+            <div class="col-md-6">
+                <label class="small text-muted mb-1">Endereço (Rua, Nº, Compl.)</label>
+                <input type="text" name="endereco" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+                <label class="small text-muted mb-1">Bairro</label>
+                <input type="text" name="bairro" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="small text-muted mb-1">Cidade</label>
+                <input type="text" name="cidade" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="small text-muted mb-1">UF</label>
+                <input type="text" name="uf" class="form-control" maxlength="2" placeholder="SP">
+            </div>
+
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                    <i class="fas fa-save me-2"></i> Salvar Cliente
+                </button>
+            </div>
+    </div>
+    </form>
+</div>
+</div>
+{% endblock %}

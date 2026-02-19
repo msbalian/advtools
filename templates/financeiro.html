@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Controle Financeiro | ADVtools{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- KPI CARD: RECEBIDO -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-white bg-success bg-gradient h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 text-uppercase mb-1" style="font-size: 0.8rem;">Total Recebido</h6>
+                        <h2 class="mb-0 fw-bold">R$ {{ "%.2f"|format(kpi.recebido) }}</h2>
+                    </div>
+                    <i class="fas fa-wallet fa-3x opacity-25"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI CARD: PENDENTE -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-secondary text-uppercase mb-1" style="font-size: 0.8rem;">A Receber</h6>
+                        <h2 class="mb-0 fw-bold text-primary">R$ {{ "%.2f"|format(kpi.pendente) }}</h2>
+                    </div>
+                    <i class="fas fa-hourglass-half fa-3x text-primary opacity-25"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI CARD: ATRASADO -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-secondary text-uppercase mb-1" style="font-size: 0.8rem;">Em Atraso</h6>
+                        <h2 class="mb-0 fw-bold text-danger">R$ {{ "%.2f"|format(kpi.atrasado) }}</h2>
+                    </div>
+                    <i class="fas fa-exclamation-circle fa-3x text-danger opacity-25"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <h5 class="mb-0 fw-bold text-secondary text-nowrap"><i class="fas fa-funnel-dollar me-2"></i> Lançamentos</h5>
+
+        <div class="btn-group flex-wrap">
+            <a href="/financeiro?filtro=pendentes"
+                class="btn btn-sm btn-outline-primary {% if filtro == 'pendentes' %}active{% endif %}">Pendentes</a>
+            <a href="/financeiro?filtro=pagos"
+                class="btn btn-sm btn-outline-success {% if filtro == 'pagos' %}active{% endif %}">Recebidos</a>
+            <a href="/financeiro?filtro=atrasados"
+                class="btn btn-sm btn-outline-danger {% if filtro == 'atrasados' %}active{% endif %}">Atrasados</a>
+            <a href="/financeiro?filtro=todos"
+                class="btn btn-sm btn-outline-secondary {% if filtro == 'todos' %}active{% endif %}">Todos</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0">
+            <thead class="table-light text-secondary text-uppercase" style="font-size: 0.8rem;">
+                <tr>
+                    <th class="ps-4">Vencimento</th>
+                    <th>Cliente</th>
+                    <th>Serviço / Parcela</th>
+                    <th>Valor</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end pe-4">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pagamentos %}
+                <tr>
+                    <td class="ps-4 fw-bold">
+                        {% if p.data_vencimento %}
+                        {{ p.data_vencimento.split('-')[2] }}/{{ p.data_vencimento.split('-')[1] }}
+                        {% endif %}
+                        <br>
+                        <small class="text-muted">{{ p.data_vencimento.split('-')[0] }}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ p.cliente_nome }}</div>
+                        <small class="text-muted"><i class="fas fa-money-check me-1"></i> {{ p.tipo_pagamento }}</small>
+                    </td>
+                    <td>
+                        <span class="d-block">{{ p.servico_nome }}</span>
+                        {% if p.observacao %}
+                        <small class="text-info fst-italic">{{ p.observacao }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <h6 class="mb-0 text-success fw-bold">R$ {{ "%.2f"|format(p.valor) }}</h6>
+                    </td>
+                    <td class="text-center">
+                        {% if p.status == 'Pago' %}
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i> PAGO</span>
+                        <div class="small text-muted mt-1">{{ p.data_pagamento }}</div>
+                        {% elif p.status == 'Pendente' and p.data_vencimento < kpi.hoje %} <span
+                            class="badge bg-danger">ATRASADO</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">PENDENTE</span>
+                            {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        {% if p.status != 'Pago' %}
+                        <a href="/financeiro/pagar/{{ p.id }}" class="btn btn-sm btn-success me-1"
+                            title="Confirmar Recebimento"
+                            onclick="return confirm('Confirmar recebimento deste valor?')">
+                            <i class="fas fa-check-double"></i>
+                        </a>
+                        {% endif %}
+                        <a href="/financeiro/excluir/{{ p.id }}" class="btn btn-sm btn-outline-danger"
+                            title="Excluir Lançamento" onclick="return confirm('Tem certeza?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fas fa-folder-open fa-2x mb-3 d-block opacity-25"></i>
+                        Nenhum lançamento encontrado neste filtro.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

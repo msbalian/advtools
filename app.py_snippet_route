@@ -1,0 +1,39 @@
+
+@app.route('/servicos/atualizar/<int:id>', methods=['POST'])
+def atualizar_servico(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    esc_id = session.get('escritorio_id')
+    
+    # Coleta dados
+    descricao = request.form.get('descricao')
+    valor = request.form.get('valor_total')
+    forma = request.form.get('forma_pagamento')
+    detalhes = request.form.get('detalhes_pagamento')
+    parcelas = request.form.get('qtd_parcelas')
+    
+    conn = get_db_connection()
+    try:
+        # Segurança: Verifica se o serviço pertence ao escritório
+        servico = conn.execute("SELECT id, cliente_id FROM servicos WHERE id = ? AND escritorio_id = ?", (id, esc_id)).fetchone()
+        if not servico:
+            flash("Serviço não encontrado ou acesso negado.", "error")
+            return redirect(url_for('dashboard'))
+            
+        conn.execute('''
+            UPDATE servicos 
+            SET descricao = ?, valor_total = ?, forma_pagamento = ?, detalhes_pagamento = ?, qtd_parcelas = ?
+            WHERE id = ? AND escritorio_id = ?
+        ''', (descricao, valor, forma, detalhes, parcelas, id, esc_id))
+        
+        conn.commit()
+        flash("Serviço atualizado com sucesso!", "success")
+        
+        # Tenta redirecionar para o cliente
+        return redirect(url_for('detalhe_cliente', id=servico['cliente_id']))
+        
+    except Exception as e:
+        flash(f"Erro ao atualizar serviço: {e}", "error")
+        return redirect(url_for('dashboard'))
+    finally:
+        conn.close()

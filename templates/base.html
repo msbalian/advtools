@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/logo_advtools.ico') }}">
+    <title>{% block title %}ADVtools Intelligence{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --sidebar-bg: #0F172A;
+            /* Azul Noturno */
+            --sidebar-hover: #1E293B;
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --accent: #F59E0B;
+            /* Gold/Amber */
+            --bg-body: #F1F5F9;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR ESTILO 'PRIMEJUD' */
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--accent);
+        }
+
+        .user-profile {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            margin: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            color: var(--sidebar-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.5rem;
+            /* Larger initial */
+        }
+
+        /* MENU ITEMS */
+        .nav-link {
+            color: var(--text-muted);
+            padding: 12px 25px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link i {
+            width: 24px;
+            margin-right: 10px;
+            font-size: 1rem;
+        }
+
+        .nav-link:hover {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+
+        .nav-link.active {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-category {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #64748B;
+            font-weight: 700;
+            padding: 20px 25px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+        }
+
+        /* UTILS */
+        .btn-prime {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: 500;
+        }
+
+        /* MOBILE RESPONSIVENESS */
+        .mobile-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .mobile-toggle {
+                display: block !important;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1001;
+                background: var(--sidebar-bg);
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+    <!-- MOBILE OVERLAY & TOGGLE -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header d-flex align-items-center justify-content-center">
+            <img src="{{ url_for('static', filename='img/logo_advtools.png') }}" alt="ADVtools" class="img-fluid"
+                style="max-height: 50px; border-radius: 5px;">
+        </div>
+
+        <!-- USER CARD -->
+        <div class="user-profile">
+            {% if session.get('logo_path') %}
+            <!-- LOGO ONLY MODE -->
+            <div class="w-100 text-center">
+                <img src="{{ url_for('static', filename=session.get('logo_path')) }}" alt="Logo"
+                    style="max-width: 100%; max-height: 80px; object-fit: contain; border-radius: 8px; margin-bottom: 5px;">
+            </div>
+            {% else %}
+            <!-- TEXT MODE -->
+            <div class="user-avatar">
+                {{ session.get('nome_escritorio', 'E')[0] }}
+            </div>
+            <div style="line-height: 1.2;">
+                <div class="small fw-bold text-white">{{ session.get('nome_escritorio', 'Escritório') }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- MENU SCROLLABLE -->
+        <div style="flex-grow: 1; overflow-y: auto;">
+            <nav class="nav flex-column">
+                <a href="/"
+                    class="nav-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i> Início
+                </a>
+
+                <a href="/clientes" class="nav-link {% if 'clientes' in request.path %}active{% endif %}">
+                    <i class="fas fa-id-card"></i> Clientes e Serviços
+                </a>
+
+                <div class="nav-category">Serviços & Contratos</div>
+
+                <a href="/servicos/tipos" class="nav-link {% if 'servicos/tipos' in request.path %}active{% endif %}">
+                    <i class="fas fa-list-ul"></i> Catálogo
+                </a>
+
+
+
+                {% if session.get('perfil') == 'Admin' %}
+                <a href="/financeiro" class="nav-link {% if 'financeiro' in request.path %}active{% endif %}"
+                    style="color: #2eb85c;">
+                    <i class="fas fa-coins"></i> Financeiro
+                </a>
+                {% endif %}
+
+                <a href="/documentos" class="nav-link {% if request.path == '/documentos' %}active{% endif %}"
+                    style="color: #4ade80;">
+                    <i class="fas fa-pen-nib"></i> ADVtools Sign
+                </a>
+
+                <div class="nav-category">Inteligência Artificial</div>
+
+                <a href="/documentos/novo" class="nav-link {% if 'documentos' in request.path %}active{% endif %}"
+                    style="color: #fbbf24;">
+                    <i class="fas fa-magic"></i> Peças IA
+                </a>
+
+                <a href="/modelos" class="nav-link {% if 'modelos' in request.path %}active{% endif %}"
+                    style="color: #60a5fa;">
+                    <i class="fas fa-file-word"></i> Modelos & Tags
+                </a>
+
+                <div class="nav-category">Configurações</div>
+
+                <a href="/equipe" class="nav-link {% if 'equipe' in request.path %}active{% endif %}">
+                    <i class="fas fa-users"></i> Minha Equipe
+                </a>
+
+                {% if session.get('perfil') == 'Admin' %}
+                <a href="/configuracoes" class="nav-link {% if 'configuracoes' in request.path %}active{% endif %}"
+                    style="color: #64748b;">
+                    <i class="fas fa-cogs"></i> Configurações
+                </a>
+                {% endif %}
+
+                {% if session.get('is_admin') %}
+                <div class="nav-category text-danger mt-3">SUPER ADMIN</div>
+                <a href="/superadmin/usuarios" class="nav-link {% if 'superadmin' in request.path %}active{% endif %}"
+                    style="color: #ef4444;">
+                    <i class="fas fa-user-shield"></i> Aprovação Global
+                </a>
+                {% endif %}
+
+                <div class="mt-4 px-3">
+                    <a href="/logout" class="btn btn-outline-secondary w-100 btn-sm text-light border-secondary">
+                        <i class="fas fa-sign-out-alt me-1"></i> Sair
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="p-3 text-center border-top border-secondary border-opacity-10 bg-dark bg-opacity-25">
+            <div class="fw-bold text-white mb-0" style="font-size: 0.95rem;">{{ session.get('nome_usuario', 'Usuário')
+                }}</div>
+            <div class="text-white-50" style="font-size: 0.70rem; margin-top: 2px;">v2.0 ATIVO</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- FLASH MESSAGES -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-bell me-2"></i> {{ messages[0] }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- BOOTSTRAP JS (Necessário para Abas e Modais) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- MÁSCARAS DE INPUT -->
+    <script src="{{ url_for('static', filename='js/input-masks.js') }}"></script>
+
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+    </script>
+</body>
+
+</html>

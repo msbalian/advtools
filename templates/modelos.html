@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Modelos de Documento | ADVtools{% endblock %}
+
+{% block content %}
+<div class="container-gestao bg-white rounded shadow-sm p-4">
+    <div
+        class="header-gestao d-flex flex-wrap justify-content-between align-items-center mb-4 border-bottom pb-3 gap-3">
+        <div>
+            <h3 class="fw-bold" style="color: #002b5b;">
+                <i class="fas fa-file-word me-2"></i> Modelos & Tags
+            </h3>
+            <small class="text-muted">Gerencie seus arquivos .docx e veja as tags disponíveis.</small>
+        </div>
+        <button class="btn btn-primary ms-auto ms-md-0" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fas fa-cloud-upload-alt me-2"></i> Enviar Novo Modelo
+        </button>
+    </div>
+
+    <div class="row">
+        <!-- LISTA DE ARQUIVOS -->
+        <div class="col-md-7">
+            <h5 class="text-secondary mb-3"><i class="fas fa-folder-open me-2"></i> Meus Modelos</h5>
+            <div class="list-group shadow-sm">
+                {% for arq in modelos %}
+                <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center p-3 gap-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                            <i class="fas fa-file-word fa-lg"></i>
+                        </div>
+                        <div style="min-width: 0;">
+                            <h6 class="mb-0 fw-bold text-break">{{ arq }}</h6>
+                            <small class="text-muted">Pronto para uso</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap ms-auto ms-md-0">
+                        <form action="/modelos/abrir/{{ arq }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-info" title="Editar no computador">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </form>
+
+                        <!-- Botão Download -->
+                        <a href="/modelos/baixar/{{ arq }}" class="btn btn-sm btn-outline-success" title="Baixar">
+                            <i class="fas fa-download"></i>
+                        </a>
+
+                        <!-- Botão Upload (Substituir) -->
+                        <form action="/modelos/substituir/{{ arq }}" method="POST" enctype="multipart/form-data"
+                            style="display:inline;">
+                            <label class="btn btn-sm btn-outline-warning" title="Substituir arquivo (Upload)">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <input type="file" name="arquivo" accept=".docx" style="display: none;"
+                                    onchange="if(confirm('Isso substituirá o arquivo atual. Continuar?')) this.form.submit();">
+                            </label>
+                        </form>
+
+                        <a href="/modelos/excluir/{{ arq }}" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Excluir este modelo?')" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center p-5 text-muted bg-light rounded border-dashed">
+                    <i class="fas fa-search fa-2x mb-3 opacity-50"></i>
+                    <p>Nenhum modelo encontrado.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- LISTA DE TAGS (GUIA) -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="fas fa-tags me-2"></i> Guia de Tags
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <p class="small text-muted mb-3">Copie e cole essas tags no seu arquivo Word. O sistema substituirá
+                        pelos dados reais.</p>
+
+                    <strong class="d-block text-primary border-bottom pb-1 mb-2">Cliente</strong>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_nome }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_doc }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_endereco }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_bairro }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_cidade }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_uf }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_cep }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_email }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_nacionalidade }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_estado_civil }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_profissao }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_rg }}' }}</code>
+                    <code <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ cliente_data_nascimento }}' }}</code>
+
+                    <strong class="d-block text-primary border-bottom pb-1 mb-2 mt-3">Partes Envolvidas</strong>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ partes_txt }}' }}</code>
+                    <small class="text-muted d-block mb-1">(Descr: Nome (Papel), Nome (Papel)...)</small>
+
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_nome }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_doc }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_rg }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_nasc }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_nacionalidade }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_estado_civil }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_profissao }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_endereco }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_bairro }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_cidade }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_uf }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_cep }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ parte_1_papel }}' }}</code>
+                    <small class="text-muted d-block mb-1">(Disponível até parte_5_...)</small>
+
+                    <strong class="d-block text-primary border-bottom pb-1 mb-2 mt-3">Serviço / Financeiro</strong>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ servico_tipo }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ valor_total }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ percentual_exito }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ forma_pagamento }}' }}</code>
+                    <small class="text-muted d-block mb-1">(Ex: "R$ 500 via Pix em 10/10...")</small>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ qtd_parcelas }}' }}</code>
+                    <code
+                        class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ detalhes_pagamento }}' }}</code>
+
+                    <strong class="d-block text-primary border-bottom pb-1 mb-2 mt-3">Gerais & IA</strong>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ conteudo_ia }}' }}</code>
+                    <small class="text-muted d-block mb-1">(Texto das cláusulas gerado pela IA)</small>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ data_hoje }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ ano_atual }}' }}</code>
+                    <code class="d-block mb-1 p-1 bg-white border rounded copy-tag">{{ '{{ data_extenso }}' }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Upload -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enviar Modelo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/modelos/upload" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Selecione o arquivo (.docx)</label>
+                        <input type="file" name="arquivo" class="form-control" accept=".docx" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .copy-tag {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .copy-tag:hover {
+        background-color: #ffeeba !important;
+        border-color: #ffc107 !important;
+    }
+</style>
+
+<script>
+    // Copiar ao clicar
+    document.querySelectorAll('.copy-tag').forEach(el => {
+        el.addEventListener('click', function () {
+            navigator.clipboard.writeText(this.innerText);
+            let original = this.style.backgroundColor;
+            this.textContent += ' (Copiado!)';
+            setTimeout(() => {
+                this.textContent = this.textContent.replace(' (Copiado!)', '');
+            }, 1000);
+        });
+    });
+</script>
+
+{% endblock %}

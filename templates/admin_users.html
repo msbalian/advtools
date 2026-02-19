@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Administração de Usuários | ADVtools{% endblock %}
+
+{% block content %}
+<div class="container-gestao bg-white rounded shadow-sm p-4">
+    <div class="header-gestao d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <h3 class="fw-bold text-danger"><i class="fas fa-user-shield me-2"></i> Painel do Administrador</h3>
+            <small class="text-muted">Aprovação e bloqueio de acessos ao sistema.</small>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-1"></i> Apenas usuários com status <strong>ATIVO</strong> podem fazer login no
+        sistema.
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Usuário / Email</th>
+                    <th>Escritório</th>
+                    <th>Status</th>
+                    <th>Permissão</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr class="{% if not u.ativo %}table-warning{% endif %}">
+                    <td>
+                        <div class="fw-bold">{{ u.nome }}</div>
+                        <small class="text-muted">{{ u.email }}</small>
+                    </td>
+                    <td>{{ u.nome_escritorio or '-' }}</td>
+                    <td>
+                        {% if u.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-lock me-1"></i> Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_admin %}
+                        <span class="badge bg-danger">ADMIN</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Usuário</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if u.id != session['usuario_id'] %}
+                        <div class="btn-group">
+                            {% if u.ativo %}
+                            <a href="/superadmin/bloquear/{{ u.id }}" class="btn btn-sm btn-outline-warning"
+                                title="Bloquear Acesso">
+                                <i class="fas fa-ban"></i>
+                            </a>
+                            {% else %}
+                            <a href="/superadmin/aprovar/{{ u.id }}" class="btn btn-sm btn-success"
+                                title="Aprovar Acesso">
+                                <i class="fas fa-check"></i>
+                            </a>
+                            {% endif %}
+                            <a href="/superadmin/excluir/{{ u.id }}" class="btn btn-sm btn-outline-danger"
+                                title="Excluir Usuário"
+                                onclick="return confirm('Tem certeza que deseja excluir este usuário permanentemente?');">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Você</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">Nenhum usuário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

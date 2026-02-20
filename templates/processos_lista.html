@@ -55,9 +55,40 @@
 <!-- LISTA DE PROCESSOS -->
 {% if processos|length == 0 %}
 <div class="text-center py-5">
+    {% if busca %}
+    <!-- Busca ativa mas sem resultados locais → oferece DataJud -->
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Nenhum processo encontrado para "{{ busca }}"</h5>
+    <p class="text-muted mb-4">O processo ainda não está cadastrado no sistema.</p>
+
+    <div class="card border-0 shadow mx-auto"
+        style="max-width: 500px; background: linear-gradient(135deg, #ecfdf5, #d1fae5);">
+        <div class="card-body py-4">
+            <h6 class="fw-bold mb-3"><i class="fas fa-cloud-download-alt text-success me-2"></i>Importar do DataJud
+                (CNJ)</h6>
+            <p class="small text-muted mb-3">Busque o processo automaticamente na base nacional do CNJ e importe dados,
+                movimentações e assuntos.</p>
+            <form method="POST" action="/processos/buscar-datajud">
+                <input type="hidden" name="numero_cnj" value="{{ busca }}">
+                <div class="mb-3">
+                    <select name="cliente_id" class="form-select form-select-sm">
+                        <option value="">Vincular a um cliente (opcional)</option>
+                        {% for c in clientes %}
+                        <option value="{{ c['id'] }}">{{ c['nome'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success fw-bold">
+                    <i class="fas fa-cloud-download-alt me-1"></i> Buscar e Importar do DataJud
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
     <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
     <h5 class="text-muted">Nenhum processo cadastrado</h5>
-    <p class="text-muted">Clique em "Novo Processo" para começar.</p>
+    <p class="text-muted">Clique em "Novo Processo" para começar ou busque um nº CNJ para importar do DataJud.</p>
+    {% endif %}
 </div>
 {% else %}
 <div class="row g-3">

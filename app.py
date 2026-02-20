@@ -25,6 +25,80 @@ from docx2pdf import convert
 import pythoncom
 import ia_gemini # Importando Motor IA
 import sys
+import requests as requests_lib  # Para API DataJud
+
+# ============================
+# DATAJUD (API CNJ) - Config
+# ============================
+DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=='
+DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br/api_publica_'
+
+TRIBUNAIS_DATAJUD = {
+    # Justiça Estadual
+    'TJAC': 'tjac', 'TJAL': 'tjal', 'TJAM': 'tjam', 'TJAP': 'tjap',
+    'TJBA': 'tjba', 'TJCE': 'tjce', 'TJDFT': 'tjdft', 'TJES': 'tjes',
+    'TJGO': 'tjgo', 'TJMA': 'tjma', 'TJMG': 'tjmg', 'TJMS': 'tjms',
+    'TJMT': 'tjmt', 'TJPA': 'tjpa', 'TJPB': 'tjpb', 'TJPE': 'tjpe',
+    'TJPI': 'tjpi', 'TJPR': 'tjpr', 'TJRJ': 'tjrj', 'TJRN': 'tjrn',
+    'TJRO': 'tjro', 'TJRR': 'tjrr', 'TJRS': 'tjrs', 'TJSC': 'tjsc',
+    'TJSE': 'tjse', 'TJSP': 'tjsp', 'TJTO': 'tjto',
+    # TRFs
+    'TRF1': 'trf1', 'TRF2': 'trf2', 'TRF3': 'trf3',
+    'TRF4': 'trf4', 'TRF5': 'trf5', 'TRF6': 'trf6',
+    # TRTs
+    'TRT1': 'trt1', 'TRT2': 'trt2', 'TRT3': 'trt3', 'TRT4': 'trt4',
+    'TRT5': 'trt5', 'TRT6': 'trt6', 'TRT7': 'trt7', 'TRT8': 'trt8',
+    'TRT9': 'trt9', 'TRT10': 'trt10', 'TRT11': 'trt11', 'TRT12': 'trt12',
+    'TRT13': 'trt13', 'TRT14': 'trt14', 'TRT15': 'trt15', 'TRT16': 'trt16',
+    'TRT17': 'trt17', 'TRT18': 'trt18', 'TRT19': 'trt19', 'TRT20': 'trt20',
+    'TRT21': 'trt21', 'TRT22': 'trt22', 'TRT23': 'trt23', 'TRT24': 'trt24',
+    # Superiores
+    'STF': 'stf', 'STJ': 'stj', 'TST': 'tst', 'TSE': 'tse', 'STM': 'stm',
+}
+
+# Mapeia código CNJ do tribunal → sigla
+# Formato CNJ: NNNNNNN-DD.AAAA.J.TT.OOOO  (J=justiça, TT=tribunal)
+_TRIBUNAL_POR_CODIGO = {
+    # Justiça Estadual (J=8)
+    ('8', '01'): 'TJAC', ('8', '02'): 'TJAL', ('8', '03'): 'TJAP',
+    ('8', '04'): 'TJAM', ('8', '05'): 'TJBA', ('8', '06'): 'TJCE',
+    ('8', '07'): 'TJDFT', ('8', '08'): 'TJES', ('8', '09'): 'TJGO',
+    ('8', '10'): 'TJMA', ('8', '11'): 'TJMT', ('8', '12'): 'TJMS',
+    ('8', '13'): 'TJMG', ('8', '14'): 'TJPA', ('8', '15'): 'TJPB',
+    ('8', '16'): 'TJPR', ('8', '17'): 'TJPE', ('8', '18'): 'TJPI',
+    ('8', '19'): 'TJRJ', ('8', '20'): 'TJRN', ('8', '21'): 'TJRS',
+    ('8', '22'): 'TJRO', ('8', '23'): 'TJRR', ('8', '24'): 'TJSC',
+    ('8', '25'): 'TJSE', ('8', '26'): 'TJSP', ('8', '27'): 'TJTO',
+    # Justiça Federal (J=4)
+    ('4', '01'): 'TRF1', ('4', '02'): 'TRF2', ('4', '03'): 'TRF3',
+    ('4', '04'): 'TRF4', ('4', '05'): 'TRF5', ('4', '06'): 'TRF6',
+    # Justiça do Trabalho (J=5)
+    ('5', '01'): 'TRT1', ('5', '02'): 'TRT2', ('5', '03'): 'TRT3',
+    ('5', '04'): 'TRT4', ('5', '05'): 'TRT5', ('5', '06'): 'TRT6',
+    ('5', '07'): 'TRT7', ('5', '08'): 'TRT8', ('5', '09'): 'TRT9',
+    ('5', '10'): 'TRT10', ('5', '11'): 'TRT11', ('5', '12'): 'TRT12',
+    ('5', '13'): 'TRT13', ('5', '14'): 'TRT14', ('5', '15'): 'TRT15',
+    ('5', '16'): 'TRT16', ('5', '17'): 'TRT17', ('5', '18'): 'TRT18',
+    ('5', '19'): 'TRT19', ('5', '20'): 'TRT20', ('5', '21'): 'TRT21',
+    ('5', '22'): 'TRT22', ('5', '23'): 'TRT23', ('5', '24'): 'TRT24',
+}
+
+def _extrair_tribunal_do_numero(numero_cnj):
+    """Extrai o tribunal do número CNJ.
+    Formato: NNNNNNN-DD.AAAA.J.TT.OOOO
+    J = ramo da justiça, TT = código do tribunal
+    """
+    try:
+        # Remove formatação
+        limpo = numero_cnj.replace('.', '').replace('-', '')
+        if len(limpo) != 20:
+            return None
+        # Posições no número limpo: J = pos 13, TT = pos 14-15
+        justica = limpo[13]
+        tribunal_cod = limpo[14:16]
+        return _TRIBUNAL_POR_CODIGO.get((justica, tribunal_cod))
+    except (IndexError, ValueError):
+        return None
 
 # Helper para encontrar arquivos (Funciona no DEV e no EXE)
 def resource_path(relative_path):
@@ -3312,79 +3386,13 @@ def remover_assunto(proc_id, assunto_id):
     return redirect(url_for('detalhe_processo', id=proc_id))
 
 
-# ==============================================================================
-# IMPORTAÇÃO VIA API DATAJUD (CNJ)
-# ==============================================================================
-
-DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJvQzNEUmFScnhSN1ZDWnhmRkY3dw=='
-DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br'
-
-# Mapeamento dos tribunais para aliases da API
-TRIBUNAIS_DATAJUD = {
-    'STF': 'api_publica_stf', 'STJ': 'api_publica_stj', 'TST': 'api_publica_tst',
-    'TSE': 'api_publica_tse', 'STM': 'api_publica_stm',
-    'TJAC': 'api_publica_tjac', 'TJAL': 'api_publica_tjal', 'TJAM': 'api_publica_tjam',
-    'TJAP': 'api_publica_tjap', 'TJBA': 'api_publica_tjba', 'TJCE': 'api_publica_tjce',
-    'TJDFT': 'api_publica_tjdft', 'TJES': 'api_publica_tjes', 'TJGO': 'api_publica_tjgo',
-    'TJMA': 'api_publica_tjma', 'TJMG': 'api_publica_tjmg', 'TJMS': 'api_publica_tjms',
-    'TJMT': 'api_publica_tjmt', 'TJPA': 'api_publica_tjpa', 'TJPB': 'api_publica_tjpb',
-    'TJPE': 'api_publica_tjpe', 'TJPI': 'api_publica_tjpi', 'TJPR': 'api_publica_tjpr',
-    'TJRJ': 'api_publica_tjrj', 'TJRN': 'api_publica_tjrn', 'TJRO': 'api_publica_tjro',
-    'TJRR': 'api_publica_tjrr', 'TJRS': 'api_publica_tjrs', 'TJSC': 'api_publica_tjsc',
-    'TJSE': 'api_publica_tjse', 'TJSP': 'api_publica_tjsp', 'TJTO': 'api_publica_tjto',
-    'TRF1': 'api_publica_trf1', 'TRF2': 'api_publica_trf2', 'TRF3': 'api_publica_trf3',
-    'TRF4': 'api_publica_trf4', 'TRF5': 'api_publica_trf5', 'TRF6': 'api_publica_trf6',
-    'TRT1': 'api_publica_trt1', 'TRT2': 'api_publica_trt2', 'TRT3': 'api_publica_trt3',
-    'TRT4': 'api_publica_trt4', 'TRT5': 'api_publica_trt5', 'TRT6': 'api_publica_trt6',
-    'TRT7': 'api_publica_trt7', 'TRT8': 'api_publica_trt8', 'TRT9': 'api_publica_trt9',
-    'TRT10': 'api_publica_trt10', 'TRT11': 'api_publica_trt11', 'TRT12': 'api_publica_trt12',
-    'TRT13': 'api_publica_trt13', 'TRT14': 'api_publica_trt14', 'TRT15': 'api_publica_trt15',
-    'TRT16': 'api_publica_trt16', 'TRT17': 'api_publica_trt17', 'TRT18': 'api_publica_trt18',
-    'TRT19': 'api_publica_trt19', 'TRT20': 'api_publica_trt20', 'TRT21': 'api_publica_trt21',
-    'TRT22': 'api_publica_trt22', 'TRT23': 'api_publica_trt23', 'TRT24': 'api_publica_trt24',
-}
 
 
-def _extrair_tribunal_do_numero(numero_cnj):
-    """Extrai o código do tribunal do número CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO)"""
-    limpo = numero_cnj.replace('.', '').replace('-', '')
-    if len(limpo) >= 20:
-        justica = limpo[13]  # dígito da justiça
-        tribunal = limpo[14:16]  # 2 dígitos do tribunal
-        
-        mapa_justica = {
-            '1': 'STF', '2': 'STJ', '3': 'STM',
-            '5': f'TRT{int(tribunal)}',
-            '6': 'TSE',
-            '8': f'TJ',  # Estadual
-            '4': f'TRF{int(tribunal)}',
-        }
-        
-        if justica == '8':
-            # Justiça Estadual: mapeia pelo código do tribunal
-            uf_map = {
-                '01': 'TJAC', '02': 'TJAL', '03': 'TJAP', '04': 'TJAM', '05': 'TJBA',
-                '06': 'TJCE', '07': 'TJDFT', '08': 'TJES', '09': 'TJGO', '10': 'TJMA',
-                '11': 'TJMT', '12': 'TJMS', '13': 'TJMG', '14': 'TJPA', '15': 'TJPB',
-                '16': 'TJPE', '17': 'TJPI', '18': 'TJPR', '19': 'TJRJ', '20': 'TJRN',
-                '21': 'TJRS', '22': 'TJRO', '23': 'TJRR', '24': 'TJSC', '25': 'TJSE',
-                '26': 'TJSP', '27': 'TJTO',
-            }
-            return uf_map.get(tribunal, None)
-        else:
-            return mapa_justica.get(justica, None)
-    return None
 
 
 @app.route('/processos/<int:id>/importar-datajud', methods=['POST'])
 def importar_datajud(id):
     if not session.get('usuario_logado'): return redirect(url_for('login'))
-    
-    try:
-        import requests as req
-    except ImportError:
-        flash("Módulo 'requests' não instalado. Execute: pip install requests", "error")
-        return redirect(url_for('detalhe_processo', id=id))
     
     conn = get_db_connection()
     escritorio_id = session.get('escritorio_id')
@@ -3417,7 +3425,7 @@ def importar_datajud(id):
         return redirect(url_for('detalhe_processo', id=id))
     
     alias = TRIBUNAIS_DATAJUD[tribunal]
-    url = f"{DATAJUD_BASE_URL}/{alias}/_search"
+    url = f"https://api-publica.datajud.cnj.jus.br/api_publica_{alias}/_search"
     
     headers = {
         'Authorization': f'APIKey {DATAJUD_API_KEY}',
@@ -3434,14 +3442,14 @@ def importar_datajud(id):
     }
     
     try:
-        resp = req.post(url, json=body, headers=headers, timeout=15)
+        resp = requests_lib.post(url, json=body, headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
-    except req.exceptions.Timeout:
+    except requests_lib.exceptions.Timeout:
         conn.close()
         flash("Timeout ao consultar a API DataJud. Tente novamente.", "error")
         return redirect(url_for('detalhe_processo', id=id))
-    except req.exceptions.RequestException as e:
+    except requests_lib.exceptions.RequestException as e:
         conn.close()
         flash(f"Erro na consulta DataJud: {str(e)}", "error")
         return redirect(url_for('detalhe_processo', id=id))
@@ -3535,6 +3543,147 @@ def importar_datajud(id):
     
     flash(f"✅ Importação DataJud concluída! Capa atualizada, {contadores['movimentacoes']} movimentações e {contadores['assuntos']} assuntos importados.", "success")
     return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/buscar-datajud', methods=['POST'])
+def buscar_criar_datajud():
+    """Busca um processo no DataJud e cria automaticamente no sistema"""
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    numero_cnj = request.form.get('numero_cnj', '').strip()
+    tribunal_manual = request.form.get('tribunal', '').strip().upper()
+    cliente_id = request.form.get('cliente_id') or None
+    
+    if not numero_cnj:
+        flash("Informe o número do processo CNJ.", "error")
+        return redirect(url_for('listar_processos'))
+    
+    escritorio_id = session.get('escritorio_id')
+    usuario_id = session.get('usuario_id')
+    
+    # Verifica se já existe no sistema
+    conn = get_db_connection()
+    existente = conn.execute(
+        "SELECT id FROM processos WHERE numero_processo = ? AND escritorio_id = ?",
+        (numero_cnj.replace('.','').replace('-',''), escritorio_id)
+    ).fetchone()
+    
+    # Tenta com formato original também
+    if not existente:
+        existente = conn.execute(
+            "SELECT id FROM processos WHERE numero_processo = ? AND escritorio_id = ?",
+            (numero_cnj, escritorio_id)
+        ).fetchone()
+    
+    if existente:
+        conn.close()
+        flash("Este processo já está cadastrado no sistema!", "info")
+        return redirect(url_for('detalhe_processo', id=existente['id']))
+    
+    # Detecta tribunal
+    tribunal = tribunal_manual or _extrair_tribunal_do_numero(numero_cnj)
+    
+    if not tribunal or tribunal not in TRIBUNAIS_DATAJUD:
+        conn.close()
+        flash(f"Não foi possível identificar o tribunal para '{numero_cnj}'. Selecione manualmente.", "error")
+        return redirect(url_for('listar_processos'))
+    
+    # Consulta DataJud
+    alias = TRIBUNAIS_DATAJUD[tribunal]
+    url = f"https://api-publica.datajud.cnj.jus.br/api_publica_{alias}/_search"
+    
+    headers = {
+        'Authorization': f'APIKey {DATAJUD_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    body = {
+        "query": {"match": {"numeroProcesso": numero_cnj.replace('.','').replace('-','')}},
+        "size": 1
+    }
+    
+    try:
+        resp = requests_lib.post(url, json=body, headers=headers, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests_lib.exceptions.Timeout:
+        conn.close()
+        flash("Timeout ao consultar a API DataJud. Tente novamente.", "error")
+        return redirect(url_for('listar_processos'))
+    except requests_lib.exceptions.RequestException as e:
+        conn.close()
+        flash(f"Erro na consulta DataJud: {str(e)}", "error")
+        return redirect(url_for('listar_processos'))
+    
+    hits = data.get('hits', {}).get('hits', [])
+    if not hits:
+        conn.close()
+        flash(f"Processo {numero_cnj} não encontrado na base DataJud ({tribunal}).", "warning")
+        return redirect(url_for('listar_processos'))
+    
+    proc_data = hits[0].get('_source', {})
+    
+    # Monta dados da capa processual
+    classe = proc_data.get('classe', {})
+    orgao = proc_data.get('orgaoJulgador', {})
+    formato = proc_data.get('formato', {})
+    sistema = proc_data.get('sistema', {})
+    
+    titulo = classe.get('nome', 'Processo importado')
+    if titulo == 'Processo importado':
+        titulo = f"Processo {numero_cnj}"
+    
+    # Cria o processo
+    cursor = conn.execute('''
+        INSERT INTO processos (
+            escritorio_id, numero_processo, titulo, tribunal, grau,
+            data_ajuizamento, nivel_sigilo, classe_codigo, classe_nome,
+            orgao_julgador_codigo, orgao_julgador_nome, orgao_julgador_municipio_ibge,
+            formato_codigo, formato_nome, sistema_codigo, sistema_nome,
+            advogado_responsavel_id, cliente_id, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Ativo')
+    ''', (
+        escritorio_id,
+        proc_data.get('numeroProcesso', numero_cnj),
+        titulo, tribunal,
+        proc_data.get('grau', 'G1'),
+        proc_data.get('dataAjuizamento'),
+        proc_data.get('nivelSigilo', 0),
+        classe.get('codigo'), classe.get('nome'),
+        orgao.get('codigo'), orgao.get('nome'),
+        orgao.get('codigoMunicipioIBGE'),
+        formato.get('codigo'), formato.get('nome', 'Eletrônico'),
+        sistema.get('codigo'), sistema.get('nome'),
+        usuario_id, cliente_id
+    ))
+    novo_id = cursor.lastrowid
+    
+    contadores = {'movimentacoes': 0, 'assuntos': 0}
+    
+    # Importa movimentações
+    for mov in proc_data.get('movimentos', []):
+        complementos = mov.get('complementosTabelados', [])
+        conn.execute('''
+            INSERT INTO movimentacoes (processo_id, tipo, codigo_movimento, nome_movimento, complementos_json, data_hora, registrado_por_id)
+            VALUES (?, 'externa', ?, ?, ?, ?, ?)
+        ''', (novo_id, mov.get('codigo'), mov.get('nome', ''), 
+              json.dumps(complementos) if complementos else None,
+              mov.get('dataHora', datetime.now().isoformat()), usuario_id))
+        contadores['movimentacoes'] += 1
+    
+    # Importa assuntos
+    for assunto in proc_data.get('assuntos', []):
+        principal = 1 if assunto.get('principal', False) else 0
+        conn.execute('''
+            INSERT INTO processo_assuntos (processo_id, codigo_tpu, nome, principal)
+            VALUES (?, ?, ?, ?)
+        ''', (novo_id, assunto.get('codigo'), assunto.get('nome', ''), principal))
+        contadores['assuntos'] += 1
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f"✅ Processo importado do DataJud! {contadores['movimentacoes']} movimentações e {contadores['assuntos']} assuntos.", "success")
+    return redirect(url_for('detalhe_processo', id=novo_id))
 
 
 if __name__ == '__main__':

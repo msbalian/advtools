@@ -232,11 +232,25 @@
                     <i class="fas fa-home"></i> Início
                 </a>
 
-                <a href="/clientes" class="nav-link {% if 'clientes' in request.path %}active{% endif %}">
+                <a href="/clientes"
+                    class="nav-link {% if 'clientes' in request.path and 'processos' not in request.path %}active{% endif %}">
                     <i class="fas fa-id-card"></i> Clientes e Serviços
                 </a>
 
-                <div class="nav-category">Serviços & Contratos</div>
+                <div class="nav-category">Gestão Processual</div>
+
+                <a href="/processos"
+                    class="nav-link {% if request.path == '/processos' or request.path.startswith('/processos/') %}active{% endif %}"
+                    style="color: #818cf8;">
+                    <i class="fas fa-gavel"></i> Processos
+                </a>
+
+                <a href="/minhas-tarefas" class="nav-link {% if 'minhas-tarefas' in request.path %}active{% endif %}"
+                    style="color: #a78bfa;">
+                    <i class="fas fa-tasks"></i> Minhas Tarefas
+                </a>
+
+                <div class="nav-category">Serviços &amp; Contratos</div>
 
                 <a href="/servicos/tipos" class="nav-link {% if 'servicos/tipos' in request.path %}active{% endif %}">
                     <i class="fas fa-list-ul"></i> Catálogo

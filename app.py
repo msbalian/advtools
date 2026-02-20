@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, send_file, redirect, url_for, session, flash, jsonify, send_from_directory
+from werkzeug.utils import secure_filename
 from docxtpl import DocxTemplate
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
@@ -151,6 +152,169 @@ def get_db_connection():
         try:
             conn.execute(f"ALTER TABLE partes_envolvidas ADD COLUMN {col} TEXT")
         except: pass
+
+    # ==========================================================================
+    # MÓDULO GESTÃO PROCESSUAL (Compatível DataJud/CNJ)
+    # ==========================================================================
+
+    # Tabela principal: Processos Judiciais (Capa Processual)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS processos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            escritorio_id INTEGER NOT NULL,
+            
+            -- Campos DataJud (Compatíveis)
+            numero_processo TEXT,
+            tribunal TEXT,
+            grau TEXT DEFAULT 'G1',
+            data_ajuizamento DATE,
+            nivel_sigilo INTEGER DEFAULT 0,
+            formato_codigo INTEGER,
+            formato_nome TEXT DEFAULT 'Eletrônico',
+            sistema_codigo INTEGER,
+            sistema_nome TEXT,
+            classe_codigo INTEGER,
+            classe_nome TEXT,
+            orgao_julgador_codigo INTEGER,
+            orgao_julgador_nome TEXT,
+            orgao_julgador_municipio_ibge INTEGER,
+            
+            -- Campos Internos do Escritório
+            titulo TEXT NOT NULL,
+            descricao TEXT,
+            status TEXT DEFAULT 'Ativo',
+            prioridade TEXT DEFAULT 'Normal',
+            advogado_responsavel_id INTEGER,
+            valor_causa REAL,
+            area_direito TEXT,
+            fase_processual TEXT,
+            
+            -- Cliente / Parte representada
+            cliente_id INTEGER,
+            polo TEXT DEFAULT 'Autor',
+            
+            -- Timestamps
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            
+            FOREIGN KEY (escritorio_id) REFERENCES escritorios(id),
+            FOREIGN KEY (advogado_responsavel_id) REFERENCES usuarios(id),
+            FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+        )
+    ''')
+
+    # Partes do Processo
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS processo_partes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER NOT NULL,
+            tipo_parte TEXT NOT NULL,
+            nome TEXT NOT NULL,
+            cpf_cnpj TEXT,
+            tipo_pessoa TEXT DEFAULT 'Física',
+            advogado_nome TEXT,
+            advogado_oab TEXT,
+            FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Assuntos TPU (compatível DataJud)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS processo_assuntos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER NOT NULL,
+            codigo_tpu INTEGER,
+            nome TEXT NOT NULL,
+            principal INTEGER DEFAULT 0,
+            FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Movimentações (Timeline Unificada: interna + externa)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS movimentacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            codigo_movimento INTEGER,
+            nome_movimento TEXT NOT NULL,
+            complementos_json TEXT,
+            descricao TEXT,
+            orgao_julgador_codigo INTEGER,
+            orgao_julgador_nome TEXT,
+            data_hora DATETIME NOT NULL,
+            data_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+            registrado_por_id INTEGER,
+            FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE,
+            FOREIGN KEY (registrado_por_id) REFERENCES usuarios(id)
+        )
+    ''')
+
+    # Tarefas Internas do Escritório
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS tarefas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER NOT NULL,
+            movimentacao_id INTEGER,
+            titulo TEXT NOT NULL,
+            descricao TEXT,
+            tipo TEXT DEFAULT 'Geral',
+            criado_por_id INTEGER NOT NULL,
+            atribuido_para_id INTEGER,
+            status TEXT DEFAULT 'Pendente',
+            prioridade TEXT DEFAULT 'Normal',
+            data_prazo DATETIME,
+            prazo_fatal INTEGER DEFAULT 0,
+            data_inicio DATETIME,
+            data_conclusao DATETIME,
+            tarefa_pai_id INTEGER,
+            tarefa_proxima_id INTEGER,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE,
+            FOREIGN KEY (movimentacao_id) REFERENCES movimentacoes(id),
+            FOREIGN KEY (criado_por_id) REFERENCES usuarios(id),
+            FOREIGN KEY (atribuido_para_id) REFERENCES usuarios(id),
+            FOREIGN KEY (tarefa_pai_id) REFERENCES tarefas(id),
+            FOREIGN KEY (tarefa_proxima_id) REFERENCES tarefas(id)
+        )
+    ''')
+
+    # Comentários nas Tarefas
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS tarefa_comentarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tarefa_id INTEGER NOT NULL,
+            usuario_id INTEGER NOT NULL,
+            texto TEXT NOT NULL,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tarefa_id) REFERENCES tarefas(id) ON DELETE CASCADE,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        )
+    ''')
+
+    # Documentos anexos ao Processo
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS processo_documentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER NOT NULL,
+            tarefa_id INTEGER,
+            nome_arquivo TEXT NOT NULL,
+            caminho_arquivo TEXT NOT NULL,
+            tipo TEXT,
+            descricao TEXT,
+            enviado_por_id INTEGER,
+            data_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE,
+            FOREIGN KEY (tarefa_id) REFERENCES tarefas(id),
+            FOREIGN KEY (enviado_por_id) REFERENCES usuarios(id)
+        )
+    ''')
+
+    # Migração: Associação opcional Serviço → Processo
+    try:
+        conn.execute("ALTER TABLE servicos ADD COLUMN processo_id INTEGER")
+    except: pass
 
     return conn
 
@@ -595,11 +759,12 @@ def detalhe_cliente(id):
     
     cliente = conn.execute("SELECT * FROM clientes WHERE id = ? AND escritorio_id = ?", (id, esc_id)).fetchone()
     
-    # Busca serviços deste cliente
+    # Busca serviços deste cliente (com processo vinculado se houver)
     servicos = conn.execute('''
-        SELECT s.*, t.nome as tipo_nome 
+        SELECT s.*, t.nome as tipo_nome, p.titulo as processo_titulo, p.id as processo_vinculado_id
         FROM servicos s 
         JOIN tipos_servico t ON s.tipo_servico_id = t.id 
+        LEFT JOIN processos p ON s.processo_id = p.id
         WHERE s.cliente_id = ? AND s.escritorio_id = ?
         ORDER BY s.id DESC
     ''', (id, esc_id)).fetchall()
@@ -609,6 +774,16 @@ def detalhe_cliente(id):
     
     # Busca Partes Envolvidas (Novo)
     partes = conn.execute("SELECT * FROM partes_envolvidas WHERE cliente_id = ?", (id,)).fetchall()
+
+    # Busca Processos Judiciais deste cliente
+    processos_cliente = conn.execute("""
+        SELECT p.*, u.nome as advogado_nome,
+            (SELECT COUNT(*) FROM tarefas t WHERE t.processo_id = p.id AND t.status = 'Pendente') as tarefas_pendentes
+        FROM processos p
+        LEFT JOIN usuarios u ON p.advogado_responsavel_id = u.id
+        WHERE p.cliente_id = ? AND p.escritorio_id = ?
+        ORDER BY p.data_atualizacao DESC
+    """, (id, esc_id)).fetchall()
     
     # Tipos para modal (Com migração automática)
     meus_tipos_count = conn.execute("SELECT count(*) FROM tipos_servico WHERE escritorio_id = ?", (esc_id,)).fetchone()[0]
@@ -635,7 +810,7 @@ def detalhe_cliente(id):
         flash("Cliente não encontrado.")
         return redirect(url_for('clientes'))
         
-    return render_template('cliente_detalhe.html', cliente=cliente, servicos=servicos, documentos=documentos, tipos_servico=tipos, partes=partes, modelos=modelos)
+    return render_template('cliente_detalhe.html', cliente=cliente, servicos=servicos, documentos=documentos, tipos_servico=tipos, partes=partes, modelos=modelos, processos_cliente=processos_cliente)
 
 @app.route('/clientes/salvar', methods=['POST'])
 def salvar_cliente():
@@ -2549,6 +2724,818 @@ def auto_setup_users():
         conn.close()
     except Exception as e:
         print(f"Erro no auto-setup: {e}")
+
+# ==============================================================================
+# MÓDULO DE GESTÃO PROCESSUAL
+# ==============================================================================
+
+@app.route('/processos')
+def listar_processos():
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    # Filtros
+    status_filtro = request.args.get('status', '')
+    area_filtro = request.args.get('area', '')
+    busca = request.args.get('busca', '')
+    
+    query = """
+        SELECT p.*, c.nome as cliente_nome, u.nome as advogado_nome,
+            (SELECT COUNT(*) FROM tarefas t WHERE t.processo_id = p.id AND t.status = 'Pendente') as tarefas_pendentes
+        FROM processos p
+        LEFT JOIN clientes c ON p.cliente_id = c.id
+        LEFT JOIN usuarios u ON p.advogado_responsavel_id = u.id
+        WHERE p.escritorio_id = ?
+    """
+    params = [escritorio_id]
+    
+    if status_filtro:
+        query += " AND p.status = ?"
+        params.append(status_filtro)
+    if area_filtro:
+        query += " AND p.area_direito = ?"
+        params.append(area_filtro)
+    if busca:
+        query += " AND (p.titulo LIKE ? OR p.numero_processo LIKE ? OR c.nome LIKE ?)"
+        params.extend([f'%{busca}%', f'%{busca}%', f'%{busca}%'])
+    
+    query += " ORDER BY p.data_atualizacao DESC"
+    
+    processos = conn.execute(query, params).fetchall()
+    
+    # Busca clientes para o modal de novo processo
+    clientes = conn.execute("SELECT id, nome FROM clientes WHERE escritorio_id = ? ORDER BY nome", (escritorio_id,)).fetchall()
+    # Busca membros da equipe
+    equipe = conn.execute("SELECT id, nome FROM usuarios WHERE escritorio_id = ? AND ativo = 1 ORDER BY nome", (escritorio_id,)).fetchall()
+    
+    conn.close()
+    return render_template('processos_lista.html', processos=processos, clientes=clientes, equipe=equipe,
+                           status_filtro=status_filtro, area_filtro=area_filtro, busca=busca)
+
+
+@app.route('/processos/novo', methods=['POST'])
+def criar_processo():
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    conn.execute('''
+        INSERT INTO processos (
+            escritorio_id, titulo, descricao, numero_processo, tribunal, grau,
+            classe_nome, area_direito, fase_processual, status, prioridade,
+            advogado_responsavel_id, cliente_id, polo, valor_causa,
+            orgao_julgador_nome, data_ajuizamento
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        escritorio_id,
+        request.form.get('titulo'),
+        request.form.get('descricao'),
+        request.form.get('numero_processo') or None,
+        request.form.get('tribunal') or None,
+        request.form.get('grau', 'G1'),
+        request.form.get('classe_nome') or None,
+        request.form.get('area_direito') or None,
+        request.form.get('fase_processual', 'Conhecimento'),
+        'Ativo',
+        request.form.get('prioridade', 'Normal'),
+        request.form.get('advogado_responsavel_id') or None,
+        request.form.get('cliente_id') or None,
+        request.form.get('polo', 'Autor'),
+        request.form.get('valor_causa') or None,
+        request.form.get('orgao_julgador_nome') or None,
+        request.form.get('data_ajuizamento') or None
+    ))
+    conn.commit()
+    conn.close()
+    
+    flash("Processo cadastrado com sucesso!", "success")
+    return redirect(url_for('listar_processos'))
+
+
+@app.route('/processos/<int:id>')
+def detalhe_processo(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    processo = conn.execute("""
+        SELECT p.*, c.nome as cliente_nome, u.nome as advogado_nome
+        FROM processos p
+        LEFT JOIN clientes c ON p.cliente_id = c.id
+        LEFT JOIN usuarios u ON p.advogado_responsavel_id = u.id
+        WHERE p.id = ? AND p.escritorio_id = ?
+    """, (id, escritorio_id)).fetchone()
+    
+    if not processo:
+        conn.close()
+        flash("Processo não encontrado.", "danger")
+        return redirect(url_for('listar_processos'))
+    
+    # Movimentações (timeline)
+    movimentacoes = conn.execute("""
+        SELECT m.*, u.nome as registrado_por_nome
+        FROM movimentacoes m
+        LEFT JOIN usuarios u ON m.registrado_por_id = u.id
+        WHERE m.processo_id = ?
+        ORDER BY m.data_hora DESC
+    """, (id,)).fetchall()
+    
+    # Tarefas
+    tarefas = conn.execute("""
+        SELECT t.*, 
+            uc.nome as criado_por_nome,
+            ua.nome as atribuido_para_nome
+        FROM tarefas t
+        LEFT JOIN usuarios uc ON t.criado_por_id = uc.id
+        LEFT JOIN usuarios ua ON t.atribuido_para_id = ua.id
+        WHERE t.processo_id = ?
+        ORDER BY 
+            CASE t.status 
+                WHEN 'Pendente' THEN 1 
+                WHEN 'Em Andamento' THEN 2 
+                WHEN 'Bloqueada' THEN 3
+                WHEN 'Concluída' THEN 4 
+                WHEN 'Cancelada' THEN 5 
+            END,
+            t.data_prazo ASC NULLS LAST
+    """, (id,)).fetchall()
+    
+    # Partes
+    partes = conn.execute("SELECT * FROM processo_partes WHERE processo_id = ?", (id,)).fetchall()
+    
+    # Assuntos
+    assuntos = conn.execute("SELECT * FROM processo_assuntos WHERE processo_id = ?", (id,)).fetchall()
+    
+    # Documentos
+    documentos = conn.execute("""
+        SELECT pd.*, u.nome as enviado_por_nome
+        FROM processo_documentos pd
+        LEFT JOIN usuarios u ON pd.enviado_por_id = u.id
+        WHERE pd.processo_id = ?
+        ORDER BY pd.data_envio DESC
+    """, (id,)).fetchall()
+    
+    # Equipe (para atribuição de tarefas)
+    equipe = conn.execute("SELECT id, nome FROM usuarios WHERE escritorio_id = ? AND ativo = 1 ORDER BY nome", (escritorio_id,)).fetchall()
+    
+    conn.close()
+    return render_template('processo_detalhe.html', 
+                           processo=processo, movimentacoes=movimentacoes, 
+                           tarefas=tarefas, partes=partes, assuntos=assuntos,
+                           documentos=documentos, equipe=equipe)
+
+
+@app.route('/processos/<int:id>/editar', methods=['POST'])
+def editar_processo(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    conn.execute('''
+        UPDATE processos SET
+            titulo = ?, descricao = ?, numero_processo = ?, tribunal = ?, grau = ?,
+            classe_nome = ?, area_direito = ?, fase_processual = ?, status = ?,
+            prioridade = ?, advogado_responsavel_id = ?, cliente_id = ?, polo = ?,
+            valor_causa = ?, orgao_julgador_nome = ?, data_ajuizamento = ?,
+            data_atualizacao = ?
+        WHERE id = ? AND escritorio_id = ?
+    ''', (
+        request.form.get('titulo'),
+        request.form.get('descricao'),
+        request.form.get('numero_processo') or None,
+        request.form.get('tribunal') or None,
+        request.form.get('grau', 'G1'),
+        request.form.get('classe_nome') or None,
+        request.form.get('area_direito') or None,
+        request.form.get('fase_processual'),
+        request.form.get('status', 'Ativo'),
+        request.form.get('prioridade', 'Normal'),
+        request.form.get('advogado_responsavel_id') or None,
+        request.form.get('cliente_id') or None,
+        request.form.get('polo', 'Autor'),
+        request.form.get('valor_causa') or None,
+        request.form.get('orgao_julgador_nome') or None,
+        request.form.get('data_ajuizamento') or None,
+        datetime.now(),
+        id, escritorio_id
+    ))
+    conn.commit()
+    conn.close()
+    
+    flash("Processo atualizado!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/<int:id>/movimentacao', methods=['POST'])
+def adicionar_movimentacao(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    conn.execute('''
+        INSERT INTO movimentacoes (processo_id, tipo, nome_movimento, descricao, data_hora, registrado_por_id, codigo_movimento, orgao_julgador_nome)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        id,
+        request.form.get('tipo', 'interna'),
+        request.form.get('nome_movimento'),
+        request.form.get('descricao') or None,
+        request.form.get('data_hora', datetime.now().strftime('%Y-%m-%d %H:%M')),
+        session.get('usuario_id'),
+        request.form.get('codigo_movimento') or None,
+        request.form.get('orgao_julgador_nome') or None
+    ))
+    
+    # Atualiza timestamp do processo
+    conn.execute("UPDATE processos SET data_atualizacao = ? WHERE id = ?", (datetime.now(), id))
+    conn.commit()
+    conn.close()
+    
+    flash("Movimentação registrada!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/<int:id>/tarefa', methods=['POST'])
+def criar_tarefa(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    conn.execute('''
+        INSERT INTO tarefas (processo_id, titulo, descricao, tipo, criado_por_id, atribuido_para_id, prioridade, data_prazo, prazo_fatal)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        id,
+        request.form.get('titulo'),
+        request.form.get('descricao') or None,
+        request.form.get('tipo', 'Geral'),
+        session.get('usuario_id'),
+        request.form.get('atribuido_para_id') or None,
+        request.form.get('prioridade', 'Normal'),
+        request.form.get('data_prazo') or None,
+        1 if request.form.get('prazo_fatal') else 0
+    ))
+    
+    conn.execute("UPDATE processos SET data_atualizacao = ? WHERE id = ?", (datetime.now(), id))
+    conn.commit()
+    conn.close()
+    
+    flash("Tarefa criada!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/tarefas/<int:tarefa_id>/status', methods=['POST'])
+def atualizar_status_tarefa(tarefa_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    novo_status = request.form.get('status')
+    conn = get_db_connection()
+    
+    tarefa = conn.execute("SELECT * FROM tarefas WHERE id = ?", (tarefa_id,)).fetchone()
+    if not tarefa:
+        conn.close()
+        return jsonify({'erro': 'Tarefa não encontrada'}), 404
+    
+    data_conclusao = datetime.now() if novo_status == 'Concluída' else None
+    data_inicio = datetime.now() if novo_status == 'Em Andamento' and not tarefa['data_inicio'] else tarefa['data_inicio']
+    
+    conn.execute("""
+        UPDATE tarefas SET status = ?, data_conclusao = ?, data_inicio = ?, data_atualizacao = ?
+        WHERE id = ?
+    """, (novo_status, data_conclusao, data_inicio, datetime.now(), tarefa_id))
+    
+    conn.execute("UPDATE processos SET data_atualizacao = ? WHERE id = ?", (datetime.now(), tarefa['processo_id']))
+    conn.commit()
+    conn.close()
+    
+    flash(f"Tarefa marcada como '{novo_status}'!", "success")
+    return redirect(url_for('detalhe_processo', id=tarefa['processo_id']))
+
+
+@app.route('/tarefas/<int:tarefa_id>/comentario', methods=['POST'])
+def adicionar_comentario_tarefa(tarefa_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    tarefa = conn.execute("SELECT processo_id FROM tarefas WHERE id = ?", (tarefa_id,)).fetchone()
+    
+    if not tarefa:
+        conn.close()
+        flash("Tarefa não encontrada.", "danger")
+        return redirect(url_for('listar_processos'))
+    
+    conn.execute("""
+        INSERT INTO tarefa_comentarios (tarefa_id, usuario_id, texto)
+        VALUES (?, ?, ?)
+    """, (tarefa_id, session.get('usuario_id'), request.form.get('texto')))
+    conn.commit()
+    conn.close()
+    
+    flash("Comentário adicionado!", "success")
+    return redirect(url_for('detalhe_processo', id=tarefa['processo_id']))
+
+
+@app.route('/processos/<int:id>/parte', methods=['POST'])
+def adicionar_parte_processo(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO processo_partes (processo_id, tipo_parte, nome, cpf_cnpj, tipo_pessoa, advogado_nome, advogado_oab)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        id,
+        request.form.get('tipo_parte'),
+        request.form.get('nome'),
+        request.form.get('cpf_cnpj') or None,
+        request.form.get('tipo_pessoa', 'Física'),
+        request.form.get('advogado_nome') or None,
+        request.form.get('advogado_oab') or None
+    ))
+    conn.commit()
+    conn.close()
+    
+    flash("Parte adicionada!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/<int:proc_id>/parte/<int:parte_id>/remover')
+def remover_parte_processo(proc_id, parte_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    conn.execute("DELETE FROM processo_partes WHERE id = ? AND processo_id = ?", (parte_id, proc_id))
+    conn.commit()
+    conn.close()
+    
+    flash("Parte removida.", "info")
+    return redirect(url_for('detalhe_processo', id=proc_id))
+
+
+@app.route('/minhas-tarefas')
+def minhas_tarefas():
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    usuario_id = session.get('usuario_id')
+    escritorio_id = session.get('escritorio_id')
+    
+    status_filtro = request.args.get('status', '')
+    
+    query = """
+        SELECT t.*, p.titulo as processo_titulo, p.numero_processo,
+            uc.nome as criado_por_nome
+        FROM tarefas t
+        JOIN processos p ON t.processo_id = p.id
+        LEFT JOIN usuarios uc ON t.criado_por_id = uc.id
+        WHERE t.atribuido_para_id = ? AND p.escritorio_id = ?
+    """
+    params = [usuario_id, escritorio_id]
+    
+    if status_filtro:
+        query += " AND t.status = ?"
+        params.append(status_filtro)
+    else:
+        query += " AND t.status NOT IN ('Concluída', 'Cancelada')"
+    
+    query += """ ORDER BY 
+        CASE t.prioridade WHEN 'Urgente' THEN 1 WHEN 'Alta' THEN 2 WHEN 'Normal' THEN 3 WHEN 'Baixa' THEN 4 END,
+        t.data_prazo ASC NULLS LAST
+    """
+    
+    tarefas = conn.execute(query, params).fetchall()
+    conn.close()
+    
+    return render_template('minhas_tarefas.html', tarefas=tarefas, status_filtro=status_filtro)
+
+
+# ==============================================================================
+# UPLOAD DE DOCUMENTOS DO PROCESSO
+# ==============================================================================
+
+BASE_PROCESSO_DOCS = 'processo_documentos'
+
+def get_pasta_processo_docs(escritorio_id, processo_id):
+    path = os.path.join(BASE_PROCESSO_DOCS, str(escritorio_id), str(processo_id))
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
+@app.route('/processos/<int:id>/documento/upload', methods=['POST'])
+def upload_documento_processo(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    usuario_id = session.get('usuario_id')
+    
+    # Verifica se o processo pertence ao escritório
+    proc = conn.execute("SELECT id FROM processos WHERE id = ? AND escritorio_id = ?", (id, escritorio_id)).fetchone()
+    if not proc:
+        conn.close()
+        flash("Processo não encontrado.", "error")
+        return redirect(url_for('listar_processos'))
+    
+    arquivo = request.files.get('arquivo')
+    if not arquivo or arquivo.filename == '':
+        conn.close()
+        flash("Nenhum arquivo selecionado.", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    nome_original = secure_filename(arquivo.filename)
+    tipo_doc = request.form.get('tipo', 'Outros')
+    descricao_doc = request.form.get('descricao', '')
+    tarefa_id = request.form.get('tarefa_id') or None
+    
+    # Garante nome único
+    pasta = get_pasta_processo_docs(escritorio_id, id)
+    nome_final = nome_original
+    contador = 1
+    while os.path.exists(os.path.join(pasta, nome_final)):
+        base, ext = os.path.splitext(nome_original)
+        nome_final = f"{base}_{contador}{ext}"
+        contador += 1
+    
+    caminho = os.path.join(pasta, nome_final)
+    arquivo.save(caminho)
+    
+    conn.execute('''
+        INSERT INTO processo_documentos (processo_id, tarefa_id, nome_arquivo, caminho_arquivo, tipo, descricao, enviado_por_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (id, tarefa_id, nome_original, caminho, tipo_doc, descricao_doc, usuario_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f"Documento '{nome_original}' enviado com sucesso!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/<int:proc_id>/documento/<int:doc_id>/download')
+def download_documento_processo(proc_id, doc_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    doc = conn.execute("""
+        SELECT pd.* FROM processo_documentos pd
+        JOIN processos p ON pd.processo_id = p.id
+        WHERE pd.id = ? AND pd.processo_id = ? AND p.escritorio_id = ?
+    """, (doc_id, proc_id, escritorio_id)).fetchone()
+    conn.close()
+    
+    if not doc or not os.path.exists(doc['caminho_arquivo']):
+        flash("Documento não encontrado.", "error")
+        return redirect(url_for('detalhe_processo', id=proc_id))
+    
+    return send_file(doc['caminho_arquivo'], as_attachment=True, download_name=doc['nome_arquivo'])
+
+
+@app.route('/processos/<int:proc_id>/documento/<int:doc_id>/remover')
+def remover_documento_processo(proc_id, doc_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    doc = conn.execute("""
+        SELECT pd.* FROM processo_documentos pd
+        JOIN processos p ON pd.processo_id = p.id
+        WHERE pd.id = ? AND pd.processo_id = ? AND p.escritorio_id = ?
+    """, (doc_id, proc_id, escritorio_id)).fetchone()
+    
+    if doc:
+        if os.path.exists(doc['caminho_arquivo']):
+            os.remove(doc['caminho_arquivo'])
+        conn.execute("DELETE FROM processo_documentos WHERE id = ?", (doc_id,))
+        conn.commit()
+        flash("Documento removido.", "info")
+    else:
+        flash("Documento não encontrado.", "error")
+    
+    conn.close()
+    return redirect(url_for('detalhe_processo', id=proc_id))
+
+
+# ==============================================================================
+# ASSOCIAÇÃO SERVIÇO ↔ PROCESSO
+# ==============================================================================
+
+@app.route('/servicos/<int:servico_id>/vincular-processo', methods=['POST'])
+def vincular_processo_servico(servico_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    processo_id = request.form.get('processo_id')
+    
+    # Verifica permissão
+    servico = conn.execute("SELECT * FROM servicos WHERE id = ? AND escritorio_id = ?", (servico_id, escritorio_id)).fetchone()
+    if not servico:
+        conn.close()
+        flash("Serviço não encontrado.", "error")
+        return redirect(url_for('clientes'))
+    
+    conn.execute("UPDATE servicos SET processo_id = ? WHERE id = ?", (processo_id or None, servico_id))
+    conn.commit()
+    conn.close()
+    
+    if processo_id:
+        flash("Processo vinculado ao serviço!", "success")
+    else:
+        flash("Processo desvinculado do serviço.", "info")
+    
+    return redirect(url_for('detalhe_cliente', id=servico['cliente_id']))
+
+
+# ==============================================================================
+# GESTÃO DE ASSUNTOS TPU (Tabela Processual Unificada)
+# ==============================================================================
+
+@app.route('/processos/<int:id>/assunto', methods=['POST'])
+def adicionar_assunto(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    proc = conn.execute("SELECT id FROM processos WHERE id = ? AND escritorio_id = ?", (id, escritorio_id)).fetchone()
+    if not proc:
+        conn.close()
+        flash("Processo não encontrado.", "error")
+        return redirect(url_for('listar_processos'))
+    
+    nome = request.form.get('nome', '').strip()
+    codigo_tpu = request.form.get('codigo_tpu') or None
+    principal = 1 if request.form.get('principal') else 0
+    
+    if not nome:
+        conn.close()
+        flash("Nome do assunto é obrigatório.", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    # Se marcou como principal, desmarca os outros
+    if principal:
+        conn.execute("UPDATE processo_assuntos SET principal = 0 WHERE processo_id = ?", (id,))
+    
+    conn.execute('''
+        INSERT INTO processo_assuntos (processo_id, nome, codigo_tpu, principal)
+        VALUES (?, ?, ?, ?)
+    ''', (id, nome, codigo_tpu, principal))
+    conn.commit()
+    conn.close()
+    
+    flash(f"Assunto '{nome}' adicionado!", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
+
+@app.route('/processos/<int:proc_id>/assunto/<int:assunto_id>/remover')
+def remover_assunto(proc_id, assunto_id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    
+    proc = conn.execute("SELECT id FROM processos WHERE id = ? AND escritorio_id = ?", (proc_id, escritorio_id)).fetchone()
+    if proc:
+        conn.execute("DELETE FROM processo_assuntos WHERE id = ? AND processo_id = ?", (assunto_id, proc_id))
+        conn.commit()
+        flash("Assunto removido.", "info")
+    
+    conn.close()
+    return redirect(url_for('detalhe_processo', id=proc_id))
+
+
+# ==============================================================================
+# IMPORTAÇÃO VIA API DATAJUD (CNJ)
+# ==============================================================================
+
+DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJvQzNEUmFScnhSN1ZDWnhmRkY3dw=='
+DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br'
+
+# Mapeamento dos tribunais para aliases da API
+TRIBUNAIS_DATAJUD = {
+    'STF': 'api_publica_stf', 'STJ': 'api_publica_stj', 'TST': 'api_publica_tst',
+    'TSE': 'api_publica_tse', 'STM': 'api_publica_stm',
+    'TJAC': 'api_publica_tjac', 'TJAL': 'api_publica_tjal', 'TJAM': 'api_publica_tjam',
+    'TJAP': 'api_publica_tjap', 'TJBA': 'api_publica_tjba', 'TJCE': 'api_publica_tjce',
+    'TJDFT': 'api_publica_tjdft', 'TJES': 'api_publica_tjes', 'TJGO': 'api_publica_tjgo',
+    'TJMA': 'api_publica_tjma', 'TJMG': 'api_publica_tjmg', 'TJMS': 'api_publica_tjms',
+    'TJMT': 'api_publica_tjmt', 'TJPA': 'api_publica_tjpa', 'TJPB': 'api_publica_tjpb',
+    'TJPE': 'api_publica_tjpe', 'TJPI': 'api_publica_tjpi', 'TJPR': 'api_publica_tjpr',
+    'TJRJ': 'api_publica_tjrj', 'TJRN': 'api_publica_tjrn', 'TJRO': 'api_publica_tjro',
+    'TJRR': 'api_publica_tjrr', 'TJRS': 'api_publica_tjrs', 'TJSC': 'api_publica_tjsc',
+    'TJSE': 'api_publica_tjse', 'TJSP': 'api_publica_tjsp', 'TJTO': 'api_publica_tjto',
+    'TRF1': 'api_publica_trf1', 'TRF2': 'api_publica_trf2', 'TRF3': 'api_publica_trf3',
+    'TRF4': 'api_publica_trf4', 'TRF5': 'api_publica_trf5', 'TRF6': 'api_publica_trf6',
+    'TRT1': 'api_publica_trt1', 'TRT2': 'api_publica_trt2', 'TRT3': 'api_publica_trt3',
+    'TRT4': 'api_publica_trt4', 'TRT5': 'api_publica_trt5', 'TRT6': 'api_publica_trt6',
+    'TRT7': 'api_publica_trt7', 'TRT8': 'api_publica_trt8', 'TRT9': 'api_publica_trt9',
+    'TRT10': 'api_publica_trt10', 'TRT11': 'api_publica_trt11', 'TRT12': 'api_publica_trt12',
+    'TRT13': 'api_publica_trt13', 'TRT14': 'api_publica_trt14', 'TRT15': 'api_publica_trt15',
+    'TRT16': 'api_publica_trt16', 'TRT17': 'api_publica_trt17', 'TRT18': 'api_publica_trt18',
+    'TRT19': 'api_publica_trt19', 'TRT20': 'api_publica_trt20', 'TRT21': 'api_publica_trt21',
+    'TRT22': 'api_publica_trt22', 'TRT23': 'api_publica_trt23', 'TRT24': 'api_publica_trt24',
+}
+
+
+def _extrair_tribunal_do_numero(numero_cnj):
+    """Extrai o código do tribunal do número CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO)"""
+    limpo = numero_cnj.replace('.', '').replace('-', '')
+    if len(limpo) >= 20:
+        justica = limpo[13]  # dígito da justiça
+        tribunal = limpo[14:16]  # 2 dígitos do tribunal
+        
+        mapa_justica = {
+            '1': 'STF', '2': 'STJ', '3': 'STM',
+            '5': f'TRT{int(tribunal)}',
+            '6': 'TSE',
+            '8': f'TJ',  # Estadual
+            '4': f'TRF{int(tribunal)}',
+        }
+        
+        if justica == '8':
+            # Justiça Estadual: mapeia pelo código do tribunal
+            uf_map = {
+                '01': 'TJAC', '02': 'TJAL', '03': 'TJAP', '04': 'TJAM', '05': 'TJBA',
+                '06': 'TJCE', '07': 'TJDFT', '08': 'TJES', '09': 'TJGO', '10': 'TJMA',
+                '11': 'TJMT', '12': 'TJMS', '13': 'TJMG', '14': 'TJPA', '15': 'TJPB',
+                '16': 'TJPE', '17': 'TJPI', '18': 'TJPR', '19': 'TJRJ', '20': 'TJRN',
+                '21': 'TJRS', '22': 'TJRO', '23': 'TJRR', '24': 'TJSC', '25': 'TJSE',
+                '26': 'TJSP', '27': 'TJTO',
+            }
+            return uf_map.get(tribunal, None)
+        else:
+            return mapa_justica.get(justica, None)
+    return None
+
+
+@app.route('/processos/<int:id>/importar-datajud', methods=['POST'])
+def importar_datajud(id):
+    if not session.get('usuario_logado'): return redirect(url_for('login'))
+    
+    try:
+        import requests as req
+    except ImportError:
+        flash("Módulo 'requests' não instalado. Execute: pip install requests", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    conn = get_db_connection()
+    escritorio_id = session.get('escritorio_id')
+    usuario_id = session.get('usuario_id')
+    
+    processo = conn.execute("SELECT * FROM processos WHERE id = ? AND escritorio_id = ?", (id, escritorio_id)).fetchone()
+    if not processo:
+        conn.close()
+        flash("Processo não encontrado.", "error")
+        return redirect(url_for('listar_processos'))
+    
+    numero_cnj = request.form.get('numero_cnj', '').strip()
+    tribunal = request.form.get('tribunal', '').strip().upper()
+    
+    if not numero_cnj:
+        numero_cnj = processo['numero_processo']
+    
+    if not numero_cnj:
+        conn.close()
+        flash("Número do processo (CNJ) é obrigatório para consulta.", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    # Auto-detecta tribunal se não informado
+    if not tribunal:
+        tribunal = _extrair_tribunal_do_numero(numero_cnj)
+    
+    if not tribunal or tribunal not in TRIBUNAIS_DATAJUD:
+        conn.close()
+        flash(f"Tribunal '{tribunal or '?'}' não reconhecido. Selecione manualmente.", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    alias = TRIBUNAIS_DATAJUD[tribunal]
+    url = f"{DATAJUD_BASE_URL}/{alias}/_search"
+    
+    headers = {
+        'Authorization': f'APIKey {DATAJUD_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    
+    body = {
+        "query": {
+            "match": {
+                "numeroProcesso": numero_cnj.replace('.', '').replace('-', '')
+            }
+        },
+        "size": 1
+    }
+    
+    try:
+        resp = req.post(url, json=body, headers=headers, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except req.exceptions.Timeout:
+        conn.close()
+        flash("Timeout ao consultar a API DataJud. Tente novamente.", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    except req.exceptions.RequestException as e:
+        conn.close()
+        flash(f"Erro na consulta DataJud: {str(e)}", "error")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    hits = data.get('hits', {}).get('hits', [])
+    if not hits:
+        conn.close()
+        flash("Processo não encontrado na base DataJud.", "warning")
+        return redirect(url_for('detalhe_processo', id=id))
+    
+    proc_data = hits[0].get('_source', {})
+    
+    # === 1. Atualiza dados da capa processual ===
+    classe = proc_data.get('classe', {})
+    orgao = proc_data.get('orgaoJulgador', {})
+    formato = proc_data.get('formato', {})
+    sistema = proc_data.get('sistema', {})
+    
+    updates = {
+        'numero_processo': proc_data.get('numeroProcesso', numero_cnj),
+        'tribunal': tribunal,
+        'grau': proc_data.get('grau', processo['grau']),
+        'data_ajuizamento': proc_data.get('dataAjuizamento', processo['data_ajuizamento']),
+        'nivel_sigilo': proc_data.get('nivelSigilo', 0),
+        'classe_codigo': classe.get('codigo'),
+        'classe_nome': classe.get('nome', processo['classe_nome']),
+        'orgao_julgador_codigo': orgao.get('codigo'),
+        'orgao_julgador_nome': orgao.get('nome', processo['orgao_julgador_nome']),
+        'orgao_julgador_municipio_ibge': orgao.get('codigoMunicipioIBGE'),
+        'formato_codigo': formato.get('codigo'),
+        'formato_nome': formato.get('nome', 'Eletrônico'),
+        'sistema_codigo': sistema.get('codigo'),
+        'sistema_nome': sistema.get('nome'),
+        'data_atualizacao': datetime.now().isoformat(),
+    }
+    
+    set_clauses = ', '.join([f"{k} = ?" for k in updates.keys()])
+    conn.execute(f"UPDATE processos SET {set_clauses} WHERE id = ?", 
+                 list(updates.values()) + [id])
+    
+    contadores = {'movimentacoes': 0, 'assuntos': 0}
+    
+    # === 2. Importa movimentações ===
+    movimentacoes_existentes = set()
+    for row in conn.execute("SELECT codigo_movimento, data_hora FROM movimentacoes WHERE processo_id = ?", (id,)):
+        movimentacoes_existentes.add((row['codigo_movimento'], row['data_hora']))
+    
+    for mov in proc_data.get('movimentos', []):
+        cod = mov.get('codigo')
+        nome_mov = mov.get('nome', 'Movimentação importada')
+        data_hora = mov.get('dataHora', datetime.now().isoformat())
+        
+        # Evita duplicatas
+        if (cod, data_hora) in movimentacoes_existentes:
+            continue
+        
+        complementos = mov.get('complementosTabelados', [])
+        complementos_json = json.dumps(complementos) if complementos else None
+        
+        conn.execute('''
+            INSERT INTO movimentacoes (processo_id, tipo, codigo_movimento, nome_movimento, complementos_json, data_hora, registrado_por_id)
+            VALUES (?, 'externa', ?, ?, ?, ?, ?)
+        ''', (id, cod, nome_mov, complementos_json, data_hora, usuario_id))
+        contadores['movimentacoes'] += 1
+    
+    # === 3. Importa assuntos ===
+    assuntos_existentes = set()
+    for row in conn.execute("SELECT codigo_tpu FROM processo_assuntos WHERE processo_id = ?", (id,)):
+        if row['codigo_tpu']:
+            assuntos_existentes.add(row['codigo_tpu'])
+    
+    for assunto in proc_data.get('assuntos', []):
+        cod_tpu = assunto.get('codigo')
+        if cod_tpu and cod_tpu in assuntos_existentes:
+            continue
+        
+        nome_assunto = assunto.get('nome', 'Assunto importado')
+        principal = 1 if assunto.get('principal', False) else 0
+        
+        if principal:
+            conn.execute("UPDATE processo_assuntos SET principal = 0 WHERE processo_id = ?", (id,))
+        
+        conn.execute('''
+            INSERT INTO processo_assuntos (processo_id, codigo_tpu, nome, principal)
+            VALUES (?, ?, ?, ?)
+        ''', (id, cod_tpu, nome_assunto, principal))
+        contadores['assuntos'] += 1
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f"✅ Importação DataJud concluída! Capa atualizada, {contadores['movimentacoes']} movimentações e {contadores['assuntos']} assuntos importados.", "success")
+    return redirect(url_for('detalhe_processo', id=id))
+
 
 if __name__ == '__main__':
     auto_setup_users() # Executa correção ao iniciar

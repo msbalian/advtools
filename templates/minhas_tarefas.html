@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Minhas Tarefas{% endblock %}
+{% block content %}
+
+<style>
+    .task-item {
+        border-left: 4px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+
+    .task-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .task-item.urgente {
+        border-left-color: #ef4444;
+    }
+
+    .task-item.alta {
+        border-left-color: #f59e0b;
+    }
+
+    .task-item.normal {
+        border-left-color: #3b82f6;
+    }
+
+    .task-item.baixa {
+        border-left-color: #94a3b8;
+    }
+
+    .prazo-vencido {
+        color: #ef4444;
+        font-weight: bold;
+    }
+
+    .prazo-proximo {
+        color: #f59e0b;
+        font-weight: bold;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <h2><i class="fas fa-tasks" style="color:#a78bfa;"></i> Minhas Tarefas</h2>
+</div>
+
+<!-- FILTROS -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="/minhas-tarefas"
+        class="btn btn-sm {{ 'btn-primary' if not status_filtro else 'btn-outline-primary' }}">Ativas</a>
+    <a href="/minhas-tarefas?status=Pendente"
+        class="btn btn-sm {{ 'btn-secondary' if status_filtro=='Pendente' else 'btn-outline-secondary' }}">Pendentes</a>
+    <a href="/minhas-tarefas?status=Em Andamento"
+        class="btn btn-sm {{ 'btn-primary' if status_filtro=='Em Andamento' else 'btn-outline-primary' }}">Em
+        Andamento</a>
+    <a href="/minhas-tarefas?status=Concluída"
+        class="btn btn-sm {{ 'btn-success' if status_filtro=='Concluída' else 'btn-outline-success' }}">Concluídas</a>
+    <a href="/minhas-tarefas?status=Cancelada"
+        class="btn btn-sm {{ 'btn-danger' if status_filtro=='Cancelada' else 'btn-outline-danger' }}">Canceladas</a>
+</div>
+
+<p class="text-muted small mb-3">{{ tarefas|length }} tarefa(s)</p>
+
+{% if tarefas|length == 0 %}
+<div class="text-center py-5">
+    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+    <h5 class="text-muted">Nenhuma tarefa pendente!</h5>
+    <p class="text-muted">Todas as suas tarefas foram concluídas ou não há tarefas atribuídas.</p>
+</div>
+{% else %}
+{% for t in tarefas %}
+<div class="card task-item {{ t['prioridade']|lower }} mb-3 border-0 shadow-sm">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <h6 class="mb-1 fw-bold">{{ t['titulo'] }}</h6>
+                {% if t['descricao'] %}
+                <small class="text-muted">{{ t['descricao'][:120] }}{{ '...' if t['descricao']|length > 120 }}</small>
+                {% endif %}
+                <div class="mt-1">
+                    <a href="/processos/{{ t['processo_id'] }}" class="text-decoration-none small"
+                        style="color:#818cf8;">
+                        <i class="fas fa-gavel me-1"></i>{{ t['processo_titulo'] }}
+                        {% if t['numero_processo'] %}
+                        <span class="text-muted">({{ t['numero_processo'] }})</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-2 text-center">
+                <span
+                    class="badge {{ 'bg-secondary' if t['status']=='Pendente' else 'bg-primary' if t['status']=='Em Andamento' else 'bg-success' if t['status']=='Concluída' else 'bg-danger' }}">
+                    {{ t['status'] }}
+                </span>
+                <br>
+                <span class="badge bg-light text-dark border mt-1">{{ t['tipo'] }}</span>
+                {% if t['prioridade'] == 'Urgente' %}
+                <span class="badge bg-danger mt-1">🔥 URGENTE</span>
+                {% elif t['prioridade'] == 'Alta' %}
+                <span class="badge bg-warning text-dark mt-1">⚠ Alta</span>
+                {% endif %}
+            </div>
+            <div class="col-md-2 text-center">
+                {% if t['data_prazo'] %}
+                <small class="{{ 'text-danger fw-bold' if t['prazo_fatal'] else 'text-muted' }}">
+                    <i class="fas fa-calendar me-1"></i>{{ t['data_prazo'][:10] }}
+                    {% if t['prazo_fatal'] %}<br><span class="badge bg-danger">Fatal</span>{% endif %}
+                </small>
+                {% else %}
+                <small class="text-muted">Sem prazo</small>
+                {% endif %}
+            </div>
+            <div class="col-md-1 text-center">
+                {% if t['criado_por_nome'] %}
+                <small class="text-muted" title="Criada por {{ t['criado_por_nome'] }}"><i
+                        class="fas fa-user-plus"></i></small>
+                {% endif %}
+            </div>
+            <div class="col-md-2 text-end">
+                {% if t['status'] not in ['Concluída', 'Cancelada'] %}
+                <div class="d-flex gap-1 justify-content-end">
+                    {% if t['status'] == 'Pendente' %}
+                    <form method="POST" action="/tarefas/{{ t['id'] }}/status" class="d-inline">
+                        <input type="hidden" name="status" value="Em Andamento">
+                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Iniciar"><i
+                                class="fas fa-play"></i></button>
+                    </form>
+                    {% endif %}
+                    <form method="POST" action="/tarefas/{{ t['id'] }}/status" class="d-inline">
+                        <input type="hidden" name="status" value="Concluída">
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Concluir"><i
+                                class="fas fa-check"></i></button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

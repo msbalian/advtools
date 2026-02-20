@@ -39,6 +39,13 @@
             <button class="nav-link" id="partes-tab" data-bs-toggle="tab" data-bs-target="#partes" type="button"
                 role="tab"><i class="fas fa-users me-2"></i>Partes Envolvidas</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="processos-tab" data-bs-toggle="tab" data-bs-target="#processos" type="button"
+                role="tab"><i class="fas fa-gavel me-2" style="color:#818cf8;"></i>Processos
+                {% if processos_cliente|length > 0 %}<span class="badge bg-primary ms-1">{{ processos_cliente|length
+                    }}</span>{% endif %}
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content" id="clienteTabContent">
@@ -167,7 +174,17 @@
                         {% for s in servicos %}
                         <tr>
                             <td class="fw-bold">{{ s.tipo_nome }}</td>
-                            <td class="small">{{ s.descricao or '-' }}</td>
+                            <td class="small">
+                                {{ s.descricao or '-' }}
+                                {% if s.processo_vinculado_id %}
+                                <div class="mt-1">
+                                    <a href="/processos/{{ s.processo_vinculado_id }}"
+                                        class="badge bg-indigo text-decoration-none" style="background:#6366f1;">
+                                        <i class="fas fa-gavel me-1"></i>{{ s.processo_titulo }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="fw-bold text-success">R$ {{ s.valor_total }}</div>
                                 <span class="badge bg-light text-dark border">{{ s.forma_pagamento or 'N/D' }}</span>
@@ -199,6 +216,67 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- ABA: PROCESSOS JUDICIAIS -->
+        <div class="tab-pane fade" id="processos" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-secondary mb-0"><i class="fas fa-gavel me-1" style="color:#818cf8;"></i> Processos
+                    Judiciais</h5>
+                <a href="/processos" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt me-1"></i> Ver Todos os Processos
+                </a>
+            </div>
+
+            {% if processos_cliente|length == 0 %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-gavel fa-2x mb-2"></i>
+                <p>Nenhum processo vinculado a este cliente.</p>
+                <a href="/processos" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i> Cadastrar
+                    Processo</a>
+            </div>
+            {% else %}
+            <div class="row g-3">
+                {% for p in processos_cliente %}
+                <div class="col-12">
+                    <a href="/processos/{{ p['id'] }}" class="text-decoration-none">
+                        <div class="card border-start border-4 {{ 'border-primary' if p['status']=='Ativo' else 'border-secondary' if p['status']=='Arquivado' else 'border-warning' if p['status']=='Suspenso' else 'border-success' }}"
+                            style="transition: transform 0.15s; cursor:pointer;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='none'">
+                            <div class="card-body py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1 text-dark fw-bold">{{ p['titulo'] }}</h6>
+                                        {% if p['numero_processo'] %}
+                                        <small class="text-muted font-monospace">{{ p['numero_processo'] }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <span
+                                            class="badge {{ 'bg-primary' if p['status']=='Ativo' else 'bg-secondary' if p['status']=='Arquivado' else 'bg-warning text-dark' if p['status']=='Suspenso' else 'bg-success' }}">{{
+                                            p['status'] }}</span>
+                                        {% if p['tarefas_pendentes'] and p['tarefas_pendentes'] > 0 %}
+                                        <span class="badge bg-danger rounded-pill" title="Tarefas pendentes">{{
+                                            p['tarefas_pendentes'] }} tarefas</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="mt-1 d-flex gap-3">
+                                    {% if p['area_direito'] %}<small class="text-muted"><i
+                                            class="fas fa-tag me-1"></i>{{ p['area_direito'] }}</small>{% endif %}
+                                    {% if p['tribunal'] %}<small class="text-muted"><i
+                                            class="fas fa-landmark me-1"></i>{{ p['tribunal'] }}</small>{% endif %}
+                                    {% if p['advogado_nome'] %}<small class="text-muted"><i
+                                            class="fas fa-user-tie me-1"></i>{{ p['advogado_nome'] }}</small>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- ABA 3: DOCUMENTOS & ASSINATURAS (Novo) -->

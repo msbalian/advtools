@@ -1,0 +1,32 @@
+-- CLIENTES --
+CREATE TABLE clientes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        escritorio_id INTEGER,
+        nome TEXT NOT NULL,
+        documento TEXT, -- CPF/CNPJ
+        telefone TEXT,
+        email TEXT,
+        endereco TEXT,
+        data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP, cep TEXT, data_nascimento TEXT, nacionalidade TEXT, estado_civil TEXT, profissao TEXT, rg TEXT, bairro TEXT, cidade TEXT, uf TEXT,
+        FOREIGN KEY(escritorio_id) REFERENCES escritorios(id)
+    )
+
+-- SERVICOS --
+CREATE TABLE servicos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        escritorio_id INTEGER,
+        cliente_id INTEGER,
+        tipo_servico_id INTEGER,
+        descricao TEXT,
+        status TEXT DEFAULT 'Ativo',
+        
+        -- Dados Financeiros
+        valor_total REAL,
+        condicoes_pagamento TEXT, -- JSON com detalhes
+        
+        data_contratacao DATETIME DEFAULT CURRENT_TIMESTAMP, forma_pagamento TEXT, qtd_parcelas INTEGER, detalhes_pagamento TEXT, porcentagem_exito TEXT, data_contrato TEXT, processo_id INTEGER,
+        FOREIGN KEY(escritorio_id) REFERENCES escritorios(id),
+        FOREIGN KEY(cliente_id) REFERENCES clientes(id),
+        FOREIGN KEY(tipo_servico_id) REFERENCES tipos_servico(id)
+    )
+

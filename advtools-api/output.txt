@@ -1,0 +1,3 @@
+ID: 1, Email: fernando@primejud.com.br
+Hash: $2b$12$oqK70.BWBuCXaDJVaFZz/O4Xl1NJdfs/E1BDsgdTeIBYE1Yo5ukGm
+Senha '123' eh VALIDA para fernando@primejud.com.br

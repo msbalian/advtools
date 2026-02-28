@@ -1,25 +1,11 @@
 import os
-from typing import List
-import shutil
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError, jwt
-
-import models
-import schemas
-import crud
-import auth
-from database import engine, get_db
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select
 import logging
 import traceback
-from fastapi import Request
+
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from services.documento_service import convert_docx_to_pdf_async
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configura log para arquivo para vermos erros 500 que uvicorn esconde
 logging.basicConfig(filename='api_errors.log', level=logging.ERROR)
@@ -56,8 +42,6 @@ async def catch_exceptions_middleware(request: Request, call_next):
             status_code=500,
             content={"detail": f"Erro interno: {str(exc)}", "traceback": traceback.format_exc()}
         )
-
-from services.auth_service import get_current_user, oauth2_scheme
 from routers import auth as auth_router
 
 app.include_router(auth_router.router)

@@ -181,7 +181,6 @@ const canConfirm = computed(() => {
   return false
 })
 
-const isPdf = computed(() => false) // reservado para uso futuro
 
 async function loadSalaData() {
   try {

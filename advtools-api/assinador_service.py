@@ -204,33 +204,48 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
                     
                     try:
                         nome = sig.get('nome', 'Assinado Digitalmente')
-                        font_size_base = h_pdf * 0.25
-                        font_size_base = max(4, min(font_size_base, 10))
-                        
-                        min_w_needed = len(nome[:60]) * font_size_base * 0.65 + 15
-                        if w_pdf < min_w_needed:
-                            w_pdf = min_w_needed
-
-                        # Caixa branca com borda preta
-                        c_page.setFillColorRGB(1, 1, 1)
-                        c_page.setStrokeColorRGB(0, 0, 0)
-                        c_page.setLineWidth(0.5)
-                        c_page.rect(x_pdf, y_pdf, w_pdf, h_pdf, fill=1, stroke=1)
-                        
-                        c_page.setFillColorRGB(0, 0, 0)
-                        font_size = max(4, min(h_pdf * 0.25, 10))
-                        
                         cpf = sig.get('cpf', 'CPF não informado')
-                        margin = 5
                         
-                        c_page.setFont("Helvetica-Oblique", font_size * 0.8)
-                        c_page.drawString(x_pdf + margin, y_pdf + h_pdf - margin - (font_size * 0.8), "Assinado Digitalmente por:")
+                        # Definições base para um carimbo elegante e muito discreto
+                        font_size_nome = 6.5
+                        font_size_detalhe = 5.0
                         
-                        c_page.setFont("Helvetica-Bold", font_size)
-                        c_page.drawString(x_pdf + margin, y_pdf + (h_pdf/2) - (font_size/2), nome[:60])
+                        w_assinado = c_page.stringWidth("Assinado Eletronicamente", "Helvetica-Oblique", font_size_detalhe)
+                        w_nome = c_page.stringWidth(nome[:45], "Helvetica-Bold", font_size_nome)
+                        w_cpf = c_page.stringWidth(f"Doc: {cpf}", "Helvetica", font_size_detalhe)
                         
-                        c_page.setFont("Helvetica", font_size * 0.9)
-                        c_page.drawString(x_pdf + margin, y_pdf + margin, f"CPF: {cpf}")
+                        margin = 4
+                        drawn_w = max(w_assinado, w_nome, w_cpf) + (margin * 2)
+                        drawn_h = 24 # Altura fixa e bem estreita para as 3 linhas
+                        
+                        # Para garantir que não fique vácuo, ancoramos no topo-esquerdo da onde o usuário mirou
+                        top_y = y_pdf + h_pdf
+                        new_y_pdf = top_y - drawn_h
+                        
+                        c_page.setFillColorRGB(0.97, 0.97, 0.97) # Fundo quase branco
+                        c_page.setStrokeColorRGB(0.8, 0.8, 0.8) # Borda cinza bem clara e fina
+                        c_page.setLineWidth(0.2)
+                        c_page.roundRect(x_pdf, new_y_pdf, drawn_w, drawn_h, radius=3, fill=1, stroke=1)
+                        
+                        # Texto elegante e pequeno
+                        c_page.setFillColorRGB(0.3, 0.35, 0.4) 
+                        
+                        # Linha 1: "Assinado Eletronicamente"
+                        c_page.setFont("Helvetica-Oblique", font_size_detalhe)
+                        y_cursor = top_y - margin - font_size_detalhe + 1
+                        c_page.drawString(x_pdf + margin, y_cursor, "Assinado Eletronicamente")
+                        
+                        # Linha 2: O Nome da Pessoa
+                        y_cursor -= (font_size_nome + 1.5)
+                        c_page.setFillColorRGB(0.15, 0.2, 0.25)
+                        c_page.setFont("Helvetica-Bold", font_size_nome)
+                        c_page.drawString(x_pdf + margin, y_cursor, nome[:45])
+                        
+                        # Linha 3: CPF
+                        y_cursor -= (font_size_detalhe + 2)
+                        c_page.setFillColorRGB(0.3, 0.35, 0.4) 
+                        c_page.setFont("Helvetica", font_size_detalhe)
+                        c_page.drawString(x_pdf + margin, y_cursor, f"Doc: {cpf}")
 
                     except Exception as e:
                         print(f"Erro ao estampar texto no PDF: {e}")

@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select as sql_select, func as sql_func, update as sql_update
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 import schemas
 import models
@@ -218,7 +219,11 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
                 print(f"Erro ao converter DOCX para PDF: {e}")
                 caminho_pdf_base = None
 
-    sigs_res = await db.execute(select(models.Signatario).where(models.Signatario.documento_id == doc_id))
+    sigs_res = await db.execute(
+        select(models.Signatario)
+        .options(selectinload(models.Signatario.posicoes))
+        .where(models.Signatario.documento_id == doc_id)
+    )
     todos_sigs = sigs_res.scalars().all()
     
     sigs_list_flat = []

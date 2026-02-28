@@ -412,6 +412,45 @@ const formatDate = (dateString) => {
     return dateString
 }
 
+// --- Funções de Ícones e Tipos de Arquivo ---
+const getFileExtension = (path) => {
+    if (!path) return 'pdf';
+    const parts = path.split('.');
+    if (parts.length > 1) {
+        const lastPart = parts.pop();
+        return lastPart ? lastPart.toLowerCase() : 'pdf';
+    }
+    return 'pdf';
+};
+
+const getFileIconClass = (path) => {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'fas fa-file-pdf';
+    if (ext === 'doc' || ext === 'docx') return 'fas fa-file-word';
+    return 'fas fa-file-alt';
+};
+
+const getFileIconBgColor = (path) => {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'bg-red-50';
+    if (ext === 'doc' || ext === 'docx') return 'bg-blue-50';
+    return 'bg-slate-50';
+};
+
+const getFileIconTextColor = (path) => {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'text-red-500';
+    if (ext === 'doc' || ext === 'docx') return 'text-blue-600';
+    return 'text-slate-500';
+};
+
+const getFileBadgeClass = (path) => {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'bg-red-100 text-red-700';
+    if (ext === 'doc' || ext === 'docx') return 'bg-blue-100 text-blue-700';
+    return 'bg-slate-100 text-slate-600';
+};
+
 onMounted(async () => {
   carregarEscritorio()
   carregarUsuario()
@@ -690,11 +729,16 @@ onMounted(async () => {
                                 <li v-for="doc in documentos" :key="doc.id" class="px-5 py-4 hover:bg-slate-50 transition-colors group">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-10 w-10 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
-                                                <FileText class="w-5 h-5" />
+                                            <div :class="[getFileIconBgColor(doc.arquivo_path), 'h-10 w-10 rounded-lg flex items-center justify-center']">
+                                                <i :class="[getFileIconClass(doc.arquivo_path), getFileIconTextColor(doc.arquivo_path), 'text-lg']"></i>
                                             </div>
                                             <div class="flex flex-col">
-                                                <span class="text-sm font-semibold text-slate-900">{{ doc.nome }}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-sm font-semibold text-slate-900">{{ doc.nome }}</span>
+                                                    <span class="text-[0.65rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" :class="getFileBadgeClass(doc.arquivo_path)">
+                                                        {{ getFileExtension(doc.arquivo_path) }}
+                                                    </span>
+                                                </div>
                                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
                                                     <span class="text-xs text-slate-500">
                                                         Salvo em: {{ new Date(doc.data_criacao).toLocaleDateString() }}

@@ -15,7 +15,13 @@
         </div>
         <div>
           <h2>Gerenciar Assinaturas</h2>
-          <p class="subtitle" v-if="documento">{{ documento.nome }}</p>
+          <p class="subtitle" v-if="documento" style="display: flex; align-items: center; gap: 6px;">
+            <i :class="[getFileIconClass(documento.arquivo_path), getFileIconTextColor(documento.arquivo_path)]"></i>
+            {{ documento.nome }}
+            <span class="text-[0.65rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ml-1" :class="getFileBadgeClass(documento.arquivo_path)">
+                {{ getFileExtension(documento.arquivo_path) }}
+            </span>
+          </p>
         </div>
       </div>
       <div class="header-right" style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
@@ -166,12 +172,19 @@
                 <div class="sig-name">{{ sig.nome }}</div>
                 <div class="sig-role">{{ sig.funcao }}</div>
                 <div v-if="sig.posicionou" class="sig-status-ok"><i class="fas fa-check"></i> Posicionado</div>
+                
+                <!-- MOVIDO PARA CÁ: Botão ficará logo abaixo do signatário se ele for o selecionado -->
+                <div v-if="posModal.activeSigner?.id === sig.id" style="margin-top: 10px;">
+                  <button class="btn-primary btn-sm" @click.stop="addStampToCurrentPage" style="width: 100%; border-radius: 4px;">
+                    <i class="fas fa-plus"></i> Inserir Carimbo Aqui
+                  </button>
+                </div>
               </li>
             </ul>
             <div class="pos-tips">
-              <p>1. Selecione um signatário</p>
-              <p>2. Navegue até a página desejada</p>
-              <p>3. Arraste a caixa e confirme</p>
+              <p>1. Selecione um signatário acima</p>
+              <p>2. Clique em <b>Inserir Carimbo</b></p>
+              <p>3. Arraste a caixa para a posição e confirme</p>
             </div>
           </div>
           <div class="pos-viewer">
@@ -208,12 +221,9 @@
                <span v-if="posModal.activeSigner">Posicionando assinatura de <b>{{ posModal.activeSigner.nome }}</b></span>
                <span v-else><b>Selecione um signatário à esquerda para começar a posicionar.</b></span>
                <div style="display: flex; gap: 10px; align-items: center;">
-                 <button v-if="posModal.activeSigner" class="btn-outline-primary btn-sm" @click="addStampToCurrentPage" style="padding: 6px 12px; margin-right: 10px;">
-                    <i class="fas fa-plus"></i> Inserir Assinatura Aqui
-                 </button>
                  <button class="btn-cancel-confirm" style="padding: 6px 16px;" @click="closePosModal">Fechar</button>
-                 <button class="btn-primary btn-sm" @click="savePositions" :disabled="savingPositions || !posModal.activeSigner">
-                    {{ savingPositions ? 'Salvando...' : 'Salvar Posições' }}
+                 <button class="btn-primary" @click="savePositions" :disabled="savingPositions || !posModal.activeSigner" style="padding: 6px 16px;">
+                    <i class="fas fa-save"></i> {{ savingPositions ? 'Salvando...' : 'Salvar Posições' }}
                  </button>
                </div>
             </div>
@@ -429,6 +439,38 @@ async function addQuickContact(ct: any) {
   }
   await addSignatario()
 }
+
+// --- Funções de Ícones e Tipos de Arquivo ---
+function getFileExtension(path: string | undefined): string {
+    if (!path) return 'pdf';
+    const parts = path.split('.');
+    if (parts.length > 1) {
+        const lastPart = parts.pop();
+        return lastPart ? lastPart.toLowerCase() : 'pdf';
+    }
+    return 'pdf';
+}
+
+function getFileIconClass(path: string | undefined) {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'fas fa-file-pdf';
+    if (ext === 'doc' || ext === 'docx') return 'fas fa-file-word';
+    return 'fas fa-file-alt';
+}
+
+function getFileIconTextColor(path: string | undefined) {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'color-red'; // Usamos classes custom ou style se preferir
+    if (ext === 'doc' || ext === 'docx') return 'color-blue';
+    return 'color-slate';
+}
+
+function getFileBadgeClass(path: string | undefined) {
+    const ext = getFileExtension(path);
+    if (ext === 'pdf') return 'badge-pdf';
+    if (ext === 'doc' || ext === 'docx') return 'badge-word';
+    return 'badge-generic';
+}
 // ==========================
 
 // === MODAL POSICIONAMENTO ===
@@ -489,10 +531,10 @@ function addStampToCurrentPage() {
     nome: sig.nome,
     cpf: sig.cpf,
     page: posPage.value,
-    x: 20,
-    y: 20,
-    w: 130,
-    h: 40
+    x: 100, // Centralizado um pouco mais pro meio da tela (assume 600px default pdf view width)
+    y: 100,
+    w: 120, // Largura fina 
+    h: 30   // Altura mínima representativa
   })
 }
 
@@ -562,15 +604,16 @@ async function savePositions() {
   const docVisualH = rect.height
 
   try {
-    const stampsBySig: Record<number, any[]> = {}
+    const stampsBySig: Record<string, any[]> = {}
     
     // Assegura que signatarios sem posições também enviem array vazio se precisar atualizar
-    signatarios.value.forEach(s => { stampsBySig[s.id] = [] })
+    signatarios.value.forEach(s => { stampsBySig[s.id.toString()] = [] })
     
     // Organiza todos os selos
     posModal.value.stamps.forEach(st => {
-      if (!stampsBySig[st.sigId]) stampsBySig[st.sigId] = []
-      stampsBySig[st.sigId].push({
+      const sid = st.sigId.toString()
+      if (!stampsBySig[sid]) stampsBySig[sid] = []
+      stampsBySig[sid].push({
         page_number: st.page,
         x_pos: st.x,
         y_pos: st.y,
@@ -1184,22 +1227,43 @@ onMounted(async () => {
 .pos-actions .btn-primary { width: auto; }
 .draggable-stamp {
   position: absolute;
-  background: rgba(239, 246, 255, 0.85);
-  border: 2px dashed #2563eb;
-  border-radius: 6px;
+  /* Fundo sutil para parecer com o gerador final */
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
   cursor: grab;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px rgba(37,99,235,0.15);
+  justify-content: flex-start;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   backdrop-filter: blur(2px);
   z-index: 10;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s;
   user-select: none;
+  overflow: hidden;
 }
-.draggable-stamp:active, .draggable-stamp.dragging { cursor: grabbing; box-shadow: 0 8px 16px rgba(37,99,235,0.25); opacity: 0.9; border-style: solid; }
-.stamp-content { text-align: center; pointer-events: none; width: 100%; padding: 4px; box-sizing: border-box; }
-.stamp-content .s-by { font-size: 0.5rem; color: #1e40af; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
-.stamp-content .s-name { font-size: 0.75rem; color: #1e3a8a; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.stamp-content .s-doc { font-size: 0.6rem; color: #3b82f6; white-space: nowrap; }
+.draggable-stamp:active, .draggable-stamp.dragging { 
+  cursor: grabbing; 
+  box-shadow: 0 8px 16px rgba(37,99,235,0.25); 
+  border-color: #2563eb;
+}
+.stamp-content { 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  pointer-events: none; 
+  width: 100%; 
+  padding: 4px 6px; 
+  box-sizing: border-box; 
+}
+.stamp-content .s-by { font-size: 0.45rem; color: #64748b; font-style: italic; margin-bottom: 2px; }
+.stamp-content .s-name { font-size: 0.75rem; color: #1e293b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+.stamp-content .s-doc { font-size: 0.55rem; color: #475569; white-space: nowrap; margin-top: 1px; }
+.color-red { color: #ef4444; }
+.color-blue { color: #2563eb; }
+.color-slate { color: #64748b; }
+
+.badge-pdf { background: #fee2e2; color: #b91c1c; }
+.badge-word { background: #dbeafe; color: #1e40af; }
+.badge-generic { background: #f1f5f9; color: #475569; }
 </style>

@@ -165,7 +165,7 @@ class Signatario(Base):
     tipo_autenticacao = Column(String(50), nullable=True) # assinatura, selfie
     imagem_assinatura_path = Column(String(300), nullable=True)
     
-    # ADVtools Sign Position Fields
+    # ADVtools Sign Position Fields (Legacy - deprecated in favor of posicoes table)
     page_number = Column(Integer, nullable=True)
     x_pos = Column(Float, nullable=True)
     y_pos = Column(Float, nullable=True)
@@ -175,3 +175,19 @@ class Signatario(Base):
     docHeight = Column("docheight", Float, nullable=True)
 
     documento = relationship("DocumentoCliente", back_populates="signatarios")
+    posicoes = relationship("SignatarioPosicao", back_populates="signatario", cascade="all, delete-orphan", lazy="selectin")
+
+class SignatarioPosicao(Base):
+    __tablename__ = "signatarios_posicoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    signatario_id = Column(Integer, ForeignKey("signatarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    page_number = Column(Integer, nullable=False)
+    x_pos = Column(Float, nullable=False)
+    y_pos = Column(Float, nullable=False)
+    width = Column(Float, nullable=False)
+    height = Column(Float, nullable=False)
+    docWidth = Column("docwidth", Float, nullable=False)
+    docHeight = Column("docheight", Float, nullable=False)
+
+    signatario = relationship("Signatario", back_populates="posicoes")

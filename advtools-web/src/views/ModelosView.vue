@@ -52,23 +52,35 @@ const tags = [
     { label: 'RG', tag: '{{ cliente_rg }}' },
     { label: 'Data Nascimento', tag: '{{ cliente_data_nascimento }}' },
   ]},
-  { group: 'Dados do Serviço/Processo', items: [
-    { label: 'Tipo', tag: '{{ servico_tipo }}' },
-    { label: 'Descrição/Objeto', tag: '{{ descricao }}' },
-    { label: 'Valor Total', tag: '{{ valor_total }}' },
-    { label: 'Forma de Pagamento', tag: '{{ forma_pagamento }}' },
-    { label: 'Detalhes Pagamento', tag: '{{ detalhes_pagamento }}' },
-    { label: 'Qtd. Parcelas', tag: '{{ qtd_parcelas }}' },
+  { group: 'Partes Envolvidas', items: [
+    { label: 'Resumo das Partes', tag: '{{ partes_resumo }}' },
+    { label: 'Parte 1: Nome', tag: '{{ parte_1_nome }}' },
+    { label: 'Parte 1: CPF/CNPJ', tag: '{{ parte_1_doc }}' },
+    { label: 'Parte 1: Papel', tag: '{{ parte_1_papel }}' },
+    { label: 'Parte 2: Nome', tag: '{{ parte_2_nome }}' },
+    { label: 'Parte 2: CPF/CNPJ', tag: '{{ parte_2_doc }}' },
+    { label: 'Parte 2: Papel', tag: '{{ parte_2_papel }}' },
   ]},
-  { group: 'Datas', items: [
+  { group: 'Dados do Serviço/Processo', items: [
+    { label: 'Tipo de Serviço', tag: '{{ servico_tipo }}' },
+    { label: 'Percentual de Êxito', tag: '{{ percentual_exito }}' },
+  ]},
+  { group: 'Condições de Pagamento', items: [
+    { label: 'Resumo dos Pagamentos', tag: '{{ pagamentos_resumo }}' },
+    { label: 'Valor Total', tag: '{{ pagamento_valor }}' },
+    { label: 'Qtd. de Parcelas', tag: '{{ qtd_parcelas }}' },
+    { label: 'Forma Geral', tag: '{{ forma_pagamento }}' },
+    { label: 'Detalhes Extras', tag: '{{ detalhes_pagamento }}' },
+    { label: 'Parcela 1: Valor', tag: '{{ pagamento_1_valor }}' },
+    { label: 'Parcela 1: Data', tag: '{{ pagamento_1_data }}' },
+    { label: 'Parcela 2: Valor', tag: '{{ pagamento_2_valor }}' },
+    { label: 'Parcela 2: Data', tag: '{{ pagamento_2_data }}' },
+    { label: 'Lista de Parcelas', tag: '{{ pagamento_parcelas }}' },
+  ]},
+  { group: 'Datas e Outros', items: [
     { label: 'Data Hoje', tag: '{{ data_hoje }}' },
-    { label: 'Ano Atual', tag: '{{ ano_atual }}' },
     { label: 'Data Extenso', tag: '{{ data_extenso }}' },
   ]},
-  { group: 'Inteligência Artificial', items: [
-    { label: 'Conteúdo IA', tag: '{{ conteudo_ia }}' },
-    { label: 'Cláusulas Extras', tag: '{{ clausulas_extras }}' },
-  ]}
 ]
 
 const copiedTag = ref('')

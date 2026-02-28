@@ -59,8 +59,7 @@ async def catch_exceptions_middleware(request: Request, call_next):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
 async def convert_docx_to_pdf_async(in_path: str, out_path: str):
-    """Executa a conversão do DOCX para PDF em uma thread separada,
-    garantindo a inicialização do COM para que o Word interop funcione."""
+    """Executa a conversão do DOCX para PDF em uma thread separada."""
     import asyncio
     import os
     abs_in = os.path.abspath(in_path)
@@ -70,14 +69,11 @@ async def convert_docx_to_pdf_async(in_path: str, out_path: str):
     
     def do_convert():
         import pythoncom
-        # Inicializa o framework COM do Windows essencial para essa biblioteca rodar em threads
+        from docx2pdf import convert
+        # Inicializa o COM na thread atual (necessário para threads em background)
         pythoncom.CoInitialize()
         try:
-            from docx2pdf import convert
             convert(abs_in, abs_out)
-        except Exception as e:
-            print(f"Erro fatal docx2pdf na thread COM: {e}")
-            raise
         finally:
             pythoncom.CoUninitialize()
 
@@ -192,10 +188,7 @@ async def delete_usuario_equipe(user_id: int, current_user: models.Usuario = Dep
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return None
 
-@app.post("/api/escritorios", response_model=schemas.Escritorio)
-async def register_escritorio(office_in: schemas.EscritorioCreate, db: AsyncSession = Depends(get_db)):
-    # Rota livre para permitir o cadastro inicial. No futuro colocar Captcha ou restrição.
-    return await crud.create_office(db, office_in)
+
 
 @app.get("/api/escritorio", response_model=schemas.Escritorio)
 async def get_meu_escritorio(current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -437,6 +430,13 @@ async def delete_parte(parte_id: int, current_user: models.Usuario = Depends(get
 async def read_documentos_cliente(cliente_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     return await crud.get_documentos_cliente(db, cliente_id, escritorio_id=current_user.escritorio_id)
 
+@app.get("/api/documentos/{documento_id}", response_model=schemas.DocumentoCliente)
+async def read_documento(documento_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    return doc
+
 @app.post("/api/clientes/{cliente_id}/documentos", response_model=schemas.DocumentoCliente)
 async def upload_documento_cliente(
     cliente_id: int,
@@ -472,6 +472,35 @@ async def delete_documento(documento_id: int, db: AsyncSession = Depends(get_db)
         os.remove(file_path)
     
     return None
+
+@app.put("/api/documentos/{documento_id}", response_model=schemas.DocumentoCliente)
+async def update_documento_file(
+    documento_id: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db), 
+    current_user: models.Usuario = Depends(get_current_user)
+):
+    # Verify document exists and user has access
+    doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+        
+    # Replace the physical file but keep the same path and name
+    file_path = os.path.join("static", doc.arquivo_path)
+    
+    # Ensure directory exists just in case
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+    with open(file_path, "wb") as buffer:
+        import shutil
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Update modification timestamp or just return the doc (using commit to trigger any onupdate hooks if exist)
+    await db.commit()
+    await db.refresh(doc)
+    
+    return doc
+
 
 from docxtpl import DocxTemplate
 from datetime import datetime
@@ -520,6 +549,7 @@ async def gerar_documento(
     servico = next((s for s in servicos if s.status == "Ativo"), servicos[0] if servicos else None)
 
     # 3. Montar Contexto (Dicionário de Tags)
+    # 3. Montar Contexto (Dicionário de Tags)
     hoje = datetime.now()
     
     context = {
@@ -548,12 +578,101 @@ async def gerar_documento(
         
         # Serviço / Financeiro
         "servico_tipo": servico.tipo_servico_id if servico else "",
-        "valor_total": f"R$ {servico.valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if servico and servico.valor_total else "",
         "percentual_exito": servico.porcentagem_exito if servico else "",
-        "forma_pagamento": servico.forma_pagamento if servico else "",
-        "qtd_parcelas": servico.qtd_parcelas if servico else "",
-        "detalhes_pagamento": servico.detalhes_pagamento if servico else ""
     }
+
+    # Tratamento de Pagamentos (JSON 1-to-N)
+    import json
+    pagamentos_list = []
+    pagamentos_resumo_linhas = []
+    soma_valor_total = 0.0
+
+    if servico and servico.condicoes_pagamento:
+        try:
+            pagamentos_raw = json.loads(servico.condicoes_pagamento)
+            if isinstance(pagamentos_raw, list):
+                pagamentos_list = pagamentos_raw
+        except json.JSONDecodeError:
+            pass
+            
+    # Computar resumo e tags individuais de pagamento
+    for i, pag in enumerate(pagamentos_list):
+        valor_num = float(pag.get("valor") or 0)
+        soma_valor_total += valor_num
+        
+        # Formatar valor e data pt-BR
+        valor_str = f"R$ {valor_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        data_str = pag.get("data") or ""
+        if data_str and "T" not in data_str and len(data_str.split("-")) == 3:
+            # Format YYYY-MM-DD to DD/MM/YYYY
+            partes_data = data_str.split("-")
+            data_str = f"{partes_data[2]}/{partes_data[1]}/{partes_data[0]}"
+
+        tipo = pag.get("tipo") or "Desconhecido"
+        obs = pag.get("obs") or ""
+        
+        linha_resumo = f"{i+1}ª Parcela - {data_str} - {valor_str} ({tipo})"
+        if obs:
+            linha_resumo += f" - {obs}"
+        pagamentos_resumo_linhas.append(linha_resumo)
+        
+        # Tags individuais seguras até 12 parcelas
+        if i < 12:
+            prefix = f"pagamento_{i+1}_"
+            context[f"{prefix}valor"] = valor_str
+            context[f"{prefix}data"] = data_str
+            context[f"{prefix}tipo"] = tipo
+            context[f"{prefix}obs"] = obs
+
+    # For pre-filling empty templates where the tags are statically referenced
+    for i in range(len(pagamentos_list), 12):
+        prefix = f"pagamento_{i+1}_"
+        context[f"{prefix}valor"] = ""
+        context[f"{prefix}data"] = ""
+        context[f"{prefix}tipo"] = ""
+        context[f"{prefix}obs"] = ""
+
+    context["pagamentos"] = pagamentos_list
+    context["pagamentos_resumo"] = "\n".join(pagamentos_resumo_linhas)
+    context["qtd_parcelas"] = str(len(pagamentos_list))
+    
+    # Lista de parcelas em texto único formatado para uso simples com {{ pagamento_parcelas }}
+    parcelas_linhas = []
+    for i, pag in enumerate(pagamentos_list):
+        valor_num = float(pag.get("valor") or 0)
+        valor_str = f"R$ {valor_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        data_str = pag.get("data") or ""
+        if data_str and "T" not in data_str and len(data_str.split("-")) == 3:
+            partes_data = data_str.split("-")
+            data_str = f"{partes_data[2]}/{partes_data[1]}/{partes_data[0]}"
+
+        linha = f"{i + 1}ª Parcela - {data_str} - {valor_str}"
+        tipo = pag.get("tipo") or ""
+        if tipo:
+            linha += f" ({tipo})"
+        obs = pag.get("obs") or ""
+        if obs:
+            linha += f" - {obs}"
+            
+        parcelas_linhas.append(linha)
+        
+    context["pagamento_parcelas"] = "\n".join(parcelas_linhas) if parcelas_linhas else ""
+    
+    
+    # Valor Total
+    if soma_valor_total > 0:
+        context["pagamento_valor"] = f"R$ {soma_valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        context["valor_total"] = context["pagamento_valor"] # Manter legibilidade para templates antigos
+    else:
+        # Fallback para o campo valor_total antigo se não houver JSON listado
+        val = servico.valor_total if servico else 0.0
+        context["pagamento_valor"] = f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if val else ""
+        context["valor_total"] = context["pagamento_valor"]
+
+    context["forma_pagamento"] = servico.forma_pagamento if servico else ""
+    context["detalhes_pagamento"] = servico.detalhes_pagamento if servico else ""
     
     # Partes Envolvidas
     partes_txt = []
@@ -579,6 +698,7 @@ async def gerar_documento(
             context[f"{prefix}cep"] = parte.cep or ""
             context[f"{prefix}papel"] = parte.papel or ""
             
+    context["partes_resumo"] = "\n".join(partes_txt)
     context["partes_txt"] = ", ".join(partes_txt)
 
     # Preenche o restante vazio para partes nulas até < 5
@@ -664,7 +784,7 @@ async def delete_signatario(documento_id: int, signatario_id: int, db: AsyncSess
     return {"message": "Signatário removido"}
 
 @app.put("/api/documentos/{documento_id}/signatarios/{signatario_id}/posicao")
-async def update_signatario_posicao(documento_id: int, signatario_id: int, posicao: schemas.SignatarioPosicaoUpdate, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):
+async def update_signatario_posicao(documento_id: int, signatario_id: int, posicao: schemas.SignatarioPosicoesUpdate, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):
     # First, verify the document belongs to the user's office
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
     if not doc:
@@ -673,7 +793,7 @@ async def update_signatario_posicao(documento_id: int, signatario_id: int, posic
     updated = await crud.update_signatario_posicao(db, signatario_id, posicao)
     if not updated:
         raise HTTPException(status_code=404, detail="Signatário não encontrado")
-    return {"message": "Posição salva com sucesso"}
+    return {"message": "Posições salvas com sucesso"}
 
 @app.post("/api/documentos/{documento_id}/finalizar")
 async def finalizar_documento(documento_id: int, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):
@@ -900,11 +1020,15 @@ async def public_confirm_assinatura(token: str, data: schemas.AssinaturaConfirma
 
     # 4b. Busca todos os signatários para o certificado
     sigs_res = await db.execute(
-        sql_select(models.Signatario).where(models.Signatario.documento_id == doc_id)
+        select(models.Signatario).where(models.Signatario.documento_id == doc_id)
     )
     todos_sigs = sigs_res.scalars().all()
-    sigs_list = [
-        {
+    
+    sigs_list_flat = []
+    sigs_list_unique = []
+    
+    for s in todos_sigs:
+        base_sig_dict = {
             "id": s.id,
             "nome": s.nome,
             "email": s.email,
@@ -916,6 +1040,7 @@ async def public_confirm_assinatura(token: str, data: schemas.AssinaturaConfirma
             "ip_assinatura": s.ip_assinatura,
             "user_agent_assinatura": s.user_agent_assinatura,
             "imagem_assinatura_path": s.imagem_assinatura_path,
+            # Fallback for old records
             "pos_page": s.page_number,
             "pos_x": s.x_pos,
             "pos_y": s.y_pos,
@@ -924,15 +1049,33 @@ async def public_confirm_assinatura(token: str, data: schemas.AssinaturaConfirma
             "pos_doc_width": s.docWidth,
             "pos_doc_height": s.docHeight,
         }
-        for s in todos_sigs
-    ]
+        
+        sigs_list_unique.append(base_sig_dict)
+        
+        # If user has multiple positions in the new db structure, we add one flat entry per position
+        if hasattr(s, 'posicoes') and s.posicoes and len(s.posicoes) > 0:
+            for p in s.posicoes:
+                pos_sig = base_sig_dict.copy()
+                pos_sig.update({
+                    "pos_page": p.page_number,
+                    "pos_x": p.x_pos,
+                    "pos_y": p.y_pos,
+                    "pos_width": p.width,
+                    "pos_height": p.height,
+                    "pos_doc_width": p.docWidth,
+                    "pos_doc_height": p.docHeight,
+                })
+                sigs_list_flat.append(pos_sig)
+        else:
+            # Fallback: Just append the base dict if no multiple positions
+            sigs_list_flat.append(base_sig_dict)
 
     # 4c. Estampa assinaturas no PDF (sem coordenadas de posição — vai gerar só o overlay de texto)
     caminho_estampado = caminho_pdf_base
     if caminho_pdf_base and os.path.exists(caminho_pdf_base):
         caminho_estampado_temp = os.path.join(PASTA_SAIDA, f"estampado_{doc_id}.pdf")
         try:
-            caminho_estampado = assinador_service.estampar_assinaturas(caminho_pdf_base, sigs_list, caminho_estampado_temp)
+            caminho_estampado = assinador_service.estampar_assinaturas(caminho_pdf_base, sigs_list_flat, caminho_estampado_temp)
         except Exception as e:
             print(f"Erro ao estampar: {e}")
             caminho_estampado = caminho_pdf_base  # fallback
@@ -947,7 +1090,7 @@ async def public_confirm_assinatura(token: str, data: schemas.AssinaturaConfirma
         await db.commit()
         # Re-lê o doc para pegar o token
         doc_res2 = await db.execute(
-            sql_select(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id)
+            select(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id)
         )
         doc = doc_res2.scalars().first()
 
@@ -973,7 +1116,7 @@ async def public_confirm_assinatura(token: str, data: schemas.AssinaturaConfirma
         "hash_original": hash_orig or "N/A"
     }
     try:
-        assinador_service.gerar_certificado_pdf(doc_dict, sigs_list, caminho_certificado, url_validacao)
+        assinador_service.gerar_certificado_pdf(doc_dict, sigs_list_unique, caminho_certificado, url_validacao)
     except Exception as e:
         print(f"Erro ao gerar certificado: {e}")
         await db.execute(

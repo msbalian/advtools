@@ -23,8 +23,12 @@
           <i :class="statusIcon"></i> {{ statusLabel }}
         </span>
         <div class="flex items-center gap-2" v-if="documento" style="display: flex; gap: 8px;">
-          <a :href="getStaticUrl(documento.arquivo_path)" target="_blank" class="btn-sm" title="Baixar Original" style="text-decoration: none; color: #475569;"><i class="fas fa-file-download"></i> Original</a>
-          <a v-if="documento.status_assinatura === 'Concluido' && documento.arquivo_assinado_path" :href="getStaticUrl(documento.arquivo_assinado_path)" target="_blank" class="btn-sm" style="text-decoration: none; color: #166534; border-color: #166534; background: #f0fdf4;" title="Baixar Assinado"><i class="fas fa-file-signature"></i> Finalizado</a>
+          <a :href="getStaticUrl(documento.arquivo_path)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 transition-colors flex items-center gap-1 shadow-sm" style="text-decoration: none;" title="Baixar Original">
+            <i class="fas fa-file-download"></i> Original
+          </a>
+          <a v-if="documento.status_assinatura === 'Concluido' && documento.arquivo_assinado_path" :href="getStaticUrl(documento.arquivo_assinado_path)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 border border-green-700 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm" style="text-decoration: none;" title="Baixar Assinado">
+            <i class="fas fa-file-signature"></i> Finalizado
+          </a>
         </div>
       </div>
     </div>
@@ -183,13 +187,14 @@
                 
                 <!-- Draggable Stamps Layer -->
                 <div 
-                  v-for="stamp in posModal.stamps" 
-                  :key="stamp.sigId"
+                  v-for="(stamp, sIdx) in posModal.stamps" 
+                  :key="stamp.id || sIdx"
                   v-show="stamp.page === posPage"
-                  :class="['draggable-stamp', { 'dragging': activeDragStamp?.sigId === stamp.sigId }]"
+                  :class="['draggable-stamp', { 'dragging': activeDragStamp === stamp }]"
                   :style="{ left: stamp.x + 'px', top: stamp.y + 'px', width: stamp.w + 'px', height: stamp.h + 'px' }"
                   @mousedown.prevent="startDragStamp($event, stamp)"
                 >
+                  <button @click.stop="removeStamp(sIdx)" class="btn-remove-stamp" title="Remover Assinatura"><i class="fas fa-times"></i></button>
                   <div class="stamp-content">
                     <div class="s-by">Assinado por:</div>
                     <div class="s-name">{{ stamp.nome }}</div>
@@ -200,9 +205,12 @@
             </div>
             
             <div class="pos-actions">
-               <span v-if="posModal.activeSigner">Arraste a caixa acima para posicionar a assinatura de <b>{{ posModal.activeSigner.nome }}</b></span>
+               <span v-if="posModal.activeSigner">Posicionando assinatura de <b>{{ posModal.activeSigner.nome }}</b></span>
                <span v-else><b>Selecione um signatário à esquerda para começar a posicionar.</b></span>
-               <div style="display: flex; gap: 10px;">
+               <div style="display: flex; gap: 10px; align-items: center;">
+                 <button v-if="posModal.activeSigner" class="btn-outline-primary btn-sm" @click="addStampToCurrentPage" style="padding: 6px 12px; margin-right: 10px;">
+                    <i class="fas fa-plus"></i> Inserir Assinatura Aqui
+                 </button>
                  <button class="btn-cancel-confirm" style="padding: 6px 16px;" @click="closePosModal">Fechar</button>
                  <button class="btn-primary btn-sm" @click="savePositions" :disabled="savingPositions || !posModal.activeSigner">
                     {{ savingPositions ? 'Salvando...' : 'Salvar Posições' }}
@@ -245,8 +253,8 @@ const route = useRoute()
 const documentoId = Number(route.params.id)
 const clienteId = route.query.clienteId as string
 const clienteNome = route.query.clienteNome as string
-// Usa URL relativa para ir pelo proxy Vite (evita CORS em dev)
-const API_BASE = ''
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = '' // kept for internal routing proxy if any, but Vite proxy handles `/api` ok. Wait, we usually use empty string for frontend proxy to `/api`. Let's stick to empty string for API calls.
 
 const documento = ref<any>(null)
 const signatarios = ref<any[]>([])
@@ -288,16 +296,22 @@ function showToast(message: string, type = 'success') {
 function getStaticUrl(path: string) {
   if (!path) return '#'
   if (path.startsWith('http')) return path
-  return `/${path}`
+  return `${API}/static/${path}`
 }
 
 async function loadData() {
   try {
+    const docRes = await fetch(`${API_BASE}/api/documentos/${documentoId}`, { headers })
+    if (docRes.ok) {
+      documento.value = await docRes.json()
+    } else {
+      documento.value = { id: documentoId, nome: `Documento #${documentoId}`, status_assinatura: 'Aguardando' }
+    }
+    
     const sigRes = await fetch(`${API_BASE}/api/documentos/${documentoId}/signatarios`, { headers })
     if (sigRes.ok) {
       signatarios.value = await sigRes.json()
     }
-    documento.value = { id: documentoId, nome: `Documento #${documentoId}`, status_assinatura: 'Aguardando' }
   } catch (e) {
     console.error('Erro ao carregar dados:', e)
   }
@@ -434,17 +448,25 @@ async function openPosModal() {
   posModal.value.activeSigner = null
   posPage.value = 1
   
-  // Limpa stamps e reconstroi baseado nos signatarios atuais
-  posModal.value.stamps = signatarios.value.map(s => ({
-    sigId: s.id,
-    nome: s.nome,
-    cpf: s.cpf,
-    page: s.page_number || 1,
-    x: s.x_pos || 20,
-    y: s.y_pos || 20,
-    w: s.width || 130, /* Adjusted to a smaller reasonable size */
-    h: s.height || 40
-  }))
+  // Limpa stamps e reconstroi baseado nas multiplas posicoes de cada signatario
+  posModal.value.stamps = []
+  
+  signatarios.value.forEach(s => {
+    if (s.posicoes && s.posicoes.length > 0) {
+      s.posicoes.forEach((p: any) => {
+        posModal.value.stamps.push({
+          sigId: s.id,
+          nome: s.nome,
+          cpf: s.cpf,
+          page: p.page_number || 1,
+          x: p.x_pos || 20,
+          y: p.y_pos || 20,
+          w: p.width || 130,
+          h: p.height || 40
+        })
+      })
+    }
+  })
 
   pdfUrl.value = `${API_BASE}/api/public/assinar/preview-pdf/${documentoId}`
 }
@@ -455,9 +477,27 @@ function closePosModal() {
 
 function activateSignerForPos(sig: any) {
   posModal.value.activeSigner = sig
-  // Acha o stamp dele e vai pra pagina dele
-  const tr = posModal.value.stamps.find(s => s.sigId === sig.id)
-  if (tr) posPage.value = tr.page
+  // Removido o pulo de página automático para permitir o usuário posicionar na página atual que ele estiver visualizando
+}
+
+function addStampToCurrentPage() {
+  if (!posModal.value.activeSigner) return
+  const sig = posModal.value.activeSigner
+  posModal.value.stamps.push({
+    id: Date.now() + Math.random(), // gerando key local unicamente pro loop frontend
+    sigId: sig.id,
+    nome: sig.nome,
+    cpf: sig.cpf,
+    page: posPage.value,
+    x: 20,
+    y: 20,
+    w: 130,
+    h: 40
+  })
+}
+
+function removeStamp(idx: number) {
+  posModal.value.stamps.splice(idx, 1)
 }
 
 function onPdfLoaded(source: any) {
@@ -476,7 +516,7 @@ const activeDragStampRef = ref<any>(null) // Using ref to trigger computed class
 
 function startDragStamp(event: MouseEvent, stamp: any) {
   if (posModal.value.activeSigner?.id !== stamp.sigId) {
-    // Auto-activate signer if user tries to drag a stamp they haven't explicitly clicked on the list
+    // Auto-activate signer se clicar em um stamp que seja dele
     const sig = signatarios.value.find(s => s.id === stamp.sigId)
     if (sig) activateSignerForPos(sig)
   }
@@ -522,20 +562,31 @@ async function savePositions() {
   const docVisualH = rect.height
 
   try {
-    const promises = posModal.value.stamps.map(st => {
-      // Ignora quem não foi tocado ou não está na tela ativa se nunca posicionado, mas no momento salva todos que estiverem no array `stamps`
-      return fetch(`${API_BASE}/api/documentos/${documentoId}/signatarios/${st.sigId}/posicao`, {
+    const stampsBySig: Record<number, any[]> = {}
+    
+    // Assegura que signatarios sem posições também enviem array vazio se precisar atualizar
+    signatarios.value.forEach(s => { stampsBySig[s.id] = [] })
+    
+    // Organiza todos os selos
+    posModal.value.stamps.forEach(st => {
+      if (!stampsBySig[st.sigId]) stampsBySig[st.sigId] = []
+      stampsBySig[st.sigId].push({
+        page_number: st.page,
+        x_pos: st.x,
+        y_pos: st.y,
+        width: st.w,
+        height: st.h,
+        docWidth: docVisualW,
+        docHeight: docVisualH
+      })
+    })
+
+    const promises = Object.keys(stampsBySig).map(sigIdstr => {
+      const sigId = parseInt(sigIdstr)
+      return fetch(`${API_BASE}/api/documentos/${documentoId}/signatarios/${sigId}/posicao`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({
-          page_number: st.page,
-          x_pos: st.x,
-          y_pos: st.y,
-          width: st.w,
-          height: st.h,
-          docWidth: docVisualW,
-          docHeight: docVisualH
-        })
+        body: JSON.stringify({ posicoes: stampsBySig[sigId] })
       })
     })
 

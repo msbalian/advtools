@@ -211,6 +211,18 @@ class SignatarioBase(BaseModel):
 class SignatarioCreate(SignatarioBase):
     pass
 
+class SignatarioPosicaoItem(BaseModel):
+    page_number: int
+    x_pos: float
+    y_pos: float
+    width: float
+    height: float
+    docWidth: float
+    docHeight: float
+
+    class Config:
+        from_attributes = True
+
 class SignatarioResponse(SignatarioBase):
     id: int
     documento_id: int
@@ -219,19 +231,14 @@ class SignatarioResponse(SignatarioBase):
     data_visualizacao: Optional[datetime]
     data_assinatura: Optional[datetime]
     tipo_autenticacao: Optional[str]
+    posicoes: List[SignatarioPosicaoItem] = []
     # Nao retornamos paths internos pro frontend publico, apenas infos publicaveis
 
     class Config:
         from_attributes = True
 
-class SignatarioPosicaoUpdate(BaseModel):
-    page_number: int
-    x_pos: float
-    y_pos: float
-    width: float
-    height: float
-    docWidth: float
-    docHeight: float
+class SignatarioPosicoesUpdate(BaseModel):
+    posicoes: List[SignatarioPosicaoItem]
 
 class AssinaturaConfirmarRequest(BaseModel):
     imagem_base64: str

@@ -135,17 +135,15 @@ def anexar_certificado(caminho_pdf_original: str, caminho_certificado: str, cami
 
     writer = PdfWriter()
     
-    with open(caminho_pdf_original, "rb") as f_orig:
+    with open(caminho_pdf_original, "rb") as f_orig, open(caminho_certificado, "rb") as f_cert, open(caminho_final, "wb") as f_out:
         reader_orig = PdfReader(f_orig)
         for page in reader_orig.pages:
             writer.add_page(page)
             
-    with open(caminho_certificado, "rb") as f_cert:
         reader_cert = PdfReader(f_cert)
         for page in reader_cert.pages:
             writer.add_page(page)
             
-    with open(caminho_final, "wb") as f_out:
         writer.write(f_out)
         
     return caminho_final
@@ -171,81 +169,81 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
         # Se não houver assinaturas posicionadas, ignora estampas visuais
         return caminho_pdf_original 
 
-    reader = PdfReader(caminho_pdf_original)
-    writer = PdfWriter()
+    with open(caminho_pdf_original, "rb") as f_in, open(caminho_final, "wb") as f_out:
+        reader = PdfReader(f_in)
+        writer = PdfWriter()
 
-    for i, page in enumerate(reader.pages):
-        page_num = i + 1
-        
-        if page_num in sigs_by_page:
-            page_width = float(page.mediabox.width)
-            page_height = float(page.mediabox.height)
+        for i, page in enumerate(reader.pages):
+            page_num = i + 1
             
-            packet_page = io.BytesIO()
-            c_page = canvas.Canvas(packet_page, pagesize=(page_width, page_height))
-            
-            for sig in sigs_by_page[page_num]:
-                img_path = sig['imagem_assinatura_path']
+            if page_num in sigs_by_page:
+                page_width = float(page.mediabox.width)
+                page_height = float(page.mediabox.height)
                 
-                doc_visual_w = float(sig.get('pos_doc_width', 0) or page_width)
-                doc_visual_h = float(sig.get('pos_doc_height', 0) or page_height)
+                packet_page = io.BytesIO()
+                c_page = canvas.Canvas(packet_page, pagesize=(page_width, page_height))
                 
-                scale_x = page_width / doc_visual_w
-                scale_y = page_height / doc_visual_h
-                
-                x_pdf = float(sig['pos_x']) * scale_x
-                
-                # Invertendo Eixo Y pois o pypdf é (0,0) no canto inferior esquerdo
-                # y_pos recebido do HTML assume (0,0) no topo superior esquerdo
-                y_visual_invertido = doc_visual_h - float(sig['pos_y']) - float(sig['pos_height'])
-                y_pdf = y_visual_invertido * scale_y
-                
-                w_pdf = float(sig['pos_width']) * scale_x
-                h_pdf = float(sig['pos_height']) * scale_y
-                
-                try:
-                    nome = sig.get('nome', 'Assinado Digitalmente')
-                    font_size_base = h_pdf * 0.25
-                    font_size_base = max(4, min(font_size_base, 10))
+                for sig in sigs_by_page[page_num]:
+                    img_path = sig['imagem_assinatura_path']
                     
-                    min_w_needed = len(nome[:60]) * font_size_base * 0.65 + 15
-                    if w_pdf < min_w_needed:
-                        w_pdf = min_w_needed
+                    doc_visual_w = float(sig.get('pos_doc_width', 0) or page_width)
+                    doc_visual_h = float(sig.get('pos_doc_height', 0) or page_height)
+                    
+                    scale_x = page_width / doc_visual_w
+                    scale_y = page_height / doc_visual_h
+                    
+                    x_pdf = float(sig['pos_x']) * scale_x
+                    
+                    # Invertendo Eixo Y pois o pypdf é (0,0) no canto inferior esquerdo
+                    # y_pos recebido do HTML assume (0,0) no topo superior esquerdo
+                    y_visual_invertido = doc_visual_h - float(sig['pos_y']) - float(sig['pos_height'])
+                    y_pdf = y_visual_invertido * scale_y
+                    
+                    w_pdf = float(sig['pos_width']) * scale_x
+                    h_pdf = float(sig['pos_height']) * scale_y
+                    
+                    try:
+                        nome = sig.get('nome', 'Assinado Digitalmente')
+                        font_size_base = h_pdf * 0.25
+                        font_size_base = max(4, min(font_size_base, 10))
+                        
+                        min_w_needed = len(nome[:60]) * font_size_base * 0.65 + 15
+                        if w_pdf < min_w_needed:
+                            w_pdf = min_w_needed
 
-                    # Caixa branca com borda preta
-                    c_page.setFillColorRGB(1, 1, 1)
-                    c_page.setStrokeColorRGB(0, 0, 0)
-                    c_page.setLineWidth(0.5)
-                    c_page.rect(x_pdf, y_pdf, w_pdf, h_pdf, fill=1, stroke=1)
-                    
-                    c_page.setFillColorRGB(0, 0, 0)
-                    font_size = max(4, min(h_pdf * 0.25, 10))
-                    
-                    cpf = sig.get('cpf', 'CPF não informado')
-                    margin = 5
-                    
-                    c_page.setFont("Helvetica-Oblique", font_size * 0.8)
-                    c_page.drawString(x_pdf + margin, y_pdf + h_pdf - margin - (font_size * 0.8), "Assinado Digitalmente por:")
-                    
-                    c_page.setFont("Helvetica-Bold", font_size)
-                    c_page.drawString(x_pdf + margin, y_pdf + (h_pdf/2) - (font_size/2), nome[:60])
-                    
-                    c_page.setFont("Helvetica", font_size * 0.9)
-                    c_page.drawString(x_pdf + margin, y_pdf + margin, f"CPF: {cpf}")
+                        # Caixa branca com borda preta
+                        c_page.setFillColorRGB(1, 1, 1)
+                        c_page.setStrokeColorRGB(0, 0, 0)
+                        c_page.setLineWidth(0.5)
+                        c_page.rect(x_pdf, y_pdf, w_pdf, h_pdf, fill=1, stroke=1)
+                        
+                        c_page.setFillColorRGB(0, 0, 0)
+                        font_size = max(4, min(h_pdf * 0.25, 10))
+                        
+                        cpf = sig.get('cpf', 'CPF não informado')
+                        margin = 5
+                        
+                        c_page.setFont("Helvetica-Oblique", font_size * 0.8)
+                        c_page.drawString(x_pdf + margin, y_pdf + h_pdf - margin - (font_size * 0.8), "Assinado Digitalmente por:")
+                        
+                        c_page.setFont("Helvetica-Bold", font_size)
+                        c_page.drawString(x_pdf + margin, y_pdf + (h_pdf/2) - (font_size/2), nome[:60])
+                        
+                        c_page.setFont("Helvetica", font_size * 0.9)
+                        c_page.drawString(x_pdf + margin, y_pdf + margin, f"CPF: {cpf}")
 
-                except Exception as e:
-                    print(f"Erro ao estampar texto no PDF: {e}")
+                    except Exception as e:
+                        print(f"Erro ao estampar texto no PDF: {e}")
 
-            c_page.save()
-            packet_page.seek(0)
-            
-            overlay_pdf = PdfReader(packet_page)
-            overlay_page = overlay_pdf.pages[0]
-            page.merge_page(overlay_page)
-            
-        writer.add_page(page)
+                c_page.save()
+                packet_page.seek(0)
+                
+                overlay_pdf = PdfReader(packet_page)
+                overlay_page = overlay_pdf.pages[0]
+                page.merge_page(overlay_page)
+                
+            writer.add_page(page)
 
-    with open(caminho_final, "wb") as f_out:
         writer.write(f_out)
         
     return caminho_final

@@ -124,9 +124,9 @@ const tarefas = [
           <div class="relative ml-2">
             <button @click="showProfileMenu = !showProfileMenu" @blur="setTimeout(() => showProfileMenu = false, 200)" class="flex items-center gap-2 p-1.5 rounded-full hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center border border-primary-200 text-primary-700">
-                 <span class="text-xs font-bold">FC</span>
+                 <span class="text-xs font-bold">{{ currentUser ? currentUser.nome.charAt(0).toUpperCase() : 'U' }}</span>
                </div>
-               <span class="hidden md:block text-sm font-medium text-slate-700">Dr. Fernando</span>
+               <span class="hidden md:block text-sm font-medium text-slate-700">{{ currentUser ? currentUser.nome : 'Carregando...' }}</span>
                <ChevronDown class="hidden md:block w-4 h-4 text-slate-400" />
             </button>
             

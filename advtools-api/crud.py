@@ -361,7 +361,7 @@ async def delete_signatario(db: AsyncSession, documento_id: int, signatario_id: 
     
     return True
 
-async def update_signatario_posicao(db: AsyncSession, signatario_id: int, posicao: schemas.SignatarioPosicaoUpdate):
+async def update_signatario_posicao(db: AsyncSession, signatario_id: int, payload: schemas.SignatarioPosicoesUpdate):
     result = await db.execute(select(models.Signatario).filter(
         models.Signatario.id == signatario_id
     ))
@@ -370,13 +370,31 @@ async def update_signatario_posicao(db: AsyncSession, signatario_id: int, posica
     if not db_sig:
         return False
         
-    db_sig.page_number = posicao.page_number
-    db_sig.x_pos = posicao.x_pos
-    db_sig.y_pos = posicao.y_pos
-    db_sig.width = posicao.width
-    db_sig.height = posicao.height
-    db_sig.docWidth = posicao.docWidth
-    db_sig.docHeight = posicao.docHeight
+    # Delete old positions
+    from sqlalchemy import delete
+    await db.execute(
+        delete(models.SignatarioPosicao).where(models.SignatarioPosicao.signatario_id == signatario_id)
+    )
+    
+    # Insert new positions
+    new_pos_list = []
+    for pos in payload.posicoes:
+        nova_posicao = models.SignatarioPosicao(
+            signatario_id=signatario_id,
+            page_number=pos.page_number,
+            x_pos=pos.x_pos,
+            y_pos=pos.y_pos,
+            width=pos.width,
+            height=pos.height,
+            docWidth=pos.docWidth,
+            docHeight=pos.docHeight
+        )
+        new_pos_list.append(nova_posicao)
+        db.add(nova_posicao)
+        
+    # Salva status de visualizacao no proprio modelo legados por conveniencia e evitar migration
+    if len(payload.posicoes) > 0:
+        db_sig.page_number = payload.posicoes[0].page_number
     
     db.add(db_sig)
     await db.commit()

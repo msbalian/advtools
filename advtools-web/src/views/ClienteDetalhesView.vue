@@ -339,6 +339,46 @@ const handleFileUpload = async (event) => {
     }
 }
 
+const replaceInput = ref(null)
+const replacingDocId = ref(null)
+
+const triggerReplace = (docId) => {
+    replacingDocId.value = docId
+    replaceInput.value.click()
+}
+
+const handleReplaceUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    isUploadingDoc.value = true
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+        const token = localStorage.getItem('advtools_token')
+        const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+        
+        const response = await fetch(`${VITE_API_URL}/api/documentos/${replacingDocId.value}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        })
+
+        if (!response.ok) throw new Error('Falha ao substituir')
+        showMessage("Documento substituído com sucesso!")
+        await loadDetalhes()
+    } catch (e) {
+        showMessage("Erro ao substituir o documento", "error")
+    } finally {
+        isUploadingDoc.value = false
+        replacingDocId.value = null
+        event.target.value = ''
+    }
+}
+
 const deleteDocumento = async (id) => {
     confirmAction("Tem certeza que deseja remover este documento?", async () => {
         try {
@@ -636,6 +676,7 @@ onMounted(async () => {
                                     </router-link>
                                 </div>
                                 <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload" accept=".pdf,.doc,.docx" />
+                                <input type="file" ref="replaceInput" class="hidden" @change="handleReplaceUpload" accept=".pdf,.doc,.docx" />
                             </div>
                         </div>
                         
@@ -681,9 +722,12 @@ onMounted(async () => {
                                                <a :href="getStaticUrl(doc.arquivo_path)" target="_blank" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Baixar Original">
                                                    <Download class="w-4 h-4" />
                                                </a>
-                                               <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" :href="getStaticUrl(doc.arquivo_assinado_path)" target="_blank" class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors" title="Baixar Assinado">
-                                                   <i class="fas fa-file-signature"></i>
+                                               <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" :href="getStaticUrl(doc.arquivo_assinado_path)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 border border-green-700 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm" style="white-space: nowrap;" title="Baixar Arquivo Finalizado e Assinado">
+                                                   <i class="fas fa-file-signature"></i> Baixar Assinado
                                                </a>
+                                               <button @click="triggerReplace(doc.id)" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Substituir Arquivo">
+                                                   <UploadCloud class="w-4 h-4" />
+                                               </button>
                                            </div>
                                            <!-- Gerenciar Assinaturas -->
                                            <router-link :to="{ name: 'gerenciar_assinaturas', params: { id: doc.id }, query: { clienteId: cliente.id, clienteNome: cliente.nome } }" class="px-3 py-1 text-xs font-medium text-sky-600 border border-sky-200 rounded-md hover:bg-sky-50 transition-colors flex items-center gap-1">

@@ -1,0 +1,378 @@
+import os
+import asyncio
+import uuid
+import shutil
+import re
+import unicodedata
+import json
+from datetime import datetime
+import locale
+from fastapi import HTTPException, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+import schemas
+import models
+import crud
+from docxtpl import DocxTemplate
+
+try:
+    locale.setlocale(locale.LC_TIME, 'Portuguese_Brazil.1252')
+except Exception:
+    try:
+        locale.setlocale(locale.LC_TIME, 'pt-BR')
+    except Exception:
+        try:
+           locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
+        except Exception:
+           pass
+
+async def convert_docx_to_pdf_async(in_path: str, out_path: str):
+    """Executa a conversão do DOCX para PDF em uma thread separada."""
+    abs_in = os.path.abspath(in_path)
+    abs_out = os.path.abspath(out_path)
+    
+    loop = asyncio.get_running_loop()
+    
+    def do_convert():
+        import pythoncom
+        from docx2pdf import convert
+        pythoncom.CoInitialize()
+        try:
+            convert(abs_in, abs_out)
+        finally:
+            pythoncom.CoUninitialize()
+
+    await loop.run_in_executor(None, do_convert)
+
+# --- ROTAS DE MODELOS ---
+
+async def listar_modelos_service(db: AsyncSession, escritorio_id: int):
+    q = select(models.ModeloDocumento).where(models.ModeloDocumento.escritorio_id == escritorio_id)
+    res = await db.execute(q)
+    modelos = res.scalars().all()
+    if not modelos:
+        return []
+    return [{"id": m.id, "nome": m.nome, "arquivo_path": m.arquivo_path, "data_criacao": m.data_criacao} for m in modelos]
+
+async def criar_modelo_service(db: AsyncSession, current_user: models.Usuario, nome: str, file: UploadFile):
+    if not file.filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .docx são permitidos")
+        
+    upload_dir = "static/modelos"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    db_path = f"modelos/{unique_filename}"
+    novo_modelo = models.ModeloDocumento(
+        escritorio_id=current_user.escritorio_id,
+        nome=nome,
+        arquivo_path=db_path
+    )
+    db.add(novo_modelo)
+    await db.commit()
+    await db.refresh(novo_modelo)
+    
+    return {"id": novo_modelo.id, "nome": novo_modelo.nome, "arquivo_path": novo_modelo.arquivo_path}
+
+async def deletar_modelo_service(db: AsyncSession, current_user: models.Usuario, modelo_id: int):
+    q = select(models.ModeloDocumento).where(
+        models.ModeloDocumento.id == modelo_id,
+        models.ModeloDocumento.escritorio_id == current_user.escritorio_id
+    )
+    res = await db.execute(q)
+    modelo = res.scalars().first()
+    
+    if not modelo:
+        raise HTTPException(status_code=404, detail="Modelo não encontrado")
+        
+    file_path = os.path.join("static", modelo.arquivo_path)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        
+    await db.delete(modelo)
+    await db.commit()
+    return {"detail": "Modelo deletado com sucesso"}
+
+async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuario, modelo_id: int, file: UploadFile):
+    if not file.filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .docx são permitidos")
+        
+    q = select(models.ModeloDocumento).where(
+        models.ModeloDocumento.id == modelo_id,
+        models.ModeloDocumento.escritorio_id == current_user.escritorio_id
+    )
+    res = await db.execute(q)
+    modelo = res.scalars().first()
+    
+    if not modelo:
+        raise HTTPException(status_code=404, detail="Modelo não encontrado")
+        
+    old_file_path = os.path.join("static", modelo.arquivo_path)
+    if os.path.exists(old_file_path):
+        os.remove(old_file_path)
+        
+    upload_dir = "static/modelos"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    modelo.arquivo_path = f"modelos/{unique_filename}"
+    await db.commit()
+    await db.refresh(modelo)
+    
+    return {"id": modelo.id, "nome": modelo.nome, "arquivo_path": modelo.arquivo_path}
+
+# --- ROTAS DE DOCUMENTOS DO CLIENTE ---
+
+async def read_documentos_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int):
+    return await crud.get_documentos_cliente(db, cliente_id, escritorio_id=current_user.escritorio_id)
+
+async def read_documento_service(db: AsyncSession, current_user: models.Usuario, documento_id: int):
+    doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    return doc
+
+async def upload_documento_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int, file: UploadFile, nome: str):
+    upload_dir = "static/documentos_clientes"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    db_path = f"documentos_clientes/{unique_filename}"
+    
+    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=cliente_id)
+    return await crud.create_documento_cliente(db, doc_create, db_path, current_user.escritorio_id)
+
+async def update_documento_file_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, file: UploadFile):
+    doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+        
+    file_path = os.path.join("static", doc.arquivo_path)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    await db.commit()
+    await db.refresh(doc)
+    return doc
+
+async def delete_documento_service(db: AsyncSession, current_user: models.Usuario, documento_id: int):
+    deleted_doc = await crud.delete_documento_cliente(db, documento_id, current_user.escritorio_id)
+    if not deleted_doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+        
+    file_path = os.path.join("static", deleted_doc.arquivo_path)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    return True
+
+# --- REDATOR INTELIGENTE ---
+
+def slugify(value):
+    nfkd_form = unicodedata.normalize('NFKD', value)
+    only_ascii = nfkd_form.encode('ascii', 'ignore').decode('ascii')
+    cleaned = re.sub(r'[^\w\s-]', '', only_ascii).strip().lower()
+    return re.sub(r'[-\s]+', '_', cleaned)
+
+async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario, request: schemas.GerarDocumentoRequest):
+    cliente = await crud.get_cliente(db, request.cliente_id, current_user.escritorio_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+        
+    q_modelo = select(models.ModeloDocumento).where(
+        models.ModeloDocumento.id == request.modelo_id,
+        models.ModeloDocumento.escritorio_id == current_user.escritorio_id
+    )
+    res_modelo = await db.execute(q_modelo)
+    modelo = res_modelo.scalars().first()
+    
+    if not modelo:
+        raise HTTPException(status_code=404, detail="Modelo não encontrado")
+
+    partes = await crud.get_partes_cliente(db, request.cliente_id, current_user.escritorio_id)
+    servicos = await crud.get_servicos_by_cliente(db, request.cliente_id, current_user.escritorio_id)
+    
+    servico = next((s for s in servicos if s.status == "Ativo"), servicos[0] if servicos else None)
+
+    hoje = datetime.now()
+    
+    context = {
+        "cliente_nome": cliente.nome or "",
+        "cliente_doc": cliente.documento or "",
+        "cliente_endereco": cliente.endereco or "",
+        "cliente_bairro": cliente.bairro or "",
+        "cliente_cidade": cliente.cidade or "",
+        "cliente_uf": cliente.uf or "",
+        "cliente_cep": cliente.cep or "",
+        "cliente_email": cliente.email or "",
+        "cliente_nacionalidade": cliente.nacionalidade or "",
+        "cliente_estado_civil": cliente.estado_civil or "",
+        "cliente_profissao": cliente.profissao or "",
+        "cliente_rg": cliente.rg or "",
+        "cliente_data_nascimento": cliente.data_nascimento or "",
+        "data_hoje": hoje.strftime("%d/%m/%Y"),
+        "ano_atual": hoje.strftime("%Y"),
+        "data_extenso": hoje.strftime("%d de %B de %Y"),
+        "conteudo_ia": "[Conteúdo IA indisponível. Habilite a IA na redação.]" if not request.usar_ia else "[Conteúdo gerado por IA...]",
+        "servico_tipo": servico.tipo_servico_id if servico else "",
+        "percentual_exito": servico.porcentagem_exito if servico else "",
+    }
+
+    pagamentos_list = []
+    pagamentos_resumo_linhas = []
+    soma_valor_total = 0.0
+
+    if servico and servico.condicoes_pagamento:
+        try:
+            pagamentos_raw = json.loads(servico.condicoes_pagamento)
+            if isinstance(pagamentos_raw, list):
+                pagamentos_list = pagamentos_raw
+        except json.JSONDecodeError:
+            pass
+            
+    for i, pag in enumerate(pagamentos_list):
+        valor_num = float(pag.get("valor") or 0)
+        soma_valor_total += valor_num
+        valor_str = f"R$ {valor_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        data_str = pag.get("data") or ""
+        if data_str and "T" not in data_str and len(data_str.split("-")) == 3:
+            partes_data = data_str.split("-")
+            data_str = f"{partes_data[2]}/{partes_data[1]}/{partes_data[0]}"
+
+        tipo = pag.get("tipo") or "Desconhecido"
+        obs = pag.get("obs") or ""
+        
+        linha_resumo = f"{i+1}ª Parcela - {data_str} - {valor_str} ({tipo})"
+        if obs:
+            linha_resumo += f" - {obs}"
+        pagamentos_resumo_linhas.append(linha_resumo)
+        
+        if i < 12:
+            prefix = f"pagamento_{i+1}_"
+            context[f"{prefix}valor"] = valor_str
+            context[f"{prefix}data"] = data_str
+            context[f"{prefix}tipo"] = tipo
+            context[f"{prefix}obs"] = obs
+
+    for i in range(len(pagamentos_list), 12):
+        prefix = f"pagamento_{i+1}_"
+        context[f"{prefix}valor"] = ""
+        context[f"{prefix}data"] = ""
+        context[f"{prefix}tipo"] = ""
+        context[f"{prefix}obs"] = ""
+
+    context["pagamentos"] = pagamentos_list
+    context["pagamentos_resumo"] = "\n".join(pagamentos_resumo_linhas)
+    context["qtd_parcelas"] = str(len(pagamentos_list))
+    
+    parcelas_linhas = []
+    for i, pag in enumerate(pagamentos_list):
+        valor_num = float(pag.get("valor") or 0)
+        valor_str = f"R$ {valor_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        data_str = pag.get("data") or ""
+        if data_str and "T" not in data_str and len(data_str.split("-")) == 3:
+            partes_data = data_str.split("-")
+            data_str = f"{partes_data[2]}/{partes_data[1]}/{partes_data[0]}"
+
+        linha = f"{i + 1}ª Parcela - {data_str} - {valor_str}"
+        tipo = pag.get("tipo") or ""
+        if tipo:
+            linha += f" ({tipo})"
+        obs = pag.get("obs") or ""
+        if obs:
+            linha += f" - {obs}"
+            
+        parcelas_linhas.append(linha)
+        
+    context["pagamento_parcelas"] = "\n".join(parcelas_linhas) if parcelas_linhas else ""
+    
+    if soma_valor_total > 0:
+        context["pagamento_valor"] = f"R$ {soma_valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        context["valor_total"] = context["pagamento_valor"] 
+    else:
+        val = servico.valor_total if servico else 0.0
+        context["pagamento_valor"] = f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if val else ""
+        context["valor_total"] = context["pagamento_valor"]
+
+    context["forma_pagamento"] = servico.forma_pagamento if servico else ""
+    context["detalhes_pagamento"] = servico.detalhes_pagamento if servico else ""
+    
+    partes_txt = []
+    for i, parte in enumerate(partes):
+        papel = parte.papel or "Envolvido"
+        partes_txt.append(f"{parte.nome} ({papel})")
+        
+        if i < 5:
+            prefix = f"parte_{i+1}_"
+            context[f"{prefix}nome"] = parte.nome or ""
+            context[f"{prefix}doc"] = parte.documento or ""
+            context[f"{prefix}rg"] = parte.rg or ""
+            context[f"{prefix}nasc"] = parte.data_nascimento or ""
+            context[f"{prefix}nacionalidade"] = parte.nacionalidade or ""
+            context[f"{prefix}estado_civil"] = parte.estado_civil or ""
+            context[f"{prefix}profissao"] = parte.profissao or ""
+            context[f"{prefix}endereco"] = parte.endereco or ""
+            context[f"{prefix}bairro"] = parte.bairro or ""
+            context[f"{prefix}cidade"] = parte.cidade or ""
+            context[f"{prefix}uf"] = parte.uf or ""
+            context[f"{prefix}cep"] = parte.cep or ""
+            context[f"{prefix}papel"] = parte.papel or ""
+            
+    context["partes_resumo"] = "\n".join(partes_txt)
+    context["partes_txt"] = ", ".join(partes_txt)
+
+    for i in range(len(partes), 5):
+        prefix = f"parte_{i+1}_"
+        for field in ["nome", "doc", "rg", "nasc", "nacionalidade", "estado_civil", "profissao", "endereco", "bairro", "cidade", "uf", "cep", "papel"]:
+            context[f"{prefix}{field}"] = ""
+
+    try:
+        source_path = os.path.join("static", modelo.arquivo_path)
+        with open("redator_debug.log", "a", encoding="utf-8") as debug_file:
+            debug_file.write(f"\n--- GERAÇÃO EM {datetime.now()} ---\n")
+            debug_file.write(f"Template: {source_path}\n")
+            debug_file.write(f"Contexto: {list(context.keys())}\n")
+
+        doc = DocxTemplate(source_path)
+        doc.render(context)
+        
+        upload_dir = "static/documentos_clientes"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        safe_title = slugify(request.titulo_documento)
+        unique_filename = f"{safe_title}_{uuid.uuid4().hex[:6]}.docx"
+        output_path = os.path.join(upload_dir, unique_filename)
+        
+        doc.save(output_path)
+        print(f"DEBUG REDATOR: Documento salvo em {output_path}")
+    except Exception as e:
+        import traceback
+        print(f"ERRO CRÍTICO NO REDATOR: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erro ao processar template .docx: {str(e)}")
+
+    db_path = f"documentos_clientes/{unique_filename}"
+    doc_create = schemas.DocumentoClienteCreate(nome=request.titulo_documento, cliente_id=request.cliente_id)
+    db_doc = await crud.create_documento_cliente(db, doc_create, db_path, current_user.escritorio_id)
+
+    return db_doc

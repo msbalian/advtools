@@ -5,8 +5,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const currentYear = computed(() => new Date().getFullYear())
 
-const email = ref('fernando@primejud.com.br')
-const password = ref('123')
+const email = ref('')
+const password = ref('')
 const errorMsg = ref('')
 const isLoading = ref(false)
 

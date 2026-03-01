@@ -29,6 +29,7 @@ async def update_meu_escritorio_service(
     current_user: models.Usuario, 
     nome: str, 
     documento: str, 
+    gemini_api_key: str,
     logo: UploadFile
 ):
     logo_path = None
@@ -49,6 +50,7 @@ async def update_meu_escritorio_service(
     escritorio_update = schemas.EscritorioUpdate(
         nome=nome,
         documento=documento,
+        gemini_api_key=gemini_api_key,
         logo_path=logo_path
     )
     

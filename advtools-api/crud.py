@@ -1,5 +1,7 @@
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 import models
 import schemas
@@ -243,10 +245,14 @@ async def delete_parte_envolvida(db: AsyncSession, parte_id: int, escritorio_id:
 # DOCUMENTOS DO CLIENTE
 # ==========================
 async def get_documentos_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int):
-    result = await db.execute(select(models.DocumentoCliente).filter(
-        models.DocumentoCliente.cliente_id == cliente_id,
-        models.DocumentoCliente.escritorio_id == escritorio_id
-    ))
+    result = await db.execute(
+        select(models.DocumentoCliente)
+        .options(selectinload(models.DocumentoCliente.signatarios))
+        .filter(
+            models.DocumentoCliente.cliente_id == cliente_id,
+            models.DocumentoCliente.escritorio_id == escritorio_id
+        )
+    )
     return result.scalars().all()
 
 async def create_documento_cliente(db: AsyncSession, documento: schemas.DocumentoClienteCreate, arquivo_path: str, escritorio_id: int):
@@ -258,16 +264,19 @@ async def create_documento_cliente(db: AsyncSession, documento: schemas.Document
     )
     db.add(db_doc)
     await db.commit()
-    await db.refresh(db_doc)
+    # Forçamos o refresh para garantir que IDs e relacionamentos vazios (mas carregados) estejam no __dict__
+    await db.refresh(db_doc, attribute_names=["signatarios"])
     return db_doc
 
-from typing import Optional
-
 async def get_documento_by_id(db: AsyncSession, documento_id: int, escritorio_id: int) -> Optional[models.DocumentoCliente]:
-    result = await db.execute(select(models.DocumentoCliente).filter(
-        models.DocumentoCliente.id == documento_id,
-        models.DocumentoCliente.escritorio_id == escritorio_id
-    ))
+    result = await db.execute(
+        select(models.DocumentoCliente)
+        .options(selectinload(models.DocumentoCliente.signatarios))
+        .filter(
+            models.DocumentoCliente.id == documento_id,
+            models.DocumentoCliente.escritorio_id == escritorio_id
+        )
+    )
     return result.scalars().first()
 
 async def delete_documento_cliente(db: AsyncSession, documento_id: int, escritorio_id: int):

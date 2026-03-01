@@ -26,8 +26,9 @@ async def get_meu_escritorio(current_user: models.Usuario = Depends(get_current_
 async def update_meu_escritorio(
     nome: str = Form(...),
     documento: str = Form(None),
+    gemini_api_key: str = Form(None),
     logo: UploadFile = File(None),
     current_user: models.Usuario = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    return await update_meu_escritorio_service(db, current_user, nome, documento, logo)
+    return await update_meu_escritorio_service(db, current_user, nome, documento, gemini_api_key, logo)

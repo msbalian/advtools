@@ -31,11 +31,19 @@ def calcular_hash_arquivo(caminho_arquivo: str) -> str:
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
-def gerar_certificado_pdf(dados_documento: dict, signatarios: list, caminho_saida: str, url_validacao: str = None) -> str:
+def calcular_hash_bytes(data: bytes) -> str:
+    """Calcula o SHA256 de dados em memória."""
+    sha256_hash = hashlib.sha256()
+    sha256_hash.update(data)
+    return sha256_hash.hexdigest()
+
+def gerar_certificado_pdf(dados_documento: dict, signatarios: list, caminho_saida: str = None, url_validacao: str = None) -> bytes:
     """
     Gera uma página PDF contendo o 'Manifesto de Assinaturas' (Log de Auditoria).
+    Se caminho_saida for None, retorna os bytes do PDF.
     """
-    c = canvas.Canvas(caminho_saida, pagesize=A4)
+    output = caminho_saida if caminho_saida else io.BytesIO()
+    c = canvas.Canvas(output, pagesize=A4)
     width, height = A4
     
     # Cabeçalho
@@ -99,18 +107,26 @@ def gerar_certificado_pdf(dados_documento: dict, signatarios: list, caminho_said
             c.drawString(80, y, f"Método: {tipo.upper() if tipo else 'N/A'} | User-Agent: {user_agent[:40]}...")
             y -= 5
             
+            # Imagem da Assinatura/Selfie no certificado
             img_path = sig.get('imagem_assinatura_path')
-            if img_path and os.path.exists(img_path):
-                try:
-                    if tipo == 'selfie':
-                        c.drawImage(img_path, 80, y - 85, width=110, height=82, mask='auto')
-                        y -= 90
-                    else:
-                        c.drawImage(img_path, 80, y - 50, width=150, height=45, mask='auto')
-                        y -= 60
-                except Exception as e:
-                    c.drawString(80, y - 10, f"[Erro ao carregar imagem: {e}]")
-                    y -= 20
+            if img_path:
+                full_img_path = str(img_path)
+                if not os.path.exists(full_img_path) and not full_img_path.startswith("static"):
+                     full_img_path = os.path.join("static", full_img_path)
+
+                if os.path.exists(full_img_path):
+                    try:
+                        if tipo == 'selfie':
+                            c.drawImage(full_img_path, 80, y - 85, width=110, height=82, mask='auto')
+                            y -= 90
+                        else:
+                            c.drawImage(full_img_path, 80, y - 50, width=150, height=45, mask='auto')
+                            y -= 60
+                    except Exception as e:
+                        c.drawString(80, y - 10, f"[Erro ao carregar imagem: {e}]")
+                        y -= 20
+                else:
+                     y -= 10
             else:
                  y -= 10
                  
@@ -125,7 +141,10 @@ def gerar_certificado_pdf(dados_documento: dict, signatarios: list, caminho_said
     c.setFillColor(colors.grey)
     c.drawString(50, 60, "Validação: " + (url_validacao if url_validacao else "N/A"))
     c.drawString(50, 50, "A validade jurídica deste documento é garantida pela Medida Provisória 2.200-2/2001 (ICP-Brasil).")
+    
     c.save()
+    if caminho_saida is None:
+        return output.getvalue()
     return caminho_saida
 
 def anexar_certificado(caminho_pdf_original: str, caminho_certificado: str, caminho_final: str) -> str:
@@ -148,30 +167,29 @@ def anexar_certificado(caminho_pdf_original: str, caminho_certificado: str, cami
         
     return caminho_final
 
-def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_final: str) -> str:
-    """Sobrepõe as imagens das assinaturas nas coordenadas salvas (pypdf origin 0,0 is bottom-left)."""
+def estampar_assinaturas(pdf_puxar, signatarios: list, caminho_final: str = None):
+    """
+    Sobrepõe as imagens das assinaturas nas coordenadas salvas.
+    pdf_puxar: pode ser bytes ou caminho do arquivo.
+    Se caminho_final for None, retorna os bytes do PDF resultante.
+    """
     if PdfWriter is None:
         raise ImportError("Biblioteca pypdf não instalada.")
 
-    packet = io.BytesIO()
-    c = canvas.Canvas(packet, pagesize=A4)
-    
-    sigs_by_page = {}
-    for sig in signatarios:
-        if not sig.get('imagem_assinatura_path') or not sig.get('pos_page'):
-            continue
-        page = int(sig['pos_page'])
-        if page not in sigs_by_page:
-            sigs_by_page[page] = []
-        sigs_by_page[page].append(sig)
-        
-    if not sigs_by_page:
-        # Se não houver assinaturas posicionadas, ignora estampas visuais
-        return caminho_pdf_original 
+    input_stream = io.BytesIO(pdf_puxar) if isinstance(pdf_puxar, bytes) else open(pdf_puxar, "rb")
+    output_stream = caminho_final if caminho_final else io.BytesIO()
 
-    with open(caminho_pdf_original, "rb") as f_in, open(caminho_final, "wb") as f_out:
-        reader = PdfReader(f_in)
+    try:
+        reader = PdfReader(input_stream)
         writer = PdfWriter()
+        
+        # Agrupar assinaturas por página
+        sigs_by_page = {}
+        for sig in signatarios:
+            if not sig.get('pos_page'): continue
+            p = int(sig['pos_page'])
+            if p not in sigs_by_page: sigs_by_page[p] = []
+            sigs_by_page[p].append(sig)
 
         for i, page in enumerate(reader.pages):
             page_num = i + 1
@@ -184,7 +202,23 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
                 c_page = canvas.Canvas(packet_page, pagesize=(page_width, page_height))
                 
                 for sig in sigs_by_page[page_num]:
-                    img_path = sig['imagem_assinatura_path']
+                    img_data = sig.get('imagem_bytes') 
+                    # img_data: se não passar bytes, tentamos ler do path se for local
+                    if not img_data and sig.get('imagem_assinatura_path'):
+                         try:
+                             ipath = str(sig['imagem_assinatura_path'])
+                             possibilities = [ipath, os.path.join("static", ipath)]
+                             for p in possibilities:
+                                 if os.path.exists(p):
+                                     with open(p, "rb") as fi:
+                                         img_data = fi.read()
+                                     break
+                         except: pass
+                    
+                    if not img_data: continue # Sem imagem, não estampa
+                    
+                    # Usamos ImageReader para ler os bytes
+                    img_reader = ImageReader(io.BytesIO(img_data))
                     
                     doc_visual_w = float(sig.get('pos_doc_width', 0) or page_width)
                     doc_visual_h = float(sig.get('pos_doc_height', 0) or page_height)
@@ -193,9 +227,6 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
                     scale_y = page_height / doc_visual_h
                     
                     x_pdf = float(sig['pos_x']) * scale_x
-                    
-                    # Invertendo Eixo Y pois o pypdf é (0,0) no canto inferior esquerdo
-                    # y_pos recebido do HTML assume (0,0) no topo superior esquerdo
                     y_visual_invertido = doc_visual_h - float(sig['pos_y']) - float(sig['pos_height'])
                     y_pdf = y_visual_invertido * scale_y
                     
@@ -205,8 +236,6 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
                     try:
                         nome = sig.get('nome', 'Assinado Digitalmente')
                         cpf = sig.get('cpf', 'CPF não informado')
-                        
-                        # Definições base para um carimbo elegante e muito discreto
                         font_size_nome = 6.5
                         font_size_detalhe = 5.0
                         
@@ -216,32 +245,26 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
                         
                         margin = 4
                         drawn_w = max(w_assinado, w_nome, w_cpf) + (margin * 2)
-                        drawn_h = 24 # Altura fixa e bem estreita para as 3 linhas
+                        drawn_h = 24
                         
-                        # Para garantir que não fique vácuo, ancoramos no topo-esquerdo da onde o usuário mirou
                         top_y = y_pdf + h_pdf
                         new_y_pdf = top_y - drawn_h
                         
-                        c_page.setFillColorRGB(0.97, 0.97, 0.97) # Fundo quase branco
-                        c_page.setStrokeColorRGB(0.8, 0.8, 0.8) # Borda cinza bem clara e fina
+                        c_page.setFillColorRGB(0.97, 0.97, 0.97)
+                        c_page.setStrokeColorRGB(0.8, 0.8, 0.8)
                         c_page.setLineWidth(0.2)
                         c_page.roundRect(x_pdf, new_y_pdf, drawn_w, drawn_h, radius=3, fill=1, stroke=1)
                         
-                        # Texto elegante e pequeno
                         c_page.setFillColorRGB(0.3, 0.35, 0.4) 
-                        
-                        # Linha 1: "Assinado Eletronicamente"
                         c_page.setFont("Helvetica-Oblique", font_size_detalhe)
                         y_cursor = top_y - margin - font_size_detalhe + 1
                         c_page.drawString(x_pdf + margin, y_cursor, "Assinado Eletronicamente")
                         
-                        # Linha 2: O Nome da Pessoa
                         y_cursor -= (font_size_nome + 1.5)
                         c_page.setFillColorRGB(0.15, 0.2, 0.25)
                         c_page.setFont("Helvetica-Bold", font_size_nome)
                         c_page.drawString(x_pdf + margin, y_cursor, nome[:45])
                         
-                        # Linha 3: CPF
                         y_cursor -= (font_size_detalhe + 2)
                         c_page.setFillColorRGB(0.3, 0.35, 0.4) 
                         c_page.setFont("Helvetica", font_size_detalhe)
@@ -252,13 +275,16 @@ def estampar_assinaturas(caminho_pdf_original: str, signatarios: list, caminho_f
 
                 c_page.save()
                 packet_page.seek(0)
-                
                 overlay_pdf = PdfReader(packet_page)
-                overlay_page = overlay_pdf.pages[0]
-                page.merge_page(overlay_page)
+                page.merge_page(overlay_pdf.pages[0])
                 
             writer.add_page(page)
 
-        writer.write(f_out)
-        
+        writer.write(output_stream)
+    finally:
+        if not isinstance(pdf_puxar, bytes):
+            input_stream.close()
+
+    if caminho_final is None:
+        return output_stream.getvalue()
     return caminho_final

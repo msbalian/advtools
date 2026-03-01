@@ -395,9 +395,19 @@ const deleteDocumento = async (id) => {
     })
 }
 
-const getStaticUrl = (path) => {
+const getDocumentUrl = (doc, isAssinado = false) => {
+    const path = isAssinado ? doc.arquivo_assinado_path : doc.arquivo_path
+    if (!path) return '#'
+    
     const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    return `${baseURL}/static/${path}` // Remove extra /static if stored as static/
+    let cleanPath = path.startsWith('static/') ? path.replace('static/', '', 1) : path
+    
+    // Se não for um caminho legado completo e não tiver o prefixo de armazenamento, adicionamos
+    if (!cleanPath.startsWith('armazenamento/') && !cleanPath.startsWith('http')) {
+        cleanPath = `armazenamento/${cleanPath}`
+    }
+    
+    return `${baseURL}/static/${cleanPath}`
 }
 
 const formatDate = (dateString) => {
@@ -740,8 +750,8 @@ onMounted(async () => {
                                                     </span>
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
-                                                    <span class="text-xs text-slate-500">
-                                                        Salvo em: {{ new Date(doc.data_criacao).toLocaleDateString() }}
+                                                    <span class="text-xs text-slate-500 flex items-center gap-1">
+                                                        <Calendar class="w-3 h-3" /> {{ new Date(doc.data_criacao).toLocaleDateString() }}
                                                     </span>
                                                     <!-- Badge de status de assinatura -->
                                                     <span
@@ -763,10 +773,10 @@ onMounted(async () => {
                                         </div>
                                         <div class="flex items-center gap-2">
                                            <div class="flex items-center gap-1">
-                                               <a :href="getStaticUrl(doc.arquivo_path)" target="_blank" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Baixar Original">
+                                               <a :href="getDocumentUrl(doc)" target="_blank" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Baixar Original">
                                                    <Download class="w-4 h-4" />
                                                </a>
-                                               <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" :href="getStaticUrl(doc.arquivo_assinado_path)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 border border-green-700 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm" style="white-space: nowrap;" title="Baixar Arquivo Finalizado e Assinado">
+                                               <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" :href="getDocumentUrl(doc, true)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 border border-green-700 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm" style="white-space: nowrap;" title="Baixar Arquivo Finalizado e Assinado">
                                                    <i class="fas fa-file-signature"></i> Baixar Assinado
                                                </a>
                                                <button @click="triggerReplace(doc.id)" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Substituir Arquivo">

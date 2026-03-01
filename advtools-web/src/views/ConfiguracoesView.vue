@@ -14,7 +14,9 @@ import {
   Pencil,
   AlertCircle,
   CheckCircle2,
-  X
+  X,
+  Cloud,
+  Settings2
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -24,7 +26,11 @@ const isLoading = ref(true)
 // =======================
 // ESTADO: ESCRITÓRIO
 // =======================
-const escritorio = ref({ nome: '', documento: '', logo_path: '' })
+const escritorio = ref({ 
+    nome: '', 
+    documento: '', 
+    logo_path: ''
+})
 const isSavingEscritorio = ref(false)
 const logoFile = ref(null)
 const logoPreview = ref(null)
@@ -123,6 +129,8 @@ const saveEscritorio = async () => {
         const formData = new FormData()
         formData.append('nome', escritorio.value.nome)
         if (escritorio.value.documento) formData.append('documento', escritorio.value.documento)
+        if (escritorio.value.gemini_api_key) formData.append('gemini_api_key', escritorio.value.gemini_api_key)
+        
         if (logoFile.value) formData.append('logo', logoFile.value)
 
         const res = await apiFetch('/api/escritorio', {
@@ -324,6 +332,17 @@ const sidebarOpen = ref(false)
                             <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">CNPJ / CPF do Titular</label>
                             <div class="mt-2 sm:col-span-2 sm:mt-0">
                                 <input v-model="escritorio.documento" type="text" :disabled="!isAdmin()" class="block w-full max-w-md rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-slate-50 disabled:text-slate-500" />
+                            </div>
+                        </div>
+
+                        <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5 sm:border-t sm:border-slate-100">
+                            <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">Gemini API Key (IA)</label>
+                            <div class="mt-2 sm:col-span-2 sm:mt-0">
+                                <input v-model="escritorio.gemini_api_key" type="text" :disabled="!isAdmin()" placeholder="AIza..." class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-slate-50 disabled:text-slate-500" />
+                                <p class="mt-2 text-xs text-slate-500">
+                                    Necessária para usar o Redator com IA. 
+                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary-600 hover:text-primary-500 font-medium">Obtenha sua chave aqui.</a>
+                                </p>
                             </div>
                         </div>
                     </div>

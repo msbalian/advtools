@@ -16,10 +16,12 @@ class EscritorioUpdate(BaseModel):
     nome: Optional[str] = None
     documento: Optional[str] = None
     logo_path: Optional[str] = None
+    gemini_api_key: Optional[str] = None
 
 class Escritorio(EscritorioBase):
     id: int
     logo_path: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     data_criacao: datetime
 
     class Config:

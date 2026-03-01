@@ -306,7 +306,12 @@ function showToast(message: string, type = 'success') {
 function getStaticUrl(path: string) {
   if (!path) return '#'
   if (path.startsWith('http')) return path
-  return `${API}/static/${path}`
+  let cleanPath = path
+  // Suporte a arquivos legados sem o prefixo armazenamento/
+  if (!cleanPath.startsWith('armazenamento/') && !cleanPath.startsWith('static/')) {
+    cleanPath = `armazenamento/${cleanPath}`
+  }
+  return `${API}/static/${cleanPath}`
 }
 
 async function loadData() {

@@ -13,7 +13,9 @@ import {
     Search,
     FileText,
     Sparkles,
-    Check
+    Check,
+    AlertCircle,
+    CheckCircle2
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -325,21 +327,20 @@ onMounted(async () => {
                                         id="usar_ia" 
                                         type="checkbox" 
                                         v-model="formData.usar_ia"
-                                        disabled
-                                        class="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600 disabled:opacity-50"
+                                        class="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600"
                                     />
                                 </div>
                                 <div class="ml-3 text-sm leading-6">
                                     <label for="usar_ia" class="font-medium text-slate-900 flex items-center gap-1">
-                                        Usar IA para redigir cláusulas livres <span class="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Breve</span>
+                                        Usar IA para redigir cláusulas personalizadas
                                     </label>
-                                    <p class="text-slate-500">Nesta versão, o Redator apenas injeta as TAGS automaticamente no arquivo DOCX, mantendo toda a formatação perfeita.</p>
+                                    <p class="text-slate-500">A IA usará o seu modelo como base e aplicará as instruções abaixo, preenchendo os dados do cliente automaticamente.</p>
                                 </div>
                             </div>
                             
                             <div v-if="formData.usar_ia" class="mt-4 pl-7 animate-fade-in-up">
-                                <label class="block text-sm font-medium leading-6 text-slate-900 mb-1">Instruções Adicionais para a IA</label>
-                                <textarea rows="3" disabled class="block w-full rounded-xl border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6 disabled:opacity-50 disabled:bg-slate-100"></textarea>
+                                <label class="block text-sm font-medium leading-6 text-slate-900 mb-1">O que a IA deve fazer? (Instruções)</label>
+                                <textarea v-model="formData.instrucoes_ia" rows="3" placeholder="Ex: Adicione uma cláusula de confidencialidade com multa de 10 salários mínimos e foro em São Paulo." class="block w-full rounded-xl border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6"></textarea>
                             </div>
                         </div>
                     </div>

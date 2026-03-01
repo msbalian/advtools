@@ -12,6 +12,7 @@ class Escritorio(Base):
     nome = Column(String(255), nullable=False)
     documento = Column(String(50))
     logo_path = Column(String(255))
+    gemini_api_key = Column(String(255), nullable=True)
     data_criacao = Column(DateTime, default=func.now())
 
     usuarios = relationship("Usuario", back_populates="escritorio")

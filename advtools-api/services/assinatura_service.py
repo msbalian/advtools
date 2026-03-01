@@ -1,4 +1,5 @@
 import os
+import io
 import uuid as _uuid
 import base64
 from datetime import datetime
@@ -15,6 +16,7 @@ import models
 import crud
 import assinador_service
 from services.documento_service import convert_docx_to_pdf_async
+from services.storage_service import get_storage_provider
 
 # --- GESTÃO DE ASSINATURAS (LOGADA) ---
 
@@ -70,14 +72,23 @@ async def finalizar_documento_service(db: AsyncSession, current_user: models.Usu
 # --- ROTAS PÚBLICAS (NÃO LOGADAS) ---
 
 async def preview_pdf_service(db: AsyncSession, documento_id: int):
-    # Preview endpoint can be used securely if token is verified, but currently requested purely by doc id
     res = await db.execute(sql_select(models.DocumentoCliente).filter(models.DocumentoCliente.id == documento_id))
     doc = res.scalars().first()
     
     if not doc:
         raise HTTPException(status_code=404, detail="Documento não encontrado")
-        
+    
+    escritorio = await crud.get_escritorio(db, doc.escritorio_id)
+    storage = get_storage_provider(escritorio)
+    
+    # Resolve o caminho físico (suporta legado e novo formato)
     arquivo_original = f"static/{doc.arquivo_path}"
+    if not os.path.exists(arquivo_original):
+        # Tenta no subdiretório de armazenamento
+        alt_path = f"static/armazenamento/{doc.arquivo_path}"
+        if os.path.exists(alt_path):
+            arquivo_original = alt_path
+            
     arquivo_exibicao = arquivo_original
     
     if arquivo_original.lower().endswith('.docx'):
@@ -92,7 +103,9 @@ async def preview_pdf_service(db: AsyncSession, documento_id: int):
             arquivo_exibicao = pdf_path
             
     if not os.path.exists(arquivo_exibicao):
-        raise HTTPException(status_code=404, detail="Arquivo físico não encontrado")
+        # Se for Drive, poderíamos retornar uma URL de Redirecionamento 
+        # mas o componente PDF do Vue precisa do stream do arquivo.
+        raise HTTPException(status_code=404, detail="Arquivo físico de visualização não encontrado")
         
     return FileResponse(arquivo_exibicao, media_type="application/pdf")
 
@@ -113,7 +126,13 @@ async def public_get_sala_assinatura_service(db: AsyncSession, token: str):
         db.add(sig)
         await db.commit()
         
+    # Resolve o caminho físico
     arquivo_original = f"static/{doc.arquivo_path}"
+    if not os.path.exists(arquivo_original):
+        alt_path = f"static/armazenamento/{doc.arquivo_path}"
+        if os.path.exists(alt_path):
+            arquivo_original = alt_path
+            
     arquivo_exibicao = arquivo_original
     
     if arquivo_original.lower().endswith('.docx'):
@@ -160,20 +179,22 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
         return {"message": "Documento já assinado por este signatário e finalizado."}
 
     if not ja_assinado:
-        upload_dir = "static/assinaturas"
-        os.makedirs(upload_dir, exist_ok=True)
+        escritorio = await crud.get_escritorio(db, doc.escritorio_id)
+        storage = get_storage_provider(escritorio)
+        
         img_filename = f"{data.tipo_autenticacao}_{sig.token_acesso}.png"
-        img_path = os.path.join(upload_dir, img_filename)
-
+        
         try:
             encoded_data = data.imagem_base64.split(",")[1] if "," in data.imagem_base64 else data.imagem_base64
             decoded_data = base64.b64decode(encoded_data)
-            with open(img_path, "wb") as f:
-                f.write(decoded_data)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Base64 inválido")
+            
+            # Salva no storage (local ou drive)
+            db_img_path = await storage.save_file(decoded_data, "assinaturas", img_filename)
+        except Exception as e:
+            print(f"Erro ao salvar imagem da assinatura: {e}")
+            raise HTTPException(status_code=400, detail="Erro ao processar imagem da assinatura")
 
-        sig.imagem_assinatura_path = img_path
+        sig.imagem_assinatura_path = db_img_path
         sig.tipo_autenticacao = data.tipo_autenticacao
         sig.status = 'Assinado'
         sig.data_assinatura = datetime.now()
@@ -204,10 +225,17 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
         await db.commit()
         return {"message": "Assinatura confirmada com sucesso!"}
 
-    PASTA_SAIDA = "static/documentos_assinados"
-    os.makedirs(PASTA_SAIDA, exist_ok=True)
+    PASTA_TEMPORARIA = "static/temp"
+    os.makedirs(PASTA_TEMPORARIA, exist_ok=True)
+
+    escritorio = await crud.get_escritorio(db, doc.escritorio_id)
+    storage = get_storage_provider(escritorio)
 
     caminho_original = os.path.join("static", doc.arquivo_path)
+    if not os.path.exists(caminho_original):
+        # Fallback para nova estrutura se necessário
+        caminho_original = os.path.join("static/armazenamento", doc.arquivo_path)
+
     caminho_pdf_base = caminho_original
 
     if caminho_original.lower().endswith('.docx'):
@@ -218,6 +246,13 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
             except Exception as e:
                 print(f"Erro ao converter DOCX para PDF: {e}")
                 caminho_pdf_base = None
+
+    # Lemos os bytes do PDF base
+    if not caminho_pdf_base or not os.path.exists(caminho_pdf_base):
+         raise HTTPException(status_code=500, detail="Erro ao preparar PDF base para assinatura.")
+    
+    with open(caminho_pdf_base, "rb") as f:
+        pdf_base_bytes = f.read()
 
     sigs_res = await db.execute(
         select(models.Signatario)
@@ -269,75 +304,79 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
         else:
             sigs_list_flat.append(base_sig_dict)
 
-    caminho_estampado = caminho_pdf_base
-    if caminho_pdf_base and os.path.exists(caminho_pdf_base):
-        caminho_estampado_temp = os.path.join(PASTA_SAIDA, f"estampado_{doc_id}.pdf")
-        try:
-            caminho_estampado = assinador_service.estampar_assinaturas(caminho_pdf_base, sigs_list_flat, caminho_estampado_temp)
-        except Exception as e:
-            print(f"Erro ao estampar: {e}")
-            caminho_estampado = caminho_pdf_base
+    # Estampar assinaturas em memória
+    try:
+        pdf_estampado_bytes = assinador_service.estampar_assinaturas(pdf_base_bytes, sigs_list_flat)
+    except Exception as e:
+        print(f"Erro ao estampar: {e}")
+        pdf_estampado_bytes = pdf_base_bytes
 
     if not doc.token_validacao:
-        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(token_validacao=_uuid.uuid4().hex))
+        new_token = _uuid.uuid4().hex
+        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(token_validacao=new_token))
         await db.commit()
-        doc_res2 = await db.execute(select(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id))
-        doc = doc_res2.scalars().first()
+        doc.token_validacao = new_token
 
     url_validacao = f"{base_url}/api/public/validar/{doc.token_validacao}"
 
     hash_orig = doc.hash_original
-    if not hash_orig and caminho_pdf_base and os.path.exists(caminho_pdf_base):
-        hash_orig = assinador_service.calcular_hash_arquivo(caminho_pdf_base)
-        if hash_orig:
-            await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(hash_original=hash_orig))
-            await db.commit()
+    if not hash_orig:
+        hash_orig = assinador_service.calcular_hash_bytes(pdf_base_bytes)
+        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(hash_original=hash_orig))
+        await db.commit()
 
-    caminho_certificado = os.path.join(PASTA_SAIDA, f"certificado_{doc_id}.pdf")
+    # Gerar Certificado em memória
     doc_dict = {
         "nome": doc.nome,
         "hash_original": hash_orig or "N/A"
     }
     try:
-        assinador_service.gerar_certificado_pdf(doc_dict, sigs_list_unique, caminho_certificado, url_validacao)
+        certificado_bytes = assinador_service.gerar_certificado_pdf(doc_dict, sigs_list_unique, url_validacao=url_validacao)
     except Exception as e:
         print(f"Erro ao gerar certificado: {e}")
         await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(status_assinatura='Concluido'))
         await db.commit()
         return {"message": "Assinatura confirmada. Erro ao gerar certificado."}
 
-    nome_final = f"final_assinado_{doc_id}.pdf"
-    caminho_final = os.path.join(PASTA_SAIDA, nome_final)
+    # Mesclar Estampado + Certificado
+    final_pdf_bytes = b""
+    try:
+        writer = assinador_service.PdfWriter()
+        # Documento com assinaturas estampadas
+        reader_estampado = assinador_service.PdfReader(io.BytesIO(pdf_estampado_bytes))
+        for page in reader_estampado.pages:
+            writer.add_page(page)
+            
+        # Manifesto/Certificado
+        reader_cert = assinador_service.PdfReader(io.BytesIO(certificado_bytes))
+        for page in reader_cert.pages:
+            writer.add_page(page)
+        
+        out_stream = io.BytesIO()
+        writer.write(out_stream)
+        final_pdf_bytes = out_stream.getvalue()
+    except Exception as e:
+        print(f"ERRO CRÍTICO AO ANEXAR CERTIFICADO: {str(e)}")
+        # Fallback para o documento estampado se a mesclagem falhar
+        final_pdf_bytes = pdf_estampado_bytes
 
-    if caminho_estampado and os.path.exists(caminho_estampado):
-        try:
-            assinador_service.anexar_certificado(caminho_estampado, caminho_certificado, caminho_final)
-        except Exception as e:
-            print(f"Erro ao anexar certificado: {e}")
-            caminho_final = caminho_certificado
-    else:
-        caminho_final = caminho_certificado
-
-    hash_final = assinador_service.calcular_hash_arquivo(caminho_final)
-    arquivo_path_relativo = caminho_final.replace("static/", "", 1) if caminho_final.startswith("static/") else caminho_final
+    # Salvar o Documento Final Assinado no Storage
+    nome_final = f"assinado_{doc.id}_{_uuid.uuid4().hex[:6]}.pdf"
+    relative_dir = f"cliente_{doc.cliente_id}/assinados"
+    
+    db_final_path = await storage.save_file(final_pdf_bytes, relative_dir, nome_final)
+    hash_final = assinador_service.calcular_hash_bytes(final_pdf_bytes)
 
     await db.execute(
         sql_update(models.DocumentoCliente)
         .where(models.DocumentoCliente.id == doc_id)
         .values(
             status_assinatura='Concluido',
-            arquivo_assinado_path=arquivo_path_relativo,
+            arquivo_assinado_path=db_final_path,
             hash_assinado=hash_final
         )
     )
     await db.commit()
-
-    for tmp in [caminho_estampado]:
-        if tmp and tmp != caminho_final and tmp != caminho_pdf_base:
-            try:
-                os.remove(tmp)
-            except:
-                pass
 
     return {"message": "Assinatura confirmada e documento finalizado!"}
 

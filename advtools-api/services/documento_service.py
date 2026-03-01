@@ -7,14 +7,31 @@ import unicodedata
 import json
 from datetime import datetime
 import locale
+import locale
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
+from docx import Document # Importando Document para leitura direta do texto
 import schemas
 import models
 import crud
 from docxtpl import DocxTemplate
+from services.storage_service import get_storage_provider
+from services.ai_service import redigir_documento_com_ia
+
+def get_docx_text(path: str) -> str:
+    """Extrai o texto puro de um documento .docx para servir de contexto à IA."""
+    try:
+        if not os.path.exists(path):
+            return ""
+        doc = Document(path)
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        return "\n".join(full_text)
+    except Exception as e:
+        print(f"Erro ao ler texto do DOCX: {e}")
+        return ""
 
 try:
     locale.setlocale(locale.LC_TIME, 'Portuguese_Brazil.1252')
@@ -59,16 +76,15 @@ async def criar_modelo_service(db: AsyncSession, current_user: models.Usuario, n
     if not file.filename.endswith(".docx"):
         raise HTTPException(status_code=400, detail="Apenas arquivos .docx são permitidos")
         
-    upload_dir = "static/modelos"
-    os.makedirs(upload_dir, exist_ok=True)
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
     
+    content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
-    file_path = os.path.join(upload_dir, unique_filename)
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Modelos ficam em uma subpasta 'modelos' dentro da raiz do escritório/local
+    db_path = await storage.save_file(content, "modelos", unique_filename)
         
-    db_path = f"modelos/{unique_filename}"
     novo_modelo = models.ModeloDocumento(
         escritorio_id=current_user.escritorio_id,
         nome=nome,
@@ -91,9 +107,9 @@ async def deletar_modelo_service(db: AsyncSession, current_user: models.Usuario,
     if not modelo:
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
         
-    file_path = os.path.join("static", modelo.arquivo_path)
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
+    await storage.delete_file(modelo.arquivo_path)
         
     await db.delete(modelo)
     await db.commit()
@@ -113,20 +129,18 @@ async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuar
     if not modelo:
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
         
-    old_file_path = os.path.join("static", modelo.arquivo_path)
-    if os.path.exists(old_file_path):
-        os.remove(old_file_path)
-        
-    upload_dir = "static/modelos"
-    os.makedirs(upload_dir, exist_ok=True)
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
     
+    # Remove antigo
+    await storage.delete_file(modelo.arquivo_path)
+    
+    # Salva novo
+    content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
-    file_path = os.path.join(upload_dir, unique_filename)
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    db_path = await storage.save_file(content, "modelos", unique_filename)
         
-    modelo.arquivo_path = f"modelos/{unique_filename}"
+    modelo.arquivo_path = db_path
     await db.commit()
     await db.refresh(modelo)
     
@@ -144,31 +158,41 @@ async def read_documento_service(db: AsyncSession, current_user: models.Usuario,
     return doc
 
 async def upload_documento_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int, file: UploadFile, nome: str):
-    upload_dir = "static/documentos_clientes"
-    os.makedirs(upload_dir, exist_ok=True)
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
     
+    content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
-    file_path = os.path.join(upload_dir, unique_filename)
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    db_path = f"documentos_clientes/{unique_filename}"
+    # Organização: cliente_{id}/documentos
+    relative_dir = f"cliente_{cliente_id}/documentos"
+    db_path = await storage.save_file(content, relative_dir, unique_filename)
     
     doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=cliente_id)
-    return await crud.create_documento_cliente(db, doc_create, db_path, current_user.escritorio_id)
+    return await crud.create_documento_cliente(
+        db, 
+        doc_create, 
+        db_path, 
+        current_user.escritorio_id
+    )
 
 async def update_documento_file_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, file: UploadFile):
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Documento não encontrado")
         
-    file_path = os.path.join("static", doc.arquivo_path)
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    content = await file.read()
+    # Atualiza mantendo a organização: cliente_{id}/documentos
+    relative_dir = f"cliente_{doc.cliente_id}/documentos"
+    filename = os.path.basename(doc.arquivo_path) if doc.arquivo_path else f"{uuid.uuid4().hex}_{file.filename}"
+    
+    db_path = await storage.save_file(content, relative_dir, filename)
+    doc.arquivo_path = db_path
         
+    db.add(doc)
     await db.commit()
     await db.refresh(doc)
     return doc
@@ -179,6 +203,9 @@ async def delete_documento_service(db: AsyncSession, current_user: models.Usuari
         raise HTTPException(status_code=404, detail="Documento não encontrado")
         
     file_path = os.path.join("static", deleted_doc.arquivo_path)
+    if not os.path.exists(file_path):
+        file_path = os.path.join("static/armazenamento", deleted_doc.arquivo_path)
+        
     if os.path.exists(file_path):
         os.remove(file_path)
     
@@ -207,6 +234,11 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
     if not modelo:
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
 
+    # Definir source_path logo aqui para que a IA e o Template possam usá-lo
+    source_path = os.path.join("static", modelo.arquivo_path)
+    if not os.path.exists(source_path):
+        source_path = os.path.join("static/armazenamento", modelo.arquivo_path)
+
     partes = await crud.get_partes_cliente(db, request.cliente_id, current_user.escritorio_id)
     servicos = await crud.get_servicos_by_cliente(db, request.cliente_id, current_user.escritorio_id)
     
@@ -215,6 +247,17 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
     hoje = datetime.now()
     
     context = {
+        "DADOS_DO_CLIENTE_PRINCIPAL": {
+            "nome": cliente.nome or "",
+            "documento": cliente.documento or "",
+            "endereco_completo": f"{cliente.endereco}, {cliente.bairro}, {cliente.cidade}-{cliente.uf}, CEP: {cliente.cep}",
+            "email": cliente.email or "",
+            "nacionalidade": cliente.nacionalidade or "",
+            "estado_civil": cliente.estado_civil or "",
+            "profissao": cliente.profissao or "",
+            "rg": cliente.rg or "",
+            "data_nascimento": cliente.data_nascimento or "",
+        },
         "cliente_nome": cliente.nome or "",
         "cliente_doc": cliente.documento or "",
         "cliente_endereco": cliente.endereco or "",
@@ -231,10 +274,33 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
         "data_hoje": hoje.strftime("%d/%m/%Y"),
         "ano_atual": hoje.strftime("%Y"),
         "data_extenso": hoje.strftime("%d de %B de %Y"),
-        "conteudo_ia": "[Conteúdo IA indisponível. Habilite a IA na redação.]" if not request.usar_ia else "[Conteúdo gerado por IA...]",
+        "conteudo_ia": "", 
         "servico_tipo": servico.tipo_servico_id if servico else "",
         "percentual_exito": servico.porcentagem_exito if servico else "",
     }
+
+    # --- LÓGICA DE IA (REDAÇÃO INTEGRAL) ---
+    if request.usar_ia:
+        escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+        if escritorio and escritorio.gemini_api_key:
+            # Extrair o TEXTO REAL do modelo para a IA entender o contexto
+            modelo_full_text = get_docx_text(source_path)
+            if not modelo_full_text:
+                modelo_full_text = f"O advogado quer redigir um(a) {modelo.nome}."
+                
+            instrucoes = request.instrucoes_ia or "Redija o documento completo, adaptando o modelo fornecido aos dados do cliente e garantindo que toda a peça esteja juridicamente coerente."
+            
+            conteudo_gerado = await redigir_documento_com_ia(
+                api_key=escritorio.gemini_api_key,
+                modelo_texto=modelo_full_text,
+                context=context,
+                instrucoes=instrucoes
+            )
+            # Injetamos o resultado na tag de conteúdo. 
+            # DICA: Se o modelo não tiver a tag, usaremos docxtpl.re_render ou fallback mais à frente.
+            context["conteudo_ia"] = conteudo_gerado
+        else:
+            context["conteudo_ia"] = "[ERRO: Gemini API Key não configurada nas configurações do escritório.]"
 
     pagamentos_list = []
     pagamentos_resumo_linhas = []
@@ -347,32 +413,73 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
             context[f"{prefix}{field}"] = ""
 
     try:
-        source_path = os.path.join("static", modelo.arquivo_path)
-        with open("redator_debug.log", "a", encoding="utf-8") as debug_file:
-            debug_file.write(f"\n--- GERAÇÃO EM {datetime.now()} ---\n")
-            debug_file.write(f"Template: {source_path}\n")
-            debug_file.write(f"Contexto: {list(context.keys())}\n")
-
+        # source_path já foi definido e verificado no início da função
+        
         doc = DocxTemplate(source_path)
         doc.render(context)
         
-        upload_dir = "static/documentos_clientes"
-        os.makedirs(upload_dir, exist_ok=True)
+        # --- VERIFICAÇÃO DE USO DE IA SEM TAG ---
+        # Se usamos IA mas o documento resultou muito curto (provavelmente a tag {{conteudo_ia}} não existia)
+        # OU se queremos forçar o conteúdo da IA como principal
+        if request.usar_ia and context.get("conteudo_ia"):
+            # Uma forma simples de detectar se a tag foi usada é ver se o texto da IA aparece no doc renderizado
+            # Mas para garantir o desejo do usuário (IA adapta a peça), se a IA foi requisitada, 
+            # e o documento final não parece ter mudado (ou apenas trocou tags básicas), 
+            # podemos gerar um DOCX puramente com o texto da IA.
+            
+            # Decisão: Se usar_ia for True, vamos gerar um DOCX baseado no retorno da IA 
+            # para garantir que a "adaptação" mencionada pelo usuário ocorra.
+            new_doc = Document()
+            
+            # Tentar adicionar logo do escritório no topo se existir
+            escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+            if escritorio.logo_path:
+                logo_abs_path = os.path.join("static", escritorio.logo_path)
+                if os.path.exists(logo_abs_path):
+                    try:
+                        new_doc.add_picture(logo_abs_path, width=None) 
+                    except: pass
+            
+            # Adicionar o texto da IA
+            for line in context["conteudo_ia"].split('\n'):
+                if line.strip():
+                    new_doc.add_paragraph(line)
+                else:
+                    new_doc.add_paragraph("")
+            
+            import io
+            file_stream = io.BytesIO()
+            new_doc.save(file_stream)
+            file_content = file_stream.getvalue()
+        else:
+            # Fluxo padrão (tags ou IA com tag presente no docx)
+            import io
+            file_stream = io.BytesIO()
+            doc.save(file_stream)
+            file_content = file_stream.getvalue()
+        
+        escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+        storage = get_storage_provider(escritorio)
         
         safe_title = slugify(request.titulo_documento)
         unique_filename = f"{safe_title}_{uuid.uuid4().hex[:6]}.docx"
-        output_path = os.path.join(upload_dir, unique_filename)
         
-        doc.save(output_path)
-        print(f"DEBUG REDATOR: Documento salvo em {output_path}")
+        # Organização: cliente_{id}/documentos
+        relative_dir = f"cliente_{request.cliente_id}/documentos"
+        db_path = await storage.save_file(file_content, relative_dir, unique_filename)
+        
     except Exception as e:
         import traceback
         print(f"ERRO CRÍTICO NO REDATOR: {str(e)}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erro ao processar template .docx: {str(e)}")
 
-    db_path = f"documentos_clientes/{unique_filename}"
     doc_create = schemas.DocumentoClienteCreate(nome=request.titulo_documento, cliente_id=request.cliente_id)
-    db_doc = await crud.create_documento_cliente(db, doc_create, db_path, current_user.escritorio_id)
+    db_doc = await crud.create_documento_cliente(
+        db, 
+        doc_create, 
+        db_path, 
+        current_user.escritorio_id
+    )
 
     return db_doc

@@ -129,7 +129,7 @@ class DocumentoCliente(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
-    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
     nome = Column(String(200), nullable=False)
     arquivo_path = Column(String(300), nullable=False)
     data_criacao = Column(DateTime, default=func.now())

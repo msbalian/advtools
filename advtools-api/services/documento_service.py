@@ -18,6 +18,7 @@ import crud
 from docxtpl import DocxTemplate
 from services.storage_service import get_storage_provider
 from services.ai_service import redigir_documento_com_ia
+from config import Config
 
 def get_docx_text(path: str) -> str:
     """Extrai o texto puro de um documento .docx para servir de contexto à IA."""
@@ -151,6 +152,9 @@ async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuar
 async def read_documentos_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int):
     return await crud.get_documentos_cliente(db, cliente_id, escritorio_id=current_user.escritorio_id)
 
+async def read_documentos_escritorio_service(db: AsyncSession, current_user: models.Usuario):
+    return await crud.get_documentos_escritorio(db, escritorio_id=current_user.escritorio_id)
+
 async def read_documento_service(db: AsyncSession, current_user: models.Usuario, documento_id: int):
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
     if not doc:
@@ -176,6 +180,25 @@ async def upload_documento_cliente_service(db: AsyncSession, current_user: model
         current_user.escritorio_id
     )
 
+async def upload_documento_escritorio_service(db: AsyncSession, current_user: models.Usuario, file: UploadFile, nome: str):
+    escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+    storage = get_storage_provider(escritorio)
+    
+    content = await file.read()
+    unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+    
+    # Organização: escritorio/documentos
+    relative_dir = "escritorio/documentos"
+    db_path = await storage.save_file(content, relative_dir, unique_filename)
+    
+    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=None)
+    return await crud.create_documento_cliente(
+        db, 
+        doc_create, 
+        db_path, 
+        current_user.escritorio_id
+    )
+
 async def update_documento_file_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, file: UploadFile):
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
     if not doc:
@@ -185,8 +208,12 @@ async def update_documento_file_service(db: AsyncSession, current_user: models.U
     storage = get_storage_provider(escritorio)
     
     content = await file.read()
-    # Atualiza mantendo a organização: cliente_{id}/documentos
-    relative_dir = f"cliente_{doc.cliente_id}/documentos"
+    # Atualiza mantendo a organização
+    if doc.cliente_id:
+        relative_dir = f"cliente_{doc.cliente_id}/documentos"
+    else:
+        relative_dir = "escritorio/documentos"
+        
     filename = os.path.basename(doc.arquivo_path) if doc.arquivo_path else f"{uuid.uuid4().hex}_{file.filename}"
     
     db_path = await storage.save_file(content, relative_dir, filename)
@@ -220,9 +247,11 @@ def slugify(value):
     return re.sub(r'[-\s]+', '_', cleaned)
 
 async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario, request: schemas.GerarDocumentoRequest):
-    cliente = await crud.get_cliente(db, request.cliente_id, current_user.escritorio_id)
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    cliente = None
+    if request.cliente_id:
+        cliente = await crud.get_cliente(db, request.cliente_id, current_user.escritorio_id)
+        if not cliente:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado")
         
     q_modelo = select(models.ModeloDocumento).where(
         models.ModeloDocumento.id == request.modelo_id,
@@ -234,55 +263,65 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
     if not modelo:
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
 
-    # Definir source_path logo aqui para que a IA e o Template possam usá-lo
     source_path = os.path.join("static", modelo.arquivo_path)
     if not os.path.exists(source_path):
         source_path = os.path.join("static/armazenamento", modelo.arquivo_path)
 
-    partes = await crud.get_partes_cliente(db, request.cliente_id, current_user.escritorio_id)
-    servicos = await crud.get_servicos_by_cliente(db, request.cliente_id, current_user.escritorio_id)
+    partes = []
+    servicos = []
+    if request.cliente_id:
+        partes = await crud.get_partes_cliente(db, request.cliente_id, current_user.escritorio_id)
+        servicos = await crud.get_servicos_by_cliente(db, request.cliente_id, current_user.escritorio_id)
     
     servico = next((s for s in servicos if s.status == "Ativo"), servicos[0] if servicos else None)
 
     hoje = datetime.now()
+    esc_obj = await crud.get_escritorio(db, current_user.escritorio_id)
     
     context = {
-        "DADOS_DO_CLIENTE_PRINCIPAL": {
-            "nome": cliente.nome or "",
-            "documento": cliente.documento or "",
-            "endereco_completo": f"{cliente.endereco}, {cliente.bairro}, {cliente.cidade}-{cliente.uf}, CEP: {cliente.cep}",
-            "email": cliente.email or "",
-            "nacionalidade": cliente.nacionalidade or "",
-            "estado_civil": cliente.estado_civil or "",
-            "profissao": cliente.profissao or "",
-            "rg": cliente.rg or "",
-            "data_nascimento": cliente.data_nascimento or "",
+        "DADOS_DO_ESCRITORIO": {
+            "nome": esc_obj.nome or "",
+            "documento": esc_obj.documento or "",
         },
-        "cliente_nome": cliente.nome or "",
-        "cliente_doc": cliente.documento or "",
-        "cliente_endereco": cliente.endereco or "",
-        "cliente_bairro": cliente.bairro or "",
-        "cliente_cidade": cliente.cidade or "",
-        "cliente_uf": cliente.uf or "",
-        "cliente_cep": cliente.cep or "",
-        "cliente_email": cliente.email or "",
-        "cliente_nacionalidade": cliente.nacionalidade or "",
-        "cliente_estado_civil": cliente.estado_civil or "",
-        "cliente_profissao": cliente.profissao or "",
-        "cliente_rg": cliente.rg or "",
-        "cliente_data_nascimento": cliente.data_nascimento or "",
+        "DADOS_DO_CLIENTE_PRINCIPAL": {
+            "nome": cliente.nome if cliente else esc_obj.nome or "",
+            "documento": cliente.documento if cliente else esc_obj.documento or "",
+            "endereco_completo": (f"{cliente.endereco}, {cliente.bairro}, {cliente.cidade}-{cliente.uf}, CEP: {cliente.cep}") if cliente else "",
+            "email": (cliente.email or "") if cliente else "",
+            "nacionalidade": (cliente.nacionalidade or "") if cliente else "",
+            "estado_civil": (cliente.estado_civil or "") if cliente else "",
+            "profissao": (cliente.profissao or "") if cliente else "",
+            "rg": (cliente.rg or "") if cliente else "",
+            "data_nascimento": (cliente.data_nascimento or "") if cliente else "",
+        },
+        "cliente_nome": (cliente.nome or "") if cliente else esc_obj.nome or "",
+        "cliente_doc": (cliente.documento or "") if cliente else esc_obj.documento or "",
+        "cliente_endereco": (cliente.endereco or "") if cliente else "",
+        "cliente_bairro": (cliente.bairro or "") if cliente else "",
+        "cliente_cidade": (cliente.cidade or "") if cliente else "",
+        "cliente_uf": (cliente.uf or "") if cliente else "",
+        "cliente_cep": (cliente.cep or "") if cliente else "",
+        "cliente_email": (cliente.email or "") if cliente else "",
+        "cliente_nacionalidade": (cliente.nacionalidade or "") if cliente else "",
+        "cliente_estado_civil": (cliente.estado_civil or "") if cliente else "",
+        "cliente_profissao": (cliente.profissao or "") if cliente else "",
+        "cliente_rg": (cliente.rg or "") if cliente else "",
+        "cliente_data_nascimento": (cliente.data_nascimento or "") if cliente else "",
         "data_hoje": hoje.strftime("%d/%m/%Y"),
         "ano_atual": hoje.strftime("%Y"),
         "data_extenso": hoje.strftime("%d de %B de %Y"),
         "conteudo_ia": "", 
-        "servico_tipo": servico.tipo_servico_id if servico else "",
-        "percentual_exito": servico.porcentagem_exito if servico else "",
+        "servico_tipo": (servico.tipo_servico_id if servico else "") if cliente else "",
+        "percentual_exito": (servico.porcentagem_exito if servico else "") if cliente else "",
     }
 
     # --- LÓGICA DE IA (REDAÇÃO INTEGRAL) ---
     if request.usar_ia:
         escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
-        if escritorio and escritorio.gemini_api_key:
+        # Usa a chave do escritório ou a global do .env como fallback
+        api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
+        
+        if api_key:
             # Extrair o TEXTO REAL do modelo para a IA entender o contexto
             modelo_full_text = get_docx_text(source_path)
             if not modelo_full_text:
@@ -464,8 +503,12 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
         safe_title = slugify(request.titulo_documento)
         unique_filename = f"{safe_title}_{uuid.uuid4().hex[:6]}.docx"
         
-        # Organização: cliente_{id}/documentos
-        relative_dir = f"cliente_{request.cliente_id}/documentos"
+        # Organização: cliente_{id}/documentos ou escritorio/documentos
+        if request.cliente_id:
+            relative_dir = f"cliente_{request.cliente_id}/documentos"
+        else:
+            relative_dir = "escritorio/documentos"
+            
         db_path = await storage.save_file(file_content, relative_dir, unique_filename)
         
     except Exception as e:

@@ -260,12 +260,12 @@ class DocumentoClienteBase(BaseModel):
     nome: str
 
 class DocumentoClienteCreate(DocumentoClienteBase):
-    cliente_id: int
+    cliente_id: Optional[int] = None
 
 class DocumentoCliente(DocumentoClienteBase):
     id: int
     escritorio_id: int
-    cliente_id: int
+    cliente_id: Optional[int] = None
     arquivo_path: str
     arquivo_assinado_path: Optional[str] = None
     data_criacao: datetime
@@ -284,7 +284,7 @@ class DocumentoCliente(DocumentoClienteBase):
 
 # Form request schema para o Redator Inteligente
 class GerarDocumentoRequest(BaseModel):
-    cliente_id: int
+    cliente_id: Optional[int] = None
     modelo_id: int
     titulo_documento: str
     usar_ia: bool = False

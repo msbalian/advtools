@@ -12,8 +12,10 @@ from services.documento_service import (
     deletar_modelo_service,
     substituir_modelo_service,
     read_documentos_cliente_service,
+    read_documentos_escritorio_service,
     read_documento_service,
     upload_documento_cliente_service,
+    upload_documento_escritorio_service,
     update_documento_file_service,
     delete_documento_service,
     gerar_documento_service
@@ -57,15 +59,22 @@ async def substituir_modelo(
 async def read_documentos_cliente(cliente_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     return await read_documentos_cliente_service(db, current_user, cliente_id)
 
-@router_clientes_docs.post("/{cliente_id}/documentos", response_model=schemas.DocumentoCliente)
-async def upload_documento_cliente(
-    cliente_id: int,
+    return await upload_documento_cliente_service(db, current_user, cliente_id, file, nome)
+
+# --- DOCUMENTOS ESCRITÓRIO ---
+
+@router_documentos.get("/escritorio", response_model=List[schemas.DocumentoCliente])
+async def read_documentos_escritorio(current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return await read_documentos_escritorio_service(db, current_user)
+
+@router_documentos.post("/escritorio", response_model=schemas.DocumentoCliente)
+async def upload_documento_escritorio(
     nome: str = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db), 
     current_user: models.Usuario = Depends(get_current_user)
 ):
-    return await upload_documento_cliente_service(db, current_user, cliente_id, file, nome)
+    return await upload_documento_escritorio_service(db, current_user, file, nome)
 
 @router_documentos.get("/{documento_id}", response_model=schemas.DocumentoCliente)
 async def read_documento(documento_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

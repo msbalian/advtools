@@ -362,7 +362,10 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
 
     # Salvar o Documento Final Assinado no Storage
     nome_final = f"assinado_{doc.id}_{_uuid.uuid4().hex[:6]}.pdf"
-    relative_dir = f"cliente_{doc.cliente_id}/assinados"
+    if doc.cliente_id:
+        relative_dir = f"cliente_{doc.cliente_id}/assinados"
+    else:
+        relative_dir = "escritorio/documentos/assinados"
     
     db_final_path = await storage.save_file(final_pdf_bytes, relative_dir, nome_final)
     hash_final = assinador_service.calcular_hash_bytes(final_pdf_bytes)

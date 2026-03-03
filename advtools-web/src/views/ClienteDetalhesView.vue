@@ -422,44 +422,29 @@ const formatDate = (dateString) => {
     return dateString
 }
 
-// --- Funções de Ícones e Tipos de Arquivo ---
 const getFileExtension = (path) => {
-    if (!path) return 'pdf';
-    const parts = path.split('.');
-    if (parts.length > 1) {
-        const lastPart = parts.pop();
-        return lastPart ? lastPart.toLowerCase() : 'pdf';
+    if (!path) return 'FILE'
+    const parts = path.split('.')
+    return parts.length > 1 ? parts.pop().toUpperCase() : 'FILE'
+}
+
+const getExtensionColor = (ext) => {
+    const colors = {
+        'PDF': 'bg-red-50 text-red-600 border-red-100',
+        'DOCX': 'bg-blue-50 text-blue-600 border-blue-100',
+        'DOC': 'bg-blue-50 text-blue-600 border-blue-100',
+        'XLSX': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'XLS': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'CSV': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'TXT': 'bg-slate-50 text-slate-600 border-slate-100',
+        'PNG': 'bg-purple-50 text-purple-600 border-purple-100',
+        'JPG': 'bg-purple-50 text-purple-600 border-purple-100',
+        'JPEG': 'bg-purple-50 text-purple-600 border-purple-100',
+        'ZIP': 'bg-amber-50 text-amber-600 border-amber-100',
+        'RAR': 'bg-amber-50 text-amber-600 border-amber-100'
     }
-    return 'pdf';
-};
-
-const getFileIconClass = (path) => {
-    const ext = getFileExtension(path);
-    if (ext === 'pdf') return 'fas fa-file-pdf';
-    if (ext === 'doc' || ext === 'docx') return 'fas fa-file-word';
-    return 'fas fa-file-alt';
-};
-
-const getFileIconBgColor = (path) => {
-    const ext = getFileExtension(path);
-    if (ext === 'pdf') return 'bg-red-50';
-    if (ext === 'doc' || ext === 'docx') return 'bg-blue-50';
-    return 'bg-slate-50';
-};
-
-const getFileIconTextColor = (path) => {
-    const ext = getFileExtension(path);
-    if (ext === 'pdf') return 'text-red-500';
-    if (ext === 'doc' || ext === 'docx') return 'text-blue-600';
-    return 'text-slate-500';
-};
-
-const getFileBadgeClass = (path) => {
-    const ext = getFileExtension(path);
-    if (ext === 'pdf') return 'bg-red-100 text-red-700';
-    if (ext === 'doc' || ext === 'docx') return 'bg-blue-100 text-blue-700';
-    return 'bg-slate-100 text-slate-600';
-};
+    return colors[ext] || 'bg-slate-50 text-slate-500 border-slate-100'
+}
 
 onMounted(async () => {
   carregarEscritorio()
@@ -739,15 +724,13 @@ onMounted(async () => {
                                 <li v-for="doc in documentos" :key="doc.id" class="px-5 py-4 hover:bg-slate-50 transition-colors group">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                            <div :class="[getFileIconBgColor(doc.arquivo_path), 'h-10 w-10 rounded-lg flex items-center justify-center']">
-                                                <i :class="[getFileIconClass(doc.arquivo_path), getFileIconTextColor(doc.arquivo_path), 'text-lg']"></i>
+                                            <div class="h-10 w-10 rounded-lg flex items-center justify-center border font-black text-[9px] tracking-tighter"
+                                                 :class="getExtensionColor(getFileExtension(doc.arquivo_path))">
+                                                {{ getFileExtension(doc.arquivo_path) }}
                                             </div>
                                             <div class="flex flex-col">
                                                 <div class="flex items-center gap-2">
                                                     <span class="text-sm font-semibold text-slate-900">{{ doc.nome }}</span>
-                                                    <span class="text-[0.65rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" :class="getFileBadgeClass(doc.arquivo_path)">
-                                                        {{ getFileExtension(doc.arquivo_path) }}
-                                                    </span>
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
                                                     <span class="text-xs text-slate-500 flex items-center gap-1">
@@ -779,7 +762,10 @@ onMounted(async () => {
                                                <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" :href="getDocumentUrl(doc, true)" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 border border-green-700 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm" style="white-space: nowrap;" title="Baixar Arquivo Finalizado e Assinado">
                                                    <i class="fas fa-file-signature"></i> Baixar Assinado
                                                </a>
-                                               <button @click="triggerReplace(doc.id)" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Substituir Arquivo">
+                                               <button v-if="doc.status_assinatura !== 'Parcial' && doc.status_assinatura !== 'Concluido'" 
+                                                       @click="triggerReplace(doc.id)" 
+                                                       class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" 
+                                                       title="Substituir Arquivo">
                                                    <UploadCloud class="w-4 h-4" />
                                                </button>
                                            </div>

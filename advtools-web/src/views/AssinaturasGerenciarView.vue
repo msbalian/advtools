@@ -7,9 +7,9 @@
           <router-link v-if="clienteId" :to="`/clientes/${clienteId}`" class="breadcrumb-link">
             <i class="fas fa-arrow-left"></i> {{ clienteNome || 'Cliente' }}
           </router-link>
-          <button v-else class="btn-back" @click="$router.back()">
-            <i class="fas fa-arrow-left"></i>
-          </button>
+          <router-link v-else :to="`/modelos`" class="breadcrumb-link">
+            <i class="fas fa-arrow-left"></i> Docs do Escritório
+          </router-link>
           <span class="breadcrumb-sep">/</span>
           <span class="breadcrumb-current">Assinaturas</span>
         </div>
@@ -396,9 +396,8 @@ function getWhatsAppLink(sig: any) {
 const quickContacts = ref<any[]>([])
 
 async function loadQuickContacts() {
-  if (!clienteId) return;
   try {
-    // Carrega Equipe
+    // Carrega Equipe (Sempre disponível)
     const reqEquipe = await fetch(`${API_BASE}/api/usuarios`, { headers })
     if (reqEquipe.ok) {
       const equipe = await reqEquipe.json()
@@ -408,23 +407,27 @@ async function loadQuickContacts() {
         })
       })
     }
-    // Carrega Cliente
-    const reqCliente = await fetch(`${API_BASE}/api/clientes/${clienteId}`, { headers })
-    if (reqCliente.ok) {
-      const c = await reqCliente.json()
-      quickContacts.value.push({
-        nome: c.nome, email: c.email || '', cpf: c.documento || '', funcao: 'Parte', tipo: 'Cliente'
-      })
-    }
-    // Carrega Partes
-    const reqPartes = await fetch(`${API_BASE}/api/clientes/${clienteId}/partes`, { headers })
-    if (reqPartes.ok) {
-      const partes = await reqPartes.json()
-      partes.forEach((p: any) => {
+    
+    // Carrega Cliente e Partes apenas se houver clienteId
+    if (clienteId && clienteId !== 'undefined' && clienteId !== 'null') {
+        // Carrega Cliente
+        const reqCliente = await fetch(`${API_BASE}/api/clientes/${clienteId}`, { headers })
+        if (reqCliente.ok) {
+        const c = await reqCliente.json()
         quickContacts.value.push({
-          nome: p.nome, email: p.email || '', cpf: p.documento || '', funcao: p.papel || 'Parte', tipo: 'Parte Envolvida'
+            nome: c.nome, email: c.email || '', cpf: c.documento || '', funcao: 'Parte', tipo: 'Cliente'
         })
-      })
+        }
+        // Carrega Partes
+        const reqPartes = await fetch(`${API_BASE}/api/clientes/${clienteId}/partes`, { headers })
+        if (reqPartes.ok) {
+        const partes = await reqPartes.json()
+        partes.forEach((p: any) => {
+            quickContacts.value.push({
+            nome: p.nome, email: p.email || '', cpf: p.documento || '', funcao: p.papel || 'Parte', tipo: 'Parte Envolvida'
+            })
+        })
+        }
     }
   } catch(e) { 
     console.error('Erro ao carregar contatos rápidos', e) 

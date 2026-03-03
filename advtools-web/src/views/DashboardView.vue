@@ -18,8 +18,11 @@ import {
   X,
   User,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Briefcase,
+  Plus
 } from 'lucide-vue-next'
+import GlobalClientSearch from '../components/GlobalClientSearch.vue'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
 
@@ -87,31 +90,44 @@ const tarefas = [
   { id: 2, title: 'Reunião Cliente TechCorp (Online)', time: '14:00 PM', priority: 'medium' },
   { id: 3, title: 'Verificar assinaturas do Contrato 042', time: '16:30 PM', priority: 'low' },
 ]
+
+const showSignDropdown = ref(false)
+const signContainer = ref(null)
+
+const handleClickOutsideSign = (event) => {
+    if (signContainer.value && !signContainer.value.contains(event.target)) {
+        showSignDropdown.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('mousedown', handleClickOutsideSign)
+})
+
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutsideSign)
+})
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50 flex">
     
     <!-- Sidebar Centralizado -->
-    <Sidebar :escritorio="escritorio" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
+    <Sidebar :escritorio="escritorio" :usuario="currentUser" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       
       <!-- Top Header -->
-      <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10">
+      <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30">
         <div class="flex items-center flex-1 gap-4">
           <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 text-slate-500 hover:text-slate-700">
             <Menu class="w-6 h-6" />
           </button>
           
           <div class="max-w-md w-full hidden sm:block">
-            <div class="relative">
-              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search class="h-5 w-5 text-slate-400" aria-hidden="true" />
-              </div>
-              <input type="text" class="block w-full rounded-full border-0 py-1.5 pl-10 pr-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 bg-slate-50" placeholder="Buscar processos, clientes, documentos..." />
-            </div>
+            <GlobalClientSearch placeholder="Buscar clientes..." />
           </div>
         </div>
 
@@ -161,15 +177,35 @@ const tarefas = [
       <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         
         <!-- Welcome Section -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 animate-fade-in-up">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 animate-fade-in-up relative z-50">
           <div>
             <h1 class="text-2xl font-bold text-slate-900">Visão Geral</h1>
             <p class="mt-1 text-sm text-slate-500">Acompanhe seus processos, prazos e métricas do escritório.</p>
           </div>
           <div class="mt-4 sm:mt-0 flex gap-3">
-            <button class="btn-secondary flex items-center gap-2">
-               <PenTool class="w-4 h-4" /> Nova Assinatura
-            </button>
+            <div class="relative" ref="signContainer">
+                <button @click="showSignDropdown = !showSignDropdown" class="btn-secondary flex items-center gap-2">
+                   <PenTool class="w-4 h-4" /> Nova Assinatura <ChevronDown class="w-4 h-4 opacity-50" />
+                </button>
+                
+                <div v-if="showSignDropdown" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 py-1 z-40 animate-fade-in-up">
+                    <button @click="router.push('/clientes?focus=true')" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors flex items-center gap-3">
+                        <Users class="w-4 h-4 text-slate-400" />
+                        <div>
+                            <p class="font-bold">Documento de Cliente</p>
+                            <p class="text-[10px] text-slate-500">Assinaturas vinculadas a um cliente</p>
+                        </div>
+                    </button>
+                    <button @click="router.push('/modelos?tab=internos')" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors flex items-center gap-3 border-t border-slate-50">
+                        <Building2 class="w-4 h-4 text-slate-400" />
+                        <div>
+                            <p class="font-bold">Documento do Escritório</p>
+                            <p class="text-[10px] text-slate-500">Documentos de uso interno</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
             <button class="btn-primary flex items-center gap-2 shadow-primary-500/30">
                <Scale class="w-4 h-4" /> Novo Processo
             </button>

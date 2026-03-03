@@ -22,10 +22,16 @@ import {
   LogOut,
   ChevronDown,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Phone,
+  ArrowRight,
+  Filter
 } from 'lucide-vue-next'
 import ClienteForm from '../components/ClienteForm.vue'
+import GlobalClientSearch from '../components/GlobalClientSearch.vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const router = useRouter()
 
 const handleLogout = () => {
@@ -216,25 +222,20 @@ onMounted(() => {
     </div>
 
     <!-- Sidebar Centralizado -->
-    <Sidebar :escritorio="escritorio" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
+    <Sidebar :escritorio="escritorio" :usuario="currentUser" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       
       <!-- Top Header -->
-      <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10">
+      <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30">
         <div class="flex items-center flex-1 gap-4">
           <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 text-slate-500 hover:text-slate-700">
             <Menu class="w-6 h-6" />
           </button>
           
           <div class="max-w-md w-full hidden sm:block">
-            <div class="relative">
-              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search class="h-5 w-5 text-slate-400" aria-hidden="true" />
-              </div>
-              <input type="text" class="block w-full rounded-full border-0 py-1.5 pl-10 pr-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 bg-slate-50" placeholder="Buscar clientes..." />
-            </div>
+            <GlobalClientSearch :auto-focus="route.query.focus === 'true'" placeholder="Buscar clientes..." />
           </div>
         </div>
 

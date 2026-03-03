@@ -56,25 +56,35 @@ async def substituir_modelo(
 # --- DOCUMENTOS CLIENTE ---
 
 @router_clientes_docs.get("/{cliente_id}/documentos", response_model=List[schemas.DocumentoCliente])
-async def read_documentos_cliente(cliente_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    return await read_documentos_cliente_service(db, current_user, cliente_id)
+async def read_documentos_cliente(cliente_id: int, pasta_id: int = -1, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return await read_documentos_cliente_service(db, current_user, cliente_id, pasta_id)
 
-    return await upload_documento_cliente_service(db, current_user, cliente_id, file, nome)
-
-# --- DOCUMENTOS ESCRITÓRIO ---
-
-@router_documentos.get("/escritorio", response_model=List[schemas.DocumentoCliente])
-async def read_documentos_escritorio(current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    return await read_documentos_escritorio_service(db, current_user)
-
-@router_documentos.post("/escritorio", response_model=schemas.DocumentoCliente)
-async def upload_documento_escritorio(
+@router_clientes_docs.post("/{cliente_id}/documentos", response_model=schemas.DocumentoCliente)
+async def upload_documento_cliente(
+    cliente_id: int,
     nome: str = Form(...),
+    pasta_id: int = Form(-1),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db), 
     current_user: models.Usuario = Depends(get_current_user)
 ):
-    return await upload_documento_escritorio_service(db, current_user, file, nome)
+    return await upload_documento_cliente_service(db, current_user, cliente_id, file, nome, pasta_id=pasta_id)
+
+# --- DOCUMENTOS ESCRITÓRIO ---
+
+@router_documentos.get("/escritorio", response_model=List[schemas.DocumentoCliente])
+async def read_documentos_escritorio(pasta_id: int = -1, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return await read_documentos_escritorio_service(db, current_user, pasta_id)
+
+@router_documentos.post("/escritorio", response_model=schemas.DocumentoCliente)
+async def upload_documento_escritorio(
+    nome: str = Form(...),
+    pasta_id: int = Form(-1),
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db), 
+    current_user: models.Usuario = Depends(get_current_user)
+):
+    return await upload_documento_escritorio_service(db, current_user, file, nome, pasta_id=pasta_id)
 
 @router_documentos.get("/{documento_id}", response_model=schemas.DocumentoCliente)
 async def read_documento(documento_id: int, current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

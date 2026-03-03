@@ -32,6 +32,9 @@ async def update_meu_escritorio_service(
     gemini_api_key: str,
     logo: UploadFile
 ):
+    if not (current_user.is_admin or current_user.perfil == 'Admin'):
+        raise HTTPException(status_code=403, detail="Apenas administradores podem alterar os dados do escritório.")
+        
     logo_path = None
     if logo:
         # Extrair extensão e montar o nome do arquivo baseado no ID do escritório

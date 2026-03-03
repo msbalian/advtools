@@ -149,11 +149,11 @@ async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuar
 
 # --- ROTAS DE DOCUMENTOS DO CLIENTE ---
 
-async def read_documentos_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int):
-    return await crud.get_documentos_cliente(db, cliente_id, escritorio_id=current_user.escritorio_id)
+async def read_documentos_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int, pasta_id: int = -1):
+    return await crud.get_documentos_cliente(db, cliente_id, escritorio_id=current_user.escritorio_id, pasta_id=pasta_id)
 
-async def read_documentos_escritorio_service(db: AsyncSession, current_user: models.Usuario):
-    return await crud.get_documentos_escritorio(db, escritorio_id=current_user.escritorio_id)
+async def read_documentos_escritorio_service(db: AsyncSession, current_user: models.Usuario, pasta_id: int = -1):
+    return await crud.get_documentos_escritorio(db, escritorio_id=current_user.escritorio_id, pasta_id=pasta_id)
 
 async def read_documento_service(db: AsyncSession, current_user: models.Usuario, documento_id: int):
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
@@ -161,7 +161,7 @@ async def read_documento_service(db: AsyncSession, current_user: models.Usuario,
         raise HTTPException(status_code=404, detail="Documento não encontrado")
     return doc
 
-async def upload_documento_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int, file: UploadFile, nome: str):
+async def upload_documento_cliente_service(db: AsyncSession, current_user: models.Usuario, cliente_id: int, file: UploadFile, nome: str, **kwargs):
     escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
     storage = get_storage_provider(escritorio)
     
@@ -172,7 +172,7 @@ async def upload_documento_cliente_service(db: AsyncSession, current_user: model
     relative_dir = f"cliente_{cliente_id}/documentos"
     db_path = await storage.save_file(content, relative_dir, unique_filename)
     
-    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=cliente_id)
+    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=cliente_id, pasta_id=kwargs.get('pasta_id'))
     return await crud.create_documento_cliente(
         db, 
         doc_create, 
@@ -180,7 +180,7 @@ async def upload_documento_cliente_service(db: AsyncSession, current_user: model
         current_user.escritorio_id
     )
 
-async def upload_documento_escritorio_service(db: AsyncSession, current_user: models.Usuario, file: UploadFile, nome: str):
+async def upload_documento_escritorio_service(db: AsyncSession, current_user: models.Usuario, file: UploadFile, nome: str, pasta_id: int = -1):
     escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
     storage = get_storage_provider(escritorio)
     
@@ -191,7 +191,7 @@ async def upload_documento_escritorio_service(db: AsyncSession, current_user: mo
     relative_dir = "escritorio/documentos"
     db_path = await storage.save_file(content, relative_dir, unique_filename)
     
-    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=None)
+    doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=None, pasta_id=pasta_id if pasta_id != -1 else None)
     return await crud.create_documento_cliente(
         db, 
         doc_create, 

@@ -24,7 +24,13 @@ import {
   Music,
   FileDown,
   Building2,
-  Wand2
+  Wand2,
+  Folder,
+  FolderPlus,
+  ChevronRight,
+  X,
+  Sparkles,
+  Loader2
 } from 'lucide-vue-next'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
@@ -39,6 +45,15 @@ const searchQuery = ref('')
 const sidebarOpen = ref(false)
 const currentUser = ref(null)
 const escritorio = ref(null)
+
+const confirmDialog = ref({ show: false, message: '', onConfirm: null, title: 'Confirmar Ação', type: 'primary' })
+const confirmAction = (message, onConfirm, title = 'Confirmar Ação', type = 'primary') => {
+    confirmDialog.value = { show: true, message, onConfirm, title, type }
+}
+const executeConfirm = async () => {
+    if (confirmDialog.value.onConfirm) await confirmDialog.value.onConfirm()
+    confirmDialog.value.show = false
+}
 const carregarDadosBase = async () => {
   try {
     const [resUser, resEsc] = await Promise.all([
@@ -71,16 +86,37 @@ const loadModelos = async () => {
 }
 
 // ==========================================
-// ESTADO DOCUMENTOS INTERNOS
+// ESTADO PASTAS & DOCUMENTOS INTERNOS
 // ==========================================
+const currentFolderId = ref(-1)
+const pastas = ref([])
+const breadcrumbs = ref([{ id: -1, nome: 'Raiz' }])
 const documentosInternos = ref([])
+
+const loadPastas = async () => {
+    try {
+        const res = await apiFetch(`/api/pastas?cliente_id=0&parent_id=${currentFolderId.value}`)
+        if (res.ok) {
+            pastas.value = await res.json()
+        }
+    } catch (e) {
+        console.error("Erro ao carregar pastas", e)
+    }
+}
+
 const loadDocumentosInternos = async () => {
   if (currentTab.value !== 'internos') return
   loading.value = true
   try {
-    const res = await apiFetch('/api/documentos/escritorio')
-    if (res.ok) {
-        documentosInternos.value = await res.json()
+    const [resDocs, resPastas] = await Promise.all([
+        apiFetch(`/api/documentos/escritorio?pasta_id=${currentFolderId.value}`),
+        apiFetch(`/api/pastas?cliente_id=0&parent_id=${currentFolderId.value}`)
+    ])
+    if (resDocs.ok) {
+        documentosInternos.value = await resDocs.json()
+    }
+    if (resPastas.ok) {
+        pastas.value = await resPastas.json()
     }
   } catch (err) {
     showToast('Erro ao carregar documentos', 'error')
@@ -88,6 +124,98 @@ const loadDocumentosInternos = async () => {
     loading.value = false
   }
 }
+
+// Lógica de Pastas
+const openFolder = async (folder) => {
+    currentFolderId.value = folder.id
+    breadcrumbs.value.push({ id: folder.id, nome: folder.nome })
+    await loadDocumentosInternos()
+}
+
+const navToBreadcrumb = async (index, breadcrumb) => {
+    if (index === breadcrumbs.value.length - 1) return
+    currentFolderId.value = breadcrumb.id
+    breadcrumbs.value = breadcrumbs.value.slice(0, index + 1)
+    await loadDocumentosInternos()
+}
+
+const showNewFolderModal = ref(false)
+const formDataFolder = ref({ nome: '' })
+const isSavingFolder = ref(false)
+
+const handleCreateFolder = async () => {
+    if (!formDataFolder.value.nome.trim()) {
+        showToast('Digite um nome para a pasta.', 'error')
+        return
+    }
+    isSavingFolder.value = true
+    try {
+        const payload = {
+            nome: formDataFolder.value.nome,
+            cliente_id: null,
+            parent_id: currentFolderId.value === -1 ? null : currentFolderId.value
+        }
+        const response = await apiFetch(`/api/pastas`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        if (!response.ok) throw new Error('Falha ao criar pasta')
+        
+        showToast('Pasta criada com sucesso!')
+        showNewFolderModal.value = false
+        formDataFolder.value.nome = ''
+        await loadDocumentosInternos()
+    } catch (e) {
+        showToast("Erro ao criar pasta: " + e.message, "error")
+    } finally {
+        isSavingFolder.value = false
+    }
+}
+
+const deleteFolder = async (id) => {
+    if (!confirm("Deseja mesmo remover esta pasta? Só é possível remover pastas vazias.")) return
+    try {
+        const res = await apiFetch(`/api/pastas/${id}`, { method: 'DELETE' })
+        if (res.ok) {
+            showToast("Pasta removida!")
+            await loadDocumentosInternos()
+        } else {
+            const err = await res.json()
+            throw new Error(err.detail || "Erro ao excluir pasta")
+        }
+    } catch (e) {
+        showToast(e.message, "error")
+    }
+}
+
+
+const organizarPasta = async () => {
+    if (currentFolderId.value === -1) return
+    
+    confirmAction("O Organizador Inteligente irá analisar seus arquivos, convertê-los para PDF e renomeá-los. Deseja iniciar?", async () => {
+        isOrganizing.value = true
+        progressModalOpen.value = true
+        jobProgress.value = { status: 'pending', progress: 0, message: 'Solicitando organização...' }
+        
+        try {
+            const response = await apiFetch(`/api/pastas/${currentFolderId.value}/organizar`, {
+                method: 'POST'
+            })
+            if (!response.ok) {
+                const err = await response.json()
+                throw new Error(err.detail || "Erro ao organizar pasta")
+            }
+            const data = await response.json()
+            currentJobId.value = data.job_id
+            pollJobStatus()
+        } catch (e) {
+            showToast(e.message, "error")
+            isOrganizing.value = false
+            progressModalOpen.value = false
+        }
+    }, "Organizador Inteligente", "purple")
+}
+
 
 // ==========================================
 // ESTADO UPLOAD / GESTÃO
@@ -118,6 +246,9 @@ const handleFileUpload = async (event) => {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('nome', file.name.split('.').slice(0, -1).join('.'))
+  if (currentTab.value === 'internos' && currentFolderId.value !== -1) {
+      formData.append('pasta_id', currentFolderId.value)
+  }
 
   isUploading.value = true
   try {
@@ -315,6 +446,9 @@ onMounted(() => {
             </div>
             
             <div class="flex gap-3">
+                <button v-if="currentTab === 'internos'" @click="showNewFolderModal = true" class="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-slate-200 transition-all">
+                    <FolderPlus class="w-4 h-4" /> Nova Pasta
+                </button>
                 <button @click="irParaRedator" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors">
                     <Wand2 class="w-4 h-4" /> Redator Inteligente
                 </button>
@@ -353,13 +487,31 @@ onMounted(() => {
                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 transition-shadow text-sm font-medium" />
             </div>
 
+            <!-- Breadcrumbs Pastas (Apenas Internos) -->
+            <div v-if="currentTab === 'internos'" class="px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center text-sm font-medium text-slate-600 overflow-x-auto mb-4">
+                <div class="flex items-center" v-for="(bc, index) in breadcrumbs" :key="bc.id">
+                    <button @click="navToBreadcrumb(index, bc)" 
+                            :class="index === breadcrumbs.length - 1 ? 'text-primary-700 font-bold' : 'hover:text-primary-600 transition-colors'">
+                        {{ bc.nome }}
+                    </button>
+                    <ChevronRight v-if="index < breadcrumbs.length - 1" class="w-4 h-4 mx-2 text-slate-400" />
+                </div>
+            </div>
+
+            <div v-if="currentFolderId !== -1 && currentTab === 'internos'" class="px-5 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between mb-4">
+                <span class="text-xs text-slate-400 font-medium font-sans uppercase tracking-wider">Modo Organizador Ativo</span>
+                <button @click="organizarPasta" :disabled="isOrganizing" class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-purple-700 transition-all disabled:opacity-50">
+                    <Sparkles class="w-4 h-4" /> {{ isOrganizing ? 'Organizando Pasta...' : 'Organizar esta Pasta' }}
+                </button>
+            </div>
+
             <!-- Grid -->
             <div v-if="loading" class="flex flex-col items-center justify-center py-20">
                 <RefreshCw class="h-8 w-8 text-primary-500 animate-spin mb-4" />
                 <p class="text-slate-500 font-medium">Carregando...</p>
             </div>
 
-            <div v-else-if="filteredItems.length === 0" class="text-center bg-white rounded-2xl border border-slate-200 border-dashed p-16">
+            <div v-else-if="filteredItems.length === 0 && (currentTab === 'modelos' || pastas.length === 0)" class="text-center bg-white rounded-2xl border border-slate-200 border-dashed p-16">
                 <FileText class="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <h3 class="text-xl font-bold text-slate-900 mb-2">Nada por aqui ainda</h3>
                 <p class="text-slate-500 mb-8 max-w-sm mx-auto">Comece enviando arquivos para organizar os documentos do seu escritório.</p>
@@ -369,6 +521,25 @@ onMounted(() => {
             </div>
 
             <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Pastas (Apenas Internos) -->
+                <div v-if="currentTab === 'internos'" v-for="pasta in pastas" :key="'p'+pasta.id" @click.self="openFolder(pasta)"
+                     class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary-400 transition-all group flex flex-col overflow-hidden cursor-pointer relative">
+                    <div class="p-5 flex items-center gap-4" @click="openFolder(pasta)">
+                        <div class="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+                            <Folder class="w-6 h-6" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-slate-900 font-bold truncate text-base group-hover:text-primary-700 transition-colors" :title="pasta.nome">{{ pasta.nome }}</h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Pasta</p>
+                        </div>
+                    </div>
+                    <button @click.stop="deleteFolder(pasta.id)" class="absolute top-4 right-4 p-2 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Excluir Pasta">
+                        <Trash2 class="w-4 h-4" />
+                    </button>
+                </div>
+
+                <!-- Itens -->
                 <div v-for="item in filteredItems" :key="item.id" 
                      class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary-200 transition-all group flex flex-col overflow-hidden">
                     
@@ -453,6 +624,34 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Modal Nova Pasta -->
+    <div v-if="showNewFolderModal" class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="showNewFolderModal = false"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
+          <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+             <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2"><FolderPlus class="w-5 h-5 text-primary-600" /> Nova Pasta</h3>
+             <button @click="showNewFolderModal = false" class="text-slate-400 hover:text-slate-500 transition-colors"><X class="w-5 h-5" /></button>
+          </div>
+          <div class="p-6">
+             <div class="space-y-4">
+                 <div>
+                     <label class="block text-sm font-medium text-slate-700 mb-1">Nome da Pasta</label>
+                     <input v-model="formDataFolder.nome" type="text" class="block w-full rounded-xl border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" placeholder="ex: Procurações" @keyup.enter="handleCreateFolder" />
+                 </div>
+             </div>
+          </div>
+          <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+             <button @click="showNewFolderModal = false" type="button" class="btn-secondary">Cancelar</button>
+             <button @click="handleCreateFolder" :disabled="isSavingFolder" type="button" class="btn-primary">
+                 {{ isSavingFolder ? 'Salvando...' : 'Criar Pasta' }}
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TOAST -->
     <Transition enter-active-class="transform ease-out duration-300 transition" enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="toast.show" class="fixed bottom-8 right-8 z-50 rounded-2xl shadow-2xl p-4 flex items-center gap-3 min-w-[300px]"
@@ -461,5 +660,74 @@ onMounted(() => {
         <p class="text-sm font-bold">{{ toast.message }}</p>
       </div>
     </Transition>
+    <!-- PRROGRESS MODAL -->
+    <div v-if="progressModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+            <div class="p-8 text-center">
+                <div class="mb-6 relative flex justify-center">
+                    <div class="absolute inset-0 bg-primary-100 rounded-full animate-ping opacity-20"></div>
+                    <div class="relative bg-primary-50 p-5 rounded-full ring-8 ring-primary-50/50">
+                        <Sparkles v-if="jobProgress.status !== 'completed'" class="w-10 h-10 text-primary-600 animate-pulse" />
+                        <CheckCircle2 v-else class="w-10 h-10 text-emerald-600" />
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-black text-slate-900 mb-2">Organizador Inteligente</h3>
+                <p class="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
+                    {{ jobProgress.message }}
+                </p>
+
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <div>
+                            <span class="text-xs font-black inline-block py-1 px-2 uppercase rounded-full text-primary-600 bg-primary-50">
+                                {{ jobProgress.status === 'completed' ? 'Finalizado' : 'Em andamento' }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-black inline-block text-primary-600">
+                                {{ jobProgress.progress }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-slate-100">
+                        <div :style="{ width: jobProgress.progress + '%' }" 
+                             class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary-500 to-indigo-600 transition-all duration-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-if="jobProgress.status === 'running' || jobProgress.status === 'pending'" class="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-slate-400">
+                    <Loader2 class="w-4 h-4 animate-spin" />
+                    A IA está processando seus documentos...
+                </div>
+                
+                <button v-if="jobProgress.status === 'completed' || jobProgress.status === 'failed'"
+                        @click="progressModalOpen = false" 
+                        class="mt-6 w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Confirm Dialog -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 animate-fade-in-up">
+        <div class="text-center">
+          <div :class="['mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4', confirmDialog.type === 'purple' ? 'bg-purple-100' : 'bg-red-100']">
+            <Sparkles v-if="confirmDialog.type === 'purple'" class="h-6 w-6 text-purple-600" />
+            <Trash2 v-else class="h-6 w-6 text-red-600" />
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">{{ confirmDialog.title }}</h3>
+          <p class="text-sm text-slate-500 mb-6">{{ confirmDialog.message }}</p>
+          <div class="flex gap-3 justify-center">
+            <button @click="confirmDialog.show = false" class="btn-secondary px-5 py-2">Cancelar</button>
+            <button @click="executeConfirm" :class="['px-5 py-2 rounded-lg font-bold text-white transition-all', confirmDialog.type === 'purple' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700']">
+                Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

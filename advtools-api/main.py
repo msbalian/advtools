@@ -11,14 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 logging.basicConfig(filename='api_errors.log', level=logging.ERROR)
 
 # Este app é sua API core em FastAPI
-app = FastAPI(title="ADVtools API", description="API para sistema jurídico", version="1.0.0")
+from config import Config
 
-# Setup CORS para o Vue.js poder consumir sem erros de Cross-Origin
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-    "http://localhost:5174",
-]
+app = FastAPI(title="ADVtools API")
+
+# Setup CORS
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")
+origins = [o.strip() for o in cors_origins_str.split(",")]
 
 # Servir arquivos da pasta static (como as logomarcas)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -67,7 +66,9 @@ app.include_router(partes_router.router_clientes_partes)
 # ==========================
 
 from routers import documentos as documentos_router
+from routers import pastas as pastas_router
 
+app.include_router(pastas_router.router)
 app.include_router(documentos_router.router_modelos)
 app.include_router(documentos_router.router_documentos)
 app.include_router(documentos_router.router_clientes_docs)
@@ -77,6 +78,8 @@ from routers import assinaturas as assinaturas_router
 
 app.include_router(assinaturas_router.router_assinaturas)
 app.include_router(assinaturas_router.router_assinativas_public)
+from routers import superadmin as superadmin_router
+app.include_router(superadmin_router.router)
 
 # ==========================
 # ROTAS APP DEFAULT

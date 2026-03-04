@@ -472,3 +472,12 @@ class DataJudBuscaRequest(BaseModel):
     numero_cnj: str
     tribunal: Optional[str] = None
     cliente_id: Optional[int] = None
+
+# ==========================
+# DASHBOARD SCHEMAS
+# ==========================
+class DashboardStats(BaseModel):
+    processos_ativos: int
+    assinaturas_pendentes: int
+    clientes_ativos: int
+    receita_mes: float

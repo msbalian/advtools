@@ -62,3 +62,6 @@ async def update_meu_escritorio_service(
         raise HTTPException(status_code=404, detail="Escritório não encontrado")
         
     return updated_escritorio
+
+async def get_dashboard_stats_service(db: AsyncSession, current_user: models.Usuario):
+    return await crud.get_dashboard_stats(db, escritorio_id=current_user.escritorio_id)

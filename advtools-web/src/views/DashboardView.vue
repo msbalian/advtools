@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   LayoutDashboard,
@@ -60,23 +60,68 @@ const carregarUsuario = async () => {
     }
 }
 
-// Add an onMounted hook if there isn't one, or merge it. 
-// At line 35 there is none, so we create it.
-import { onMounted } from 'vue'
+const dashboardStats = ref({
+    processos_ativos: 0,
+    assinaturas_pendentes: 0,
+    clientes_ativos: 0,
+    receita_mes: 0
+})
+
+const carregarStats = async () => {
+    try {
+        const res = await apiFetch('/api/escritorio/stats')
+        if (res.ok) {
+            dashboardStats.value = await res.json()
+        }
+    } catch (e) {
+        console.error("Erro ao carregar estatísticas do dashboard", e)
+    }
+}
 
 onMounted(() => {
     carregarEscritorio()
     carregarUsuario()
+    carregarStats()
 })
 
-
-
-const stats = [
-  { name: 'Processos Ativos', stat: '142', change: '+12%', changeType: 'increase', icon: Scale, color: 'text-primary-600', bg: 'bg-primary-50' },
-  { name: 'Assinaturas Pend.', stat: '8', change: '-2', changeType: 'decrease', icon: PenTool, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { name: 'Novos Clientes', stat: '24', change: '+4.5%', changeType: 'increase', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { name: 'Receita Prevista', stat: 'R$ 45.2k', change: '+15.2%', changeType: 'increase', icon: BadgeDollarSign, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-]
+const stats = computed(() => [
+  { 
+    name: 'Processos Ativos', 
+    stat: dashboardStats.value.processos_ativos.toString(), 
+    change: 'Total', 
+    changeType: 'increase', 
+    icon: Scale, 
+    color: 'text-primary-600', 
+    bg: 'bg-primary-50' 
+  },
+  { 
+    name: 'Assinaturas Pend.', 
+    stat: dashboardStats.value.assinaturas_pendentes.toString(), 
+    change: 'Aguardando', 
+    changeType: 'neutral', 
+    icon: PenTool, 
+    color: 'text-amber-600', 
+    bg: 'bg-amber-50' 
+  },
+  { 
+    name: 'Clientes Ativos', 
+    stat: dashboardStats.value.clientes_ativos.toString(), 
+    change: 'Base Total', 
+    changeType: 'increase', 
+    icon: Users, 
+    color: 'text-emerald-600', 
+    bg: 'bg-emerald-50' 
+  },
+  { 
+    name: 'Receita deste mês', 
+    stat: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardStats.value.receita_mes), 
+    change: 'Faturamento', 
+    changeType: 'increase', 
+    icon: BadgeDollarSign, 
+    color: 'text-indigo-600', 
+    bg: 'bg-indigo-50' 
+  },
+])
 
 const processos = [
   { id: '0010234-55.2023.8.26.0100', cliente: 'TechCorp S.A.', tribunal: 'TJSP', status: 'Aguardando Prazo', date: 'Hoje, 14:30', badgeRef: 'bg-amber-50 text-amber-700 ring-amber-600/20' },
@@ -104,7 +149,7 @@ onMounted(() => {
     document.addEventListener('mousedown', handleClickOutsideSign)
 })
 
-import { onUnmounted } from 'vue'
+
 onUnmounted(() => {
     document.removeEventListener('mousedown', handleClickOutsideSign)
 })
@@ -206,7 +251,7 @@ onUnmounted(() => {
                 </div>
             </div>
             
-            <button class="btn-primary flex items-center gap-2 shadow-primary-500/30">
+            <button @click="router.push('/processos/novo')" class="btn-primary flex items-center gap-2 shadow-primary-500/30">
                <Scale class="w-4 h-4" /> Novo Processo
             </button>
           </div>
@@ -311,7 +356,7 @@ onUnmounted(() => {
              <div class="card bg-gradient-to-br from-primary-600 to-primary-800 text-white p-6 animate-fade-in-up" style="animation-delay: 0.6s;">
                 <h3 class="font-semibold text-lg mb-2">Petição Inteligente</h3>
                 <p class="text-primary-100 text-sm mb-4">Gere petições altamente assertivas em segundos utilizando a Inteligência Artificial Gemini integrada aos dados do seu processo.</p>
-                <button class="bg-white text-primary-700 hover:bg-primary-50 font-medium py-2 px-4 rounded-lg shadow-sm transition-colors text-sm w-full">
+                <button @click="router.push('/redator')" class="bg-white text-primary-700 hover:bg-primary-50 font-medium py-2 px-4 rounded-lg shadow-sm transition-colors text-sm w-full">
                   Gerar Nova Peça com IA
                 </button>
              </div>

@@ -8,7 +8,8 @@ from services.auth_service import get_current_user
 from services.escritorio_service import (
     create_escritorio_service,
     get_meu_escritorio_service,
-    update_meu_escritorio_service
+    update_meu_escritorio_service,
+    get_dashboard_stats_service
 )
 
 router = APIRouter(prefix="/api/escritorios", tags=["Escritorios"])
@@ -32,3 +33,7 @@ async def update_meu_escritorio(
     db: AsyncSession = Depends(get_db)
 ):
     return await update_meu_escritorio_service(db, current_user, nome, documento, gemini_api_key, logo)
+
+@router_singular.get("/stats", response_model=schemas.DashboardStats)
+async def get_dashboard_stats(current_user: models.Usuario = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return await get_dashboard_stats_service(db, current_user)

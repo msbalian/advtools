@@ -16,11 +16,24 @@ router = APIRouter(prefix="/api/pastas", tags=["Pastas de Documentos"])
 async def listar_pastas(
     cliente_id: Optional[int] = None,
     servico_id: Optional[int] = None,
-    parent_id: Optional[int] = -1,
+    processo_id: Optional[int] = None,
+    parent_id: Optional[str] = "-1",
     db: AsyncSession = Depends(get_db), 
     current_user: models.Usuario = Depends(get_current_user)
 ):
-    return await crud.get_pastas(db, current_user.escritorio_id, cliente_id, servico_id, parent_id)
+    pid = -1
+    if parent_id is not None:
+        if parent_id == "-1":
+            pid = -1
+        elif parent_id.lower() == "null" or parent_id == "":
+            pid = None
+        else:
+            try:
+                pid = int(parent_id)
+            except ValueError:
+                pid = -1
+    
+    return await crud.get_pastas(db, current_user.escritorio_id, cliente_id, servico_id, pid, processo_id=processo_id)
 
 @router.post("", response_model=schemas.PastaDocumentoResponse)
 async def criar_pasta(

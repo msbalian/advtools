@@ -1,3 +1,5 @@
+import json
+from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, distinct
@@ -268,7 +270,7 @@ async def delete_parte_envolvida(db: AsyncSession, parte_id: int, escritorio_id:
 # ==========================
 # GESTÃO DE PASTAS DE DOCUMENTOS
 # ==========================
-async def get_pastas(db: AsyncSession, escritorio_id: int, cliente_id: Optional[int] = None, servico_id: Optional[int] = None, parent_id: Optional[int] = -1):
+async def get_pastas(db: AsyncSession, escritorio_id: int, cliente_id: Optional[int] = None, servico_id: Optional[int] = None, parent_id: Optional[int] = -1, processo_id: Optional[int] = None):
     query = select(models.PastaDocumento).filter(models.PastaDocumento.escritorio_id == escritorio_id)
     
     if cliente_id is not None:
@@ -278,7 +280,11 @@ async def get_pastas(db: AsyncSession, escritorio_id: int, cliente_id: Optional[
             query = query.filter(models.PastaDocumento.cliente_id == cliente_id)
     if servico_id is not None:
         query = query.filter(models.PastaDocumento.servico_id == servico_id)
-    if parent_id != -1: # Se parent_id for passado (mesmo None para a raiz), aplicamos o filtro
+    if processo_id is not None:
+        query = query.filter(models.PastaDocumento.processo_id == processo_id)
+    if parent_id != -1:
+        # Se for None, filtramos por parent_id is null (Raiz)
+        # Se for um ID, filtramos por esse ID
         query = query.filter(models.PastaDocumento.parent_id == parent_id)
         
     result = await db.execute(query)
@@ -689,3 +695,60 @@ async def delete_tipo_servico(db: AsyncSession, tipo_id: int, escritorio_id: int
     await db.delete(db_tipo)
     await db.commit()
     return True
+
+# ==========================
+# DASHBOARD / ESTATÍSTICAS
+# ==========================
+async def get_dashboard_stats(db: AsyncSession, escritorio_id: int):
+    # 1. Processos Ativos
+    res_proc = await db.execute(
+        select(func.count(models.Processo.id))
+        .where(models.Processo.escritorio_id == escritorio_id)
+        .where(models.Processo.status == 'Ativo')
+    )
+    processos_ativos = res_proc.scalar() or 0
+
+    # 2. Clientes Ativos (Total)
+    res_clie = await db.execute(
+        select(func.count(models.Cliente.id))
+        .where(models.Cliente.escritorio_id == escritorio_id)
+    )
+    clientes_ativos = res_clie.scalar() or 0
+
+    # 3. Assinaturas Pendentes (Aguardando ou Parcial)
+    res_ass = await db.execute(
+        select(func.count(models.DocumentoCliente.id))
+        .where(models.DocumentoCliente.escritorio_id == escritorio_id)
+        .where(models.DocumentoCliente.status_assinatura.in_(['Aguardando', 'Parcial']))
+    )
+    assinaturas_pendentes = res_ass.scalar() or 0
+
+    # 4. Receita deste Mês (Somatória de condicoes_pagamento JSON)
+    res_serv = await db.execute(
+        select(models.Servico)
+        .where(models.Servico.escritorio_id == escritorio_id)
+    )
+    servicos = res_serv.scalars().all()
+
+    current_month_year = datetime.now().strftime("%m/%Y")
+    receita_total = 0.0
+
+    for s in servicos:
+        if s.condicoes_pagamento:
+            try:
+                pagamentos = json.loads(s.condicoes_pagamento)
+                if isinstance(pagamentos, list):
+                    for p in pagamentos:
+                        # O formato no frontend é DD/MM/AAAA
+                        data_pg = p.get('data', '')
+                        if data_pg and data_pg.endswith(current_month_year):
+                            receita_total += float(p.get('valor') or 0)
+            except (json.JSONDecodeError, ValueError):
+                continue
+
+    return {
+        "processos_ativos": processos_ativos,
+        "clientes_ativos": clientes_ativos,
+        "assinaturas_pendentes": assinaturas_pendentes,
+        "receita_mes": receita_total
+    }

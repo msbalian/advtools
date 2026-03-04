@@ -470,29 +470,29 @@ onMounted(() => {
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
       <!-- HEADER -->
-      <header class="bg-white border-b border-slate-200 px-8 py-5 flex flex-col gap-4 z-10">
-        <div class="flex items-center justify-between">
+      <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-5 flex flex-col gap-4 z-10">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div class="flex items-center gap-4">
             <button @click="sidebarOpen = true" class="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 focus:outline-none">
                 <FileText class="h-6 w-6" />
             </button>
-            <div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <Building2 class="w-6 h-6 text-primary-600" /> Docs do Escritório
+            <div class="min-w-0">
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2 truncate">
+                    <Building2 class="w-6 h-6 text-primary-600 flex-shrink-0" /> Docs do Escritório
                 </h1>
-                <p class="text-sm text-slate-500 font-medium">Gestão centralizada de modelos e documentos internos</p>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium truncate">Gestão centralizada de modelos e documentos internos</p>
             </div>
             </div>
             
-            <div class="flex gap-3">
-                <button v-if="currentTab === 'internos'" @click="showNewFolderModal = true" class="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-slate-200 transition-all">
-                    <FolderPlus class="w-4 h-4" /> Nova Pasta
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button v-if="currentTab === 'internos'" @click="showNewFolderModal = true" class="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md hover:bg-slate-200 transition-all">
+                    <FolderPlus class="w-4 h-4" /> <span class="hidden xsm:inline">Nova Pasta</span>
                 </button>
-                <button @click="irParaRedator" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors">
-                    <Wand2 class="w-4 h-4" /> Redator Inteligente
+                <button @click="irParaRedator" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs sm:text-sm font-bold hover:bg-indigo-100 transition-colors">
+                    <Wand2 class="w-4 h-4" /> <span class="hidden sm:inline">Redator Inteligente</span>
                 </button>
-                <button @click="triggerUpload" :disabled="isUploading" class="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-primary-700 transition-all disabled:opacity-50">
-                    <Plus class="w-4 h-4" /> {{ currentTab === 'modelos' ? 'Novo Modelo' : 'Upload Documento' }}
+                <button @click="triggerUpload" :disabled="isUploading" class="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md hover:bg-primary-700 transition-all disabled:opacity-50">
+                    <Plus class="w-4 h-4" /> <span>{{ currentTab === 'modelos' ? 'Novo Modelo' : 'Upload' }}</span>
                 </button>
             </div>
         </div>
@@ -537,10 +537,10 @@ onMounted(() => {
                 </div>
             </div>
 
-            <div v-if="currentFolderId !== -1 && currentTab === 'internos'" class="px-5 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between mb-4">
+            <div v-if="currentFolderId !== -1 && currentTab === 'internos'" class="px-5 py-3 bg-white border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
                 <span class="text-xs text-slate-400 font-medium font-sans uppercase tracking-wider">Modo Organizador Ativo</span>
-                <button @click="organizarPasta" :disabled="isOrganizing" class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-purple-700 transition-all disabled:opacity-50">
-                    <Sparkles class="w-4 h-4" /> {{ isOrganizing ? 'Organizando Pasta...' : 'Organizar esta Pasta' }}
+                <button @click="organizarPasta" :disabled="isOrganizing" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:bg-purple-700 transition-all disabled:opacity-50">
+                    <Sparkles class="w-4 h-4" /> {{ isOrganizing ? 'Organizando...' : 'Organizar esta Pasta' }}
                 </button>
             </div>
 

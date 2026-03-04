@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
@@ -16,11 +16,19 @@ import {
   CheckCircle2,
   X,
   Cloud,
-  Settings2
+  Settings2,
+  ShieldCheck,
+  Search
 } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 
 const router = useRouter()
-const activeTab = ref('escritorio') // 'escritorio' ou 'equipe'
+const route = useRoute()
+const activeTab = ref(route.query.tab || 'escritorio') // 'escritorio', 'equipe' ou 'global'
+
+watch(() => route.query.tab, (newTab) => {
+    if (newTab) activeTab.value = newTab
+})
 const isLoading = ref(true)
 
 // =======================
@@ -39,6 +47,8 @@ const logoPreview = ref(null)
 // ESTADO: EQUIPE
 // =======================
 const usuarios = ref([])
+const usuariosGlobais = ref([])
+const searchGlobal = ref('')
 const isSavingUsuario = ref(false)
 const showUsuarioModal = ref(false)
 const isEditingUsuario = ref(false)
@@ -77,6 +87,9 @@ onMounted(async () => {
   await loadCurrentUser()
   await loadDadosEscritorio()
   await loadEquipe()
+  if (currentUser.value?.is_admin) {
+    await loadUsuariosGlobais()
+  }
   isLoading.value = false
 })
 
@@ -109,6 +122,15 @@ const loadEquipe = async () => {
         usuarios.value = await res.json()
     } catch (e) {
         console.error(e)
+    }
+}
+
+const loadUsuariosGlobais = async () => {
+    try {
+        const res = await apiFetch('/api/admin/usuarios')
+        if (res.ok) usuariosGlobais.value = await res.json()
+    } catch (e) {
+        console.error("Erro ao carregar gestão global", e)
     }
 }
 
@@ -244,7 +266,49 @@ const toggleStatus = async (user) => {
 }
 
 const isAdmin = () => {
-    return currentUser.value && currentUser.value.is_admin
+    return currentUser.value && (currentUser.value.is_admin || currentUser.value.perfil === 'Admin')
+}
+
+const filteredGlobalUsers = computed(() => {
+    if (!searchGlobal.value) return usuariosGlobais.value
+    const s = searchGlobal.value.toLowerCase()
+    return usuariosGlobais.value.filter(u => 
+        u.nome.toLowerCase().includes(s) || 
+        u.email.toLowerCase().includes(s) || 
+        u.escritorio?.nome?.toLowerCase().includes(s)
+    )
+})
+
+const handleAprovarGlobal = async (userId) => {
+    try {
+        const res = await apiFetch(`/api/admin/usuarios/${userId}/aprovar`, { method: 'POST' })
+        if (res.ok) {
+            showMessage("Usuário aprovado/ativado com sucesso!")
+            await loadUsuariosGlobais()
+        }
+    } catch (e) { showMessage("Erro ao aprovar usuário", "error") }
+}
+
+const handleBloquearGlobal = async (userId) => {
+    try {
+        const res = await apiFetch(`/api/admin/usuarios/${userId}/bloquear`, { method: 'POST' })
+        if (res.ok) {
+            showMessage("Usuário bloqueado com sucesso!")
+            await loadUsuariosGlobais()
+        }
+    } catch (e) { showMessage("Erro ao bloquear usuário", "error") }
+}
+
+const handleExcluirGlobal = async (userId) => {
+    confirmAction("Deseja realmente EXCLUIR este usuário permanentemente?", async () => {
+        try {
+            const res = await apiFetch(`/api/admin/usuarios/${userId}`, { method: 'DELETE' })
+            if (res.ok) {
+                showMessage("Usuário excluído com sucesso!")
+                await loadUsuariosGlobais()
+            }
+        } catch (e) { showMessage("Erro ao excluir usuário", "error") }
+    })
 }
 
 const sidebarOpen = ref(false)
@@ -297,6 +361,13 @@ const sidebarOpen = ref(false)
                         :class="[activeTab === 'equipe' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
                     >
                         <Users class="w-4 h-4" /> Gestão da Equipe
+                    </button>
+                    <button 
+                        v-if="currentUser?.is_admin"
+                        @click="activeTab = 'global'"
+                        :class="[activeTab === 'global' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
+                    >
+                        <ShieldCheck class="w-4 h-4" /> Gestão Global (Root)
                     </button>
                 </nav>
             </div>
@@ -412,6 +483,58 @@ const sidebarOpen = ref(false)
                                     <button v-if="isAdmin() && currentUser.id !== user.id" @click="deleteUsuario(user.id)" class="text-red-500 hover:text-red-700 px-2">
                                         <Trash2 class="w-4 h-4" />
                                     </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content: Gestão Global -->
+            <div v-if="activeTab === 'global'" class="p-6">
+                <div class="sm:flex sm:items-center sm:justify-between mb-6">
+                    <div>
+                        <h2 class="text-base font-semibold leading-6 text-slate-900">Administração Global do Sistema</h2>
+                        <p class="mt-1 text-sm text-slate-500">Gestão de usuários e aprovações de todos os escritórios cadastrados.</p>
+                    </div>
+                </div>
+
+                <div class="relative mb-6">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Search class="h-4 w-4 text-slate-400" />
+                    </div>
+                    <input v-model="searchGlobal" type="text" placeholder="Filtrar por nome, email ou escritório..." class="block w-full max-w-md rounded-lg border-0 py-2 pl-10 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-primary-600 sm:text-sm" />
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-300">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-3">Usuário / Escritório</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Status</th>
+                                <th class="relative py-3.5 pl-3 pr-4 sm:pr-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            <tr v-for="u in filteredGlobalUsers" :key="u.id">
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-3">
+                                    <div class="font-bold text-slate-900 text-base">{{ u.nome }}</div>
+                                    <div class="text-slate-500">{{ u.email }}</div>
+                                    <div class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                        {{ u.escritorio?.nome || 'N/A' }}
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span :class="[u.ativo ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-amber-50 text-amber-700 ring-amber-600/20', 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset']">
+                                        {{ u.ativo ? 'Ativo' : 'Pendente/Bloqueado' }}
+                                    </span>
+                                </td>
+                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-3">
+                                    <div class="flex justify-end gap-2">
+                                        <button v-if="!u.ativo" @click="handleAprovarGlobal(u.id)" class="text-emerald-600 hover:text-emerald-900">Aprovar</button>
+                                        <button v-if="u.ativo && u.id !== currentUser?.id" @click="handleBloquearGlobal(u.id)" class="text-amber-600 hover:text-amber-900">Bloquear</button>
+                                        <button v-if="u.id !== currentUser?.id" @click="handleExcluirGlobal(u.id)" class="text-red-600 hover:text-red-900">Excluir</button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

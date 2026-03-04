@@ -1,8 +1,9 @@
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
+from config import Config
 
-engine = create_async_engine('postgresql+asyncpg://postgres:0000@localhost:5432/advtools')
+engine = create_async_engine(Config.DATABASE_URL)
 
 async def run_migration():
     async with engine.begin() as conn:

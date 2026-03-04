@@ -45,6 +45,7 @@ const searchQuery = ref('')
 const sidebarOpen = ref(false)
 const currentUser = ref(null)
 const escritorio = ref(null)
+const sortBy = ref('nome') // 'nome' ou 'data'
 
 const confirmDialog = ref({ show: false, message: '', onConfirm: null, title: 'Confirmar Ação', type: 'primary' })
 const confirmAction = (message, onConfirm, title = 'Confirmar Ação', type = 'primary') => {
@@ -432,6 +433,40 @@ const getStatusClass = (status) => {
     if (status === 'Parcial' || status === 'Pendente') return 'bg-amber-100 text-amber-700'
     return 'bg-slate-100 text-slate-600'
 }
+const formatSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '-'
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+const sortedContent = computed(() => {
+    // Mescla pastas e documentos para aplicação da ordenação, 
+    // mas mantendo pastas sempre no topo.
+    const query = searchQuery.value.toLowerCase()
+    
+    // Filtragem
+    const filteredPastas = pastas.value.filter(p => p.nome.toLowerCase().includes(query))
+    const currentDocs = currentTab.value === 'modelos' ? modelos.value : documentosInternos.value
+    const filteredDocs = currentDocs.filter(d => d.nome.toLowerCase().includes(query))
+    
+    // Ordenação
+    const sorter = (a, b) => {
+        if (sortBy.value === 'data') {
+            const dateA = new Date(a.data_alteracao || a.data_criacao || 0)
+            const dateB = new Date(b.data_alteracao || b.data_criacao || 0)
+            return dateB - dateA // Recentes primeiro
+        } else {
+            return a.nome.localeCompare(b.nome)
+        }
+    }
+    
+    return {
+        pastas: [...filteredPastas].sort(sorter),
+        docs: [...filteredDocs].sort(sorter)
+    }
+})
 
 const getFileExtension = (path) => {
     if (!path) return 'FILE'
@@ -526,6 +561,17 @@ onMounted(() => {
                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 transition-shadow text-sm font-medium" />
             </div>
 
+            <!-- Controles de Ordenação -->
+            <div class="flex items-center gap-2 mb-2 px-1">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">Ordenar por:</span>
+                <button @click="sortBy = 'nome'" :class="['px-3 py-1.5 rounded-lg text-xs font-bold transition-all', sortBy === 'nome' ? 'bg-primary-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50']">
+                    Nome (A-Z)
+                </button>
+                <button @click="sortBy = 'data'" :class="['px-3 py-1.5 rounded-lg text-xs font-bold transition-all', sortBy === 'data' ? 'bg-primary-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50']">
+                    Mais Recentes
+                </button>
+            </div>
+
             <!-- Breadcrumbs Pastas (Apenas Internos) -->
             <div v-if="currentTab === 'internos'" class="px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center text-sm font-medium text-slate-600 overflow-x-auto mb-4">
                 <div class="flex items-center" v-for="(bc, index) in breadcrumbs" :key="bc.id">
@@ -562,7 +608,7 @@ onMounted(() => {
             <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
                 <!-- Pastas (Apenas Internos) -->
-                <div v-if="currentTab === 'internos'" v-for="pasta in pastas" :key="'p'+pasta.id" @click.self="openFolder(pasta)"
+                <div v-if="currentTab === 'internos'" v-for="pasta in sortedContent.pastas" :key="'p'+pasta.id" @click.self="openFolder(pasta)"
                      class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary-400 transition-all group flex flex-col overflow-hidden cursor-pointer relative">
                     <div class="p-5 flex items-center gap-4" @click="openFolder(pasta)">
                         <div class="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
@@ -570,7 +616,7 @@ onMounted(() => {
                         </div>
                         <div class="min-w-0 flex-1">
                             <h3 class="text-slate-900 font-bold truncate text-base group-hover:text-primary-700 transition-colors" :title="pasta.nome">{{ pasta.nome }}</h3>
-                            <p class="text-xs text-slate-400 font-medium mt-1">Pasta</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{{ formatSize(pasta.tamanho_total) }} • Pasta</p>
                         </div>
                     </div>
                     <button @click.stop="deleteFolder(pasta.id)" class="absolute top-4 right-4 p-2 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Excluir Pasta">
@@ -579,7 +625,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Itens -->
-                <div v-for="item in filteredItems" :key="item.id" 
+                <div v-for="item in sortedContent.docs" :key="item.id" 
                      class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary-200 transition-all group flex flex-col overflow-hidden">
                     
                     <div class="p-5 flex items-start gap-4">
@@ -595,7 +641,9 @@ onMounted(() => {
                                     {{ item.status_assinatura }}
                                 </span>
                             </div>
-                            <p class="text-xs text-slate-400 font-medium">Enviado em {{ formatDate(item.data_criacao) }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1">
+                                {{ formatSize(item.tamanho) }} • {{ formatDate(item.data_alteracao || item.data_criacao) }}
+                            </p>
                         </div>
                     </div>
 

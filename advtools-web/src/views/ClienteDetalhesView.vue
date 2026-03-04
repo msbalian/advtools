@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
@@ -66,6 +66,7 @@ const breadcrumbs = ref([{ id: -1, nome: 'Raiz' }])
 const isLoading = ref(true)
 const showProfileMenu = ref(false)
 const currentUser = ref(null)
+const sortBy = ref('nome') // 'nome' ou 'data'
 
 const carregarUsuario = async () => {
     try {
@@ -463,6 +464,33 @@ const getExtensionColor = (ext) => {
     }
     return colors[ext] || 'bg-slate-50 text-slate-500 border-slate-100'
 }
+const formatSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '-'
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+const sortedContent = computed(() => {
+    const query = '' // Aqui não tem busca global, mas podemos adicionar se quiser
+    
+    // Ordenação
+    const sorter = (a, b) => {
+        if (sortBy.value === 'data') {
+            const dateA = new Date(a.data_alteracao || a.data_criacao || 0)
+            const dateB = new Date(b.data_alteracao || b.data_criacao || 0)
+            return dateB - dateA
+        } else {
+            return (a.nome || '').localeCompare(b.nome || '')
+        }
+    }
+    
+    return {
+        pastas: [...pastas.value].sort(sorter),
+        documentos: [...documentos.value].sort(sorter)
+    }
+})
 
 // Lógica de Pastas
 const openFolder = async (folder) => {
@@ -665,6 +693,8 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="cliente" class="space-y-6 animate-fade-in-up">
+            <!-- Controles de Ordenação (Global para Documentos/Pastas abaixo) -->
+             <!-- Deslocado para perto da seção de documentos se preferir, mas aqui fica central -->
             
             <!-- Dashboard Cover & Header -->
             <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden relative">
@@ -872,13 +902,24 @@ onMounted(async () => {
                         </div>
 
                         <!-- Breadcrumbs Pastas -->
-                        <div class="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center text-sm font-medium text-slate-600 overflow-x-auto">
-                            <div class="flex items-center" v-for="(bc, index) in breadcrumbs" :key="bc.id">
-                                <button @click="navToBreadcrumb(index, bc)" 
-                                        :class="index === breadcrumbs.length - 1 ? 'text-sky-700' : 'hover:text-sky-600 transition-colors'">
-                                    {{ bc.nome }}
+                        <div class="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between overflow-x-auto">
+                            <div class="flex items-center text-sm font-medium text-slate-600">
+                                <div class="flex items-center" v-for="(bc, index) in breadcrumbs" :key="bc.id">
+                                    <button @click="navToBreadcrumb(index, bc)" 
+                                            :class="index === breadcrumbs.length - 1 ? 'text-sky-700' : 'hover:text-sky-600 transition-colors'">
+                                        {{ bc.nome }}
+                                    </button>
+                                    <ChevronRight v-if="index < breadcrumbs.length - 1" class="w-4 h-4 mx-1 text-slate-400" />
+                                </div>
+                            </div>
+                            <!-- Controles de Ordenação -->
+                            <div class="flex items-center gap-2">
+                                <button @click="sortBy = 'nome'" :class="['px-2 py-1 rounded text-[10px] font-bold transition-all', sortBy === 'nome' ? 'bg-sky-600 text-white' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-50']">
+                                    A-Z
                                 </button>
-                                <ChevronRight v-if="index < breadcrumbs.length - 1" class="w-4 h-4 mx-1 text-slate-400" />
+                                <button @click="sortBy = 'data'" :class="['px-2 py-1 rounded text-[10px] font-bold transition-all', sortBy === 'data' ? 'bg-sky-600 text-white' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-50']">
+                                    Data
+                                </button>
                             </div>
                         </div>
 
@@ -892,12 +933,15 @@ onMounted(async () => {
                         <div class="overflow-x-auto">
                             <ul v-if="documentos.length > 0 || pastas.length > 0" role="list" class="divide-y divide-slate-100">
                                 <!-- Render Pastas -->
-                                <li v-for="pasta in pastas" :key="'p'+pasta.id" @click.self="openFolder(pasta)" class="px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer group flex items-center justify-between border-l-4 border-transparent hover:border-sky-400">
+                                <li v-for="pasta in sortedContent.pastas" :key="'p'+pasta.id" @click.self="openFolder(pasta)" class="px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer group flex items-center justify-between border-l-4 border-transparent hover:border-sky-400">
                                     <div class="flex items-center gap-3 w-full" @click="openFolder(pasta)">
                                         <div class="p-2 bg-slate-100 text-slate-500 rounded-lg group-hover:bg-sky-100 group-hover:text-sky-600 transition-colors">
                                            <Folder class="w-5 h-5 flex-shrink-0" />
                                         </div>
-                                        <span class="text-sm font-semibold text-slate-800 group-hover:text-sky-700 transition-colors">{{ pasta.nome }}</span>
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-semibold text-slate-800 group-hover:text-sky-700 transition-colors">{{ pasta.nome }}</span>
+                                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ formatSize(pasta.tamanho_total) }} • Pasta</span>
+                                        </div>
                                     </div>
                                     <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button @click.stop="deleteFolder(pasta.id)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pasta">
@@ -906,7 +950,7 @@ onMounted(async () => {
                                     </div>
                                 </li>
                                 <!-- Render Documentos -->
-                                <li v-for="doc in documentos" :key="doc.id" class="px-5 py-4 hover:bg-slate-50 transition-colors group">
+                                <li v-for="doc in sortedContent.documentos" :key="doc.id" class="px-5 py-4 hover:bg-slate-50 transition-colors group">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
                                             <div class="h-10 w-10 rounded-lg flex items-center justify-center border font-black text-[9px] tracking-tighter"
@@ -918,8 +962,8 @@ onMounted(async () => {
                                                     <span class="text-sm font-semibold text-slate-900">{{ doc.nome }}</span>
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
-                                                    <span class="text-xs text-slate-500 flex items-center gap-1">
-                                                        <Calendar class="w-3 h-3" /> {{ new Date(doc.data_criacao).toLocaleDateString() }}
+                                                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                                                        {{ formatSize(doc.tamanho) }} • {{ formatDate(doc.data_alteracao || doc.data_criacao) }}
                                                     </span>
                                                     <!-- Badge de status de assinatura -->
                                                     <span

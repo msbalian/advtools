@@ -261,14 +261,45 @@ class DocumentoClienteBase(BaseModel):
 
 class DocumentoClienteCreate(DocumentoClienteBase):
     cliente_id: Optional[int] = None
+    pasta_id: Optional[int] = None
+
+class DocumentoClienteUpdate(BaseModel):
+    nome: Optional[str] = None
+    pasta_id: Optional[int] = None
+
+class PastaDocumentoBase(BaseModel):
+    nome: str
+    cliente_id: Optional[int] = None
+    servico_id: Optional[int] = None
+    processo_id: Optional[int] = None
+    parent_id: Optional[int] = None
+
+class PastaDocumentoCreate(PastaDocumentoBase):
+    pass
+
+class PastaDocumentoUpdate(BaseModel):
+    nome: Optional[str] = None
+    parent_id: Optional[int] = None
+
+class PastaDocumentoResponse(PastaDocumentoBase):
+    id: int
+    escritorio_id: int
+    data_criacao: datetime
+    tamanho_total: Optional[int] = 0 # Adicionado para listagem
+
+    class Config:
+        from_attributes = True
 
 class DocumentoCliente(DocumentoClienteBase):
     id: int
     escritorio_id: int
     cliente_id: Optional[int] = None
+    pasta_id: Optional[int] = None
     arquivo_path: str
+    tamanho: Optional[int] = None
     arquivo_assinado_path: Optional[str] = None
     data_criacao: datetime
+    data_alteracao: Optional[datetime] = None
     
     # ADVtools Sign Fields
     token_assinatura: Optional[str] = None

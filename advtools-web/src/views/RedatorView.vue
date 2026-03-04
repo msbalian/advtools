@@ -15,7 +15,8 @@ import {
     Sparkles,
     Check,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    Building2
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -107,9 +108,20 @@ watch(clienteQuery, (newVal) => {
 const selecionarCliente = (cliente) => {
     clienteSelecionado.value = cliente
     clienteQuery.value = cliente.nome
-    formData.value.cliente_id = cliente.id
+    formData.value.cliente_id = cliente.id // Note: cliente.id will be null for Office
     showClienteDropdown.value = false
 }
+
+// Opção especial para o próprio escritório
+const opcaoEscritorio = computed(() => {
+    if (!escritorio.value) return null
+    return {
+        id: null,
+        nome: "O Próprio Escritório",
+        documento: escritorio.value.documento || "Documento Interno",
+        isOffice: true
+    }
+})
 
 // Se veio parametro na rota (da Dashboard do Cliente)
 const prefillCliente = async (clienteId) => {
@@ -149,16 +161,23 @@ watch(() => formData.value.modelo_id, (newVal) => {
 
 // Gerar Documento
 const handleGenerate = async () => {
-    if (!formData.value.cliente_id || !formData.value.modelo_id || !formData.value.titulo_documento) {
-        showMessage("Preencha cliente, modelo e título.", "error")
+    if (formData.value.cliente_id === undefined || !formData.value.modelo_id || !formData.value.titulo_documento) {
+        // Agora cliente_id pode ser null, mas não indefinido
+    }
+
+    if (!formData.value.modelo_id || !formData.value.titulo_documento) {
+        showMessage("Preencha modelo e título.", "error")
         return
     }
 
     isGenerating.value = true
     try {
+        const payload = { ...formData.value }
+        // Se cliente_id for nulo, o backend entende como escritório
+        
         const response = await apiFetch('/api/redator/gerar', {
             method: 'POST',
-            body: JSON.stringify(formData.value)
+            body: JSON.stringify(payload)
         })
 
         if (!response.ok) {
@@ -167,7 +186,6 @@ const handleGenerate = async () => {
                 const err = await response.json()
                 errorMsg = err.detail || errorMsg
             } catch (jsonErr) {
-                // Se não for JSON, pega o texto puro se possível ou usa o status
                 errorMsg = `Erro do Servidor (${response.status})`
             }
             throw new Error(errorMsg)
@@ -175,9 +193,13 @@ const handleGenerate = async () => {
 
         showMessage("Documento gerado com sucesso!")
         
-        // Redireciona para a aba do cliente
+        // Redireciona para o local apropriado
         setTimeout(() => {
-            router.push(`/clientes/${formData.value.cliente_id}`)
+            if (payload.cliente_id) {
+                router.push(`/clientes/${payload.cliente_id}`)
+            } else {
+                router.push('/modelos') // Volta para Docs do Escritório (aba internos carregará por lá)
+            }
         }, 1500)
         
     } catch (e) {
@@ -194,6 +216,11 @@ onMounted(async () => {
 
     if (route.query.cliente) {
         await prefillCliente(route.query.cliente)
+    } else if (route.query.context === 'escritorio') {
+        // Seleciona o escritório por padrão se vier da área interna
+        if (opcaoEscritorio.value) {
+            selecionarCliente(opcaoEscritorio.value)
+        }
     }
 })
 
@@ -201,7 +228,7 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-slate-50 flex">
-    <Sidebar :escritorio="escritorio" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
+    <Sidebar :escritorio="escritorio" :usuario="currentUser" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Top Header -->
@@ -272,19 +299,30 @@ onMounted(async () => {
                             </div>
                             
                             <!-- Dropdown de Resultados -->
-                            <div v-if="showClienteDropdown && clienteQuery.length >= 2" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 sm:text-sm shadow-2xl">
-                                <ul v-if="clientesEncontrados.length > 0">
+                            <div v-if="showClienteDropdown" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 sm:text-sm shadow-2xl">
+                                <ul>
+                                    <!-- Opção Escritório sempre disponível ou filtrada -->
+                                    <li v-if="opcaoEscritorio && (!clienteQuery || opcaoEscritorio.nome.toLowerCase().includes(clienteQuery.toLowerCase()))" 
+                                        @click="selecionarCliente(opcaoEscritorio)" 
+                                        class="relative cursor-pointer select-none py-2.5 pl-3 pr-9 border-b border-slate-50 hover:bg-purple-50 text-slate-900 group">
+                                        <div class="flex items-center">
+                                            <Building2 class="w-4 h-4 text-purple-600 mr-2" />
+                                            <span class="ml-1 truncate font-bold text-purple-700">{{ opcaoEscritorio.nome }}</span>
+                                            <span class="ml-2 truncate text-xs text-slate-400">(Documento Interno)</span>
+                                        </div>
+                                    </li>
+
                                     <li v-for="c in clientesEncontrados" :key="c.id" @click="selecionarCliente(c)" class="relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-purple-50 text-slate-900 group">
                                         <div class="flex items-center">
                                             <span :class="['ml-3 truncate font-medium group-hover:text-purple-700']">{{ c.nome }}</span>
                                             <span class="ml-2 truncate text-xs text-slate-500">{{ c.documento }}</span>
                                         </div>
-                                        <span v-if="clienteSelecionado && clienteSelecionado.id === c.id" class="absolute inset-y-0 right-0 flex items-center pr-4 text-purple-600">
+                                        <span v-if="clienteSelecionado && clienteSelecionado.id === c.id && !clienteSelecionado.isOffice" class="absolute inset-y-0 right-0 flex items-center pr-4 text-purple-600">
                                             <Check class="h-4 w-4" />
                                         </span>
                                     </li>
                                 </ul>
-                                <div v-else-if="!isLoadingClientes" class="py-2 pl-6 pr-4 text-sm text-slate-500">Nenhum cliente encontrado.</div>
+                                <div v-if="(!clientesEncontrados || clientesEncontrados.length === 0) && !isLoadingClientes && (!opcaoEscritorio || !opcaoEscritorio.nome.toLowerCase().includes(clienteQuery.toLowerCase()))" class="py-2 pl-6 pr-4 text-sm text-slate-500">Nenhum resultado encontrado.</div>
                             </div>
                         </div>
                     </div>
@@ -301,9 +339,11 @@ onMounted(async () => {
                                 <label class="block text-sm font-medium leading-6 text-slate-900 mb-1">Selecione o Modelo Base</label>
                                 <select v-model="formData.modelo_id" class="block w-full rounded-xl border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
                                     <option value="" disabled>Escolha um modelo de documento...</option>
-                                    <option v-for="m in modelos" :key="m.id" :value="m.id">{{ m.nome }}</option>
+                                    <template v-if="modelos">
+                                        <option v-for="m in modelos" :key="m.id" :value="m.id">{{ m.nome }}</option>
+                                    </template>
                                 </select>
-                                <p v-if="modelos.length === 0" class="mt-1 text-xs text-rose-500">Nenhum modelo cadastrado. Envie um modelo primeiro na área de Documentos.</p>
+                                <p v-if="!modelos || modelos.length === 0" class="mt-1 text-xs text-rose-500">Nenhum modelo cadastrado. Envie um modelo primeiro na área de Documentos.</p>
                             </div>
                             
                             <div>
@@ -349,7 +389,7 @@ onMounted(async () => {
                     <div class="pt-4 border-t border-slate-100 flex justify-end">
                         <button 
                             @click="handleGenerate" 
-                            :disabled="isGenerating || !formData.cliente_id || !formData.modelo_id || !formData.titulo_documento" 
+                            :disabled="isGenerating || formData.cliente_id === '' || !formData.modelo_id || !formData.titulo_documento" 
                             class="inline-flex justify-center items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <div v-if="isGenerating" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>

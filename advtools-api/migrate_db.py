@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, text
+from config import Config
 
-DATABASE_URL = "postgresql://postgres:0000@localhost:5432/advtools"
+# Converte URL de asyncpg para sync pg se necessário (removendo +asyncpg)
+DATABASE_URL = Config.DATABASE_URL.replace("+asyncpg", "")
 engine = create_engine(DATABASE_URL)
 
 def apply_migrations():

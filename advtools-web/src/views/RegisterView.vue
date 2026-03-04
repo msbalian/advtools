@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { vMaska } from 'maska/vue'
 
 const router = useRouter()
 const currentYear = computed(() => new Date().getFullYear())
@@ -60,7 +61,8 @@ const handleRegister = async () => {
         email: form.value.email,
         senha: form.value.senha,
         escritorio_id: escritorio.id,
-        is_admin: true // Primeiro usuário do escritório é admin
+        is_admin: false, // O primeiro usuário do escritório é ADMIN DO ESCRITÓRIO, não SuperAdmin global
+        perfil: 'Admin'
       })
     })
 
@@ -138,8 +140,8 @@ const handleRegister = async () => {
              </div>
              
              <div class="sm:col-span-2">
-               <label class="block text-sm font-medium leading-6 text-slate-900">CNPJ / Cpf do Titular</label>
-               <input v-model="form.documento_escritorio" type="text" class="mt-2 input-field" placeholder="00.000.000/0000-00" />
+               <label class="block text-sm font-medium leading-6 text-slate-900">CNPJ / CPF do Titular</label>
+               <input v-model="form.documento_escritorio" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" type="text" class="mt-2 input-field" placeholder="00.000.000/0000-00" />
              </div>
 
              <!-- Seção Usuário -->

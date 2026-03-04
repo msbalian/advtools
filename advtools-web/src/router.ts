@@ -42,7 +42,7 @@ const router = createRouter({
         {
             path: '/modelos',
             name: 'modelos',
-            component: () => import('./views/ModelosView.vue'),
+            component: () => import('./views/DocsEscritorioView.vue'),
             meta: { requiresAuth: true }
         },
         {
@@ -61,6 +61,12 @@ const router = createRouter({
             path: '/documentos/:id/assinaturas',
             name: 'gerenciar_assinaturas',
             component: () => import('./views/AssinaturasGerenciarView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/admin/usuarios',
+            name: 'admin_usuarios',
+            component: () => import('./views/SuperAdminUsersView.vue'),
             meta: { requiresAuth: true }
         },
         // === ROTAS PÚBLICAS (sem autenticação) ===

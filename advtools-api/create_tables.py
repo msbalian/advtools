@@ -1,14 +1,15 @@
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 from models import Base
-import models
+from config import Config
+import asyncio
 
-DATABASE_URL = "postgresql://postgres:0000@localhost:5432/advtools"
-sync_engine = create_engine(DATABASE_URL)
+async_engine = create_async_engine(Config.DATABASE_URL)
 
-def create_new_tables():
+async def create_tables():
     print("Creating new tables...")
-    Base.metadata.create_all(bind=sync_engine)
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     print("Done!")
 
 if __name__ == "__main__":
-    create_new_tables()
+    asyncio.run(create_tables())

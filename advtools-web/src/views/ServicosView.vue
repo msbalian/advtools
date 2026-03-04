@@ -221,7 +221,7 @@ onMounted(() => {
     </div>
 
     <!-- Sidebar Centralizado -->
-    <Sidebar :escritorio="escritorio" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
+    <Sidebar :escritorio="escritorio" :usuario="currentUser" v-model:sidebarOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">

@@ -120,9 +120,34 @@ class ModeloDocumento(Base):
     escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
     nome = Column(String(200), nullable=False)
     arquivo_path = Column(String(300), nullable=False)
+    tamanho = Column(Integer, nullable=True) # em bytes
+    data_criacao = Column(DateTime, default=func.now())
+    data_alteracao = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    escritorio = relationship("Escritorio")
+
+class PastaDocumento(Base):
+    __tablename__ = "pastas_documento"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    
+    # Vínculos Opcionais
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
+    servico_id = Column(Integer, ForeignKey("servicos.id"), nullable=True, index=True)
+    processo_id = Column(Integer, nullable=True) # Processo not defined yet
+    
+    # Subpastas
+    parent_id = Column(Integer, ForeignKey("pastas_documento.id"), nullable=True, index=True)
+
     data_criacao = Column(DateTime, default=func.now())
     
     escritorio = relationship("Escritorio")
+    cliente = relationship("Cliente")
+    servico = relationship("Servico")
+    subpastas = relationship("PastaDocumento", backref="parent", remote_side=[id])
+    documentos = relationship("DocumentoCliente", back_populates="pasta")
 
 class DocumentoCliente(Base):
     __tablename__ = "documentos_cliente"
@@ -130,9 +155,12 @@ class DocumentoCliente(Base):
     id = Column(Integer, primary_key=True, index=True)
     escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
+    pasta_id = Column(Integer, ForeignKey("pastas_documento.id"), nullable=True, index=True)
     nome = Column(String(200), nullable=False)
     arquivo_path = Column(String(300), nullable=False)
+    tamanho = Column(Integer, nullable=True) # em bytes
     data_criacao = Column(DateTime, default=func.now())
+    data_alteracao = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # ADVtools Sign Fields
     token_assinatura = Column(String(32), unique=True, index=True, nullable=True) # UUID hex para acesso se precisar de sala pública do doc
@@ -144,6 +172,7 @@ class DocumentoCliente(Base):
     
     escritorio = relationship("Escritorio")
     cliente = relationship("Cliente", back_populates="documentos")
+    pasta = relationship("PastaDocumento", back_populates="documentos")
     signatarios = relationship("Signatario", back_populates="documento", cascade="all, delete-orphan", lazy="selectin")
 
 class Signatario(Base):

@@ -184,6 +184,9 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                 # Atualizar DB
                 doc.nome = novo_nome_exibicao
                 doc.arquivo_path = new_db_path
+                doc.tamanho = len(final_content)
+                from datetime import datetime
+                doc.data_alteracao = datetime.now()
                 
                 if metadados.get("is_financeiro"):
                     despesas.append({
@@ -217,7 +220,8 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                 excel_db_path = await storage.save_file(output.getvalue(), os.path.dirname(documentos[0].arquivo_path), f"Despesas_{uuid.uuid4().hex[:4]}.xlsx")
                 doc_excel = models.DocumentoCliente(
                     nome="Despesas Consolidadas", arquivo_path=excel_db_path,
-                    escritorio_id=escritorio_id, cliente_id=documentos[0].cliente_id, pasta_id=pasta_id
+                    escritorio_id=escritorio_id, cliente_id=documentos[0].cliente_id, pasta_id=pasta_id,
+                    tamanho=len(output.getvalue())
                 )
                 db.add(doc_excel)
                 

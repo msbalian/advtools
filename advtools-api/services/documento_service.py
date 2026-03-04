@@ -89,7 +89,8 @@ async def criar_modelo_service(db: AsyncSession, current_user: models.Usuario, n
     novo_modelo = models.ModeloDocumento(
         escritorio_id=current_user.escritorio_id,
         nome=nome,
-        arquivo_path=db_path
+        arquivo_path=db_path,
+        tamanho=len(content)
     )
     db.add(novo_modelo)
     await db.commit()
@@ -142,6 +143,7 @@ async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuar
     db_path = await storage.save_file(content, "modelos", unique_filename)
         
     modelo.arquivo_path = db_path
+    modelo.tamanho = len(content)
     await db.commit()
     await db.refresh(modelo)
     
@@ -177,7 +179,8 @@ async def upload_documento_cliente_service(db: AsyncSession, current_user: model
         db, 
         doc_create, 
         db_path, 
-        current_user.escritorio_id
+        current_user.escritorio_id,
+        tamanho=len(content)
     )
 
 async def upload_documento_escritorio_service(db: AsyncSession, current_user: models.Usuario, file: UploadFile, nome: str, pasta_id: int = -1):
@@ -196,7 +199,8 @@ async def upload_documento_escritorio_service(db: AsyncSession, current_user: mo
         db, 
         doc_create, 
         db_path, 
-        current_user.escritorio_id
+        current_user.escritorio_id,
+        tamanho=len(content)
     )
 
 async def update_documento_file_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, file: UploadFile):
@@ -218,6 +222,7 @@ async def update_documento_file_service(db: AsyncSession, current_user: models.U
     
     db_path = await storage.save_file(content, relative_dir, filename)
     doc.arquivo_path = db_path
+    doc.tamanho = len(content)
         
     db.add(doc)
     await db.commit()
@@ -522,7 +527,8 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
         db, 
         doc_create, 
         db_path, 
-        current_user.escritorio_id
+        current_user.escritorio_id,
+        tamanho=len(file_content)
     )
 
     return db_doc

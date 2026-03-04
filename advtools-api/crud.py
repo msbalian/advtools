@@ -11,6 +11,20 @@ async def get_user_by_email(db: AsyncSession, email: str):
     result = await db.execute(select(models.Usuario).filter(models.Usuario.email == email))
     return result.scalars().first()
 
+async def check_any_superadmin_exists(db: AsyncSession) -> bool:
+    result = await db.execute(select(models.Usuario).filter(models.Usuario.is_admin == True).limit(1))
+    return result.scalars().first() is not None
+
+async def ensure_default_office(db: AsyncSession):
+    result = await db.execute(select(models.Escritorio).limit(1))
+    esc = result.scalars().first()
+    if not esc:
+        esc = models.Escritorio(nome="Escritório Master", documento="000.000.000-00")
+        db.add(esc)
+        await db.commit()
+        await db.refresh(esc)
+    return esc
+
 async def create_user(db: AsyncSession, user: schemas.UsuarioCreate):
     hashed_password = get_password_hash(user.senha)
     db_user = models.Usuario(
@@ -242,25 +256,116 @@ async def delete_parte_envolvida(db: AsyncSession, parte_id: int, escritorio_id:
     return True
 
 # ==========================
-# DOCUMENTOS DO CLIENTE
+# GESTÃO DE PASTAS DE DOCUMENTOS
 # ==========================
-async def get_documentos_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int):
+async def get_pastas(db: AsyncSession, escritorio_id: int, cliente_id: Optional[int] = None, servico_id: Optional[int] = None, parent_id: Optional[int] = -1):
+    query = select(models.PastaDocumento).filter(models.PastaDocumento.escritorio_id == escritorio_id)
+    
+    if cliente_id is not None:
+        if cliente_id == 0:
+            query = query.filter(models.PastaDocumento.cliente_id.is_(None))
+        else:
+            query = query.filter(models.PastaDocumento.cliente_id == cliente_id)
+    if servico_id is not None:
+        query = query.filter(models.PastaDocumento.servico_id == servico_id)
+    if parent_id != -1: # Se parent_id for passado (mesmo None para a raiz), aplicamos o filtro
+        query = query.filter(models.PastaDocumento.parent_id == parent_id)
+        
+    result = await db.execute(query)
+    pastas_list = result.scalars().all()
+    
+    from sqlalchemy import func
+    for p in pastas_list:
+        sz_q = select(func.sum(models.DocumentoCliente.tamanho)).where(models.DocumentoCliente.pasta_id == p.id)
+        sz_res = await db.execute(sz_q)
+        p.tamanho_total = sz_res.scalar() or 0
+        
+    return pastas_list
+
+async def get_pasta_by_id(db: AsyncSession, pasta_id: int, escritorio_id: int):
     result = await db.execute(
-        select(models.DocumentoCliente)
-        .options(selectinload(models.DocumentoCliente.signatarios))
-        .filter(
-            models.DocumentoCliente.cliente_id == cliente_id,
-            models.DocumentoCliente.escritorio_id == escritorio_id
+        select(models.PastaDocumento).filter(
+            models.PastaDocumento.id == pasta_id,
+            models.PastaDocumento.escritorio_id == escritorio_id
         )
     )
+    return result.scalars().first()
+
+async def create_pasta(db: AsyncSession, pasta: schemas.PastaDocumentoCreate, escritorio_id: int):
+    db_pasta = models.PastaDocumento(**pasta.dict(), escritorio_id=escritorio_id)
+    db.add(db_pasta)
+    await db.commit()
+    await db.refresh(db_pasta)
+    return db_pasta
+
+async def update_pasta(db: AsyncSession, pasta_id: int, pasta_update: schemas.PastaDocumentoUpdate, escritorio_id: int):
+    db_pasta = await get_pasta_by_id(db, pasta_id, escritorio_id)
+    if not db_pasta:
+        return None
+    
+    update_data = pasta_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_pasta, key, value)
+        
+    db.add(db_pasta)
+    await db.commit()
+    await db.refresh(db_pasta)
+    return db_pasta
+
+async def delete_pasta(db: AsyncSession, pasta_id: int, escritorio_id: int):
+    db_pasta = await get_pasta_by_id(db, pasta_id, escritorio_id)
+    if not db_pasta:
+        return False, "Pasta não encontrada."
+        
+    result_sub = await db.execute(select(models.PastaDocumento).filter(models.PastaDocumento.parent_id == pasta_id).limit(1))
+    if result_sub.scalars().first():
+        return False, "Não é possível excluir. A pasta contém subpastas."
+        
+    result_docs = await db.execute(select(models.DocumentoCliente).filter(models.DocumentoCliente.pasta_id == pasta_id).limit(1))
+    if result_docs.scalars().first():
+        return False, "Não é possível excluir. A pasta contém documentos."
+    
+    await db.delete(db_pasta)
+    await db.commit()
+    return True, "Pasta excluída com sucesso."
+
+# ==========================
+# DOCUMENTOS DO CLIENTE
+# ==========================
+async def get_documentos_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int, pasta_id: Optional[int] = -1):
+    query = select(models.DocumentoCliente).options(selectinload(models.DocumentoCliente.signatarios)).filter(
+        models.DocumentoCliente.cliente_id == cliente_id,
+        models.DocumentoCliente.escritorio_id == escritorio_id
+    )
+    if pasta_id == -1:
+        query = query.filter(models.DocumentoCliente.pasta_id == None)
+    else:
+        query = query.filter(models.DocumentoCliente.pasta_id == pasta_id)
+        
+    result = await db.execute(query)
     return result.scalars().all()
 
-async def create_documento_cliente(db: AsyncSession, documento: schemas.DocumentoClienteCreate, arquivo_path: str, escritorio_id: int):
+async def get_documentos_escritorio(db: AsyncSession, escritorio_id: int, pasta_id: Optional[int] = -1):
+    query = select(models.DocumentoCliente).options(selectinload(models.DocumentoCliente.signatarios)).filter(
+        models.DocumentoCliente.cliente_id == None,
+        models.DocumentoCliente.escritorio_id == escritorio_id
+    )
+    if pasta_id == -1:
+        query = query.filter(models.DocumentoCliente.pasta_id == None)
+    else:
+        query = query.filter(models.DocumentoCliente.pasta_id == pasta_id)
+        
+    result = await db.execute(query)
+    return result.scalars().all()
+
+async def create_documento_cliente(db: AsyncSession, documento: schemas.DocumentoClienteCreate, arquivo_path: str, escritorio_id: int, **kwargs):
     db_doc = models.DocumentoCliente(
         escritorio_id=escritorio_id,
         cliente_id=documento.cliente_id,
+        pasta_id=documento.pasta_id,
         nome=documento.nome,
-        arquivo_path=arquivo_path
+        arquivo_path=arquivo_path,
+        tamanho=kwargs.get('tamanho')
     )
     db.add(db_doc)
     await db.commit()

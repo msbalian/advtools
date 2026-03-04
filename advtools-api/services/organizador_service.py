@@ -149,7 +149,6 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
 
                 # Chamar IA Multimodal
                 metadados = await analisar_documento_para_organizacao(api_key, texto, image_b64, mime_type if image_b64 else None)
-                print(f"DEBUG AI: Metadados processados para {doc.nome}: {metadados}")
                 
                 if "error" in metadados:
                     logger.warning(f"IA falhou para {doc.id}: {metadados['error']}")

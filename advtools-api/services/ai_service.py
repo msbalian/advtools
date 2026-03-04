@@ -1,18 +1,20 @@
 import os
 import json
 import requests
+from datetime import datetime
 from typing import Dict, Any
 
 # Lista de modelos para redundância (Nomes completos conforme exigido pela API)
 MODELOS_DISPONIVEIS = [
+    "models/gemini-2.0-flash",
+    "models/gemini-2.5-flash",
     "models/gemini-1.5-flash",
-    "models/gemini-1.5-flash-latest",
     "models/gemini-1.5-pro",
     "models/gemini-pro"
 ]
 
 # Versões da API para testar
-API_VERSIONS = ["v1beta", "v1"]
+API_VERSIONS = ["v1", "v1beta"]
 
 async def redigir_documento_com_ia(api_key: str, modelo_texto: str, context: Dict[str, Any], instrucoes: str) -> str:
     """
@@ -125,20 +127,17 @@ async def analisar_documento_para_organizacao(api_key: str, text_content: str = 
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
-        ],
-        "generationConfig": {
-            "response_mime_type": "application/json"
-        }
+        ]
     }
     headers = {'Content-Type': 'application/json'}
 
-    modelos_vision = ["models/gemini-1.5-flash", "models/gemini-1.5-pro"]
+    # Sanitiza a chave (remove espaços que podem vir do banco)
+    api_key = api_key.strip() if api_key else ""
     
     for version in API_VERSIONS:
-        for modelo in modelos_vision:
+        for modelo in MODELOS_DISPONIVEIS:
             url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
             try:
-                print(f"DEBUG AI: Processando com {modelo} ({version})...")
                 response = requests.post(url, headers=headers, json=payload, timeout=40)
                 
                 if response.status_code == 200:
@@ -147,7 +146,6 @@ async def analisar_documento_para_organizacao(api_key: str, text_content: str = 
                         candidate = res_data['candidates'][0]
                         if 'content' in candidate and 'parts' in candidate['content']:
                             raw_text = candidate['content']['parts'][0]['text'].strip()
-                            print(f"DEBUG AI: Sucesso! Resposta: {raw_text[:60]}...")
                             
                             json_str = raw_text.replace('```json', '').replace('```', '').strip()
                             try:
@@ -157,18 +155,10 @@ async def analisar_documento_para_organizacao(api_key: str, text_content: str = 
                                 end = json_str.rfind('}')
                                 if start != -1 and end != -1:
                                     return json.loads(json_str[start:end+1])
-                        else:
-                            print(f"DEBUG AI: Candidate sem conteúdo. FinishReason: {candidate.get('finishReason')}")
-                    else:
-                        print(f"DEBUG AI: Nenhum candidate retornado. Response: {res_data}")
-                else:
-                    print(f"DEBUG AI: Erro na API {modelo}: {response.status_code} - {response.text[:200]}")
-            except Exception as e:
-                print(f"DEBUG AI: Exceção na chamada {modelo}: {str(e)}")
+            except:
                 continue
 
-    # Fallback único para sabermos se chegamos aqui
-    return {"categoria": "Outros", "nome_sugerido": "IA_FALHOU_IDENTIFICAR", "is_financeiro": False}
+    return {"categoria": "Outros", "nome_sugerido": "Documento_Nao_Identificado", "is_financeiro": False}
 
 
 

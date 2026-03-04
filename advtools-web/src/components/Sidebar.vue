@@ -29,7 +29,7 @@ const emit = defineEmits(['close'])
 const navigation = [
   { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Clientes e Serviços', icon: Users, path: '/clientes' },
-  { name: 'Processos (DataJud)', icon: Scale, path: '/processos' },
+  { name: 'Processos Judiciais', icon: Scale, path: '/processos' },
   { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
   { name: 'Financeiro', icon: BadgeDollarSign, path: '#' },

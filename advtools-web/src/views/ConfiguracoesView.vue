@@ -18,7 +18,10 @@ import {
   Cloud,
   Settings2,
   ShieldCheck,
-  Search
+  Search,
+  Plus,
+  FolderOpen,
+  Scale
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -42,6 +45,14 @@ const escritorio = ref({
 const isSavingEscritorio = ref(false)
 const logoFile = ref(null)
 const logoPreview = ref(null)
+
+// =======================
+// ESTADO: CONFIGURAÇÕES EXTRAS
+// =======================
+const pastasTrabalho = ref([])
+const tiposServico = ref([])
+const newPastaNome = ref('')
+const newTipoNome = ref('')
 
 // =======================
 // ESTADO: EQUIPE
@@ -87,11 +98,95 @@ onMounted(async () => {
   await loadCurrentUser()
   await loadDadosEscritorio()
   await loadEquipe()
+  await loadConfiguracoesExtras()
   if (currentUser.value?.is_admin) {
     await loadUsuariosGlobais()
   }
   isLoading.value = false
 })
+
+const loadConfiguracoesExtras = async () => {
+    try {
+        const [resPastas, resTipos] = await Promise.all([
+            apiFetch('/api/configuracoes/pastas-trabalho'),
+            apiFetch('/api/configuracoes/tipos-servico')
+        ])
+        if (resPastas.ok) pastasTrabalho.value = await resPastas.json()
+        if (resTipos.ok) tiposServico.value = await resTipos.json()
+    } catch (e) {
+        console.error("Erro ao carregar configurações extras", e)
+    }
+}
+
+const addPastaTrabalho = async () => {
+    console.log("Clicou adicionar pasta. Valor:", newPastaNome.value);
+    if (!newPastaNome.value) {
+        console.warn("Input de pasta vazio. Retornando early.");
+        showMessage("Por favor, digite o nome da pasta.", "error");
+        return;
+    }
+    try {
+        console.log("Fazendo fetch de pasta...");        const res = await apiFetch('/api/configuracoes/pastas-trabalho', {
+            method: 'POST',
+            body: JSON.stringify({ nome: newPastaNome.value })
+        })
+        if (res.ok) {
+            newPastaNome.value = ''
+            await loadConfiguracoesExtras()
+            showMessage("Pasta de trabalho adicionada!")
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro ao adicionar pasta", "error")
+        }
+    } catch (e) { showMessage("Erro de conexão", "error") }
+}
+
+const deletePastaTrabalho = (id) => {
+    confirmAction("Deseja excluir esta pasta de trabalho?", async () => {
+        try {
+            const res = await apiFetch(`/api/configuracoes/pastas-trabalho/${id}`, { method: 'DELETE' })
+            if (res.ok) {
+                await loadConfiguracoesExtras()
+                showMessage("Pasta excluída!")
+            }
+        } catch (e) { showMessage("Erro ao excluir", "error") }
+    })
+}
+
+const addTipoServico = async () => {
+    console.log("Clicou adicionar serviço. Valor:", newTipoNome.value);
+    if (!newTipoNome.value) {
+        console.warn("Input de tipo de serviço vazio. Retornando early.");
+        showMessage("Por favor, digite o nome do tipo de serviço.", "error");
+        return;
+    }
+    try {
+        console.log("Fazendo fetch de tipo de serviço...");        const res = await apiFetch('/api/configuracoes/tipos-servico', {
+            method: 'POST',
+            body: JSON.stringify({ nome: newTipoNome.value })
+        })
+        if (res.ok) {
+            newTipoNome.value = ''
+            await loadConfiguracoesExtras()
+            showMessage("Tipo de serviço adicionado!")
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro ao adicionar tipo", "error")
+        }
+    } catch (e) { showMessage("Erro de conexão", "error") }
+}
+
+const deleteTipoServico = (id) => {
+    confirmAction("Deseja excluir este tipo de serviço?", async () => {
+        try {
+            const res = await apiFetch(`/api/configuracoes/tipos-servico/${id}`, { method: 'DELETE' })
+            if (res.ok) {
+                await loadConfiguracoesExtras()
+                showMessage("Tipo excluído!")
+            }
+        } catch (e) { showMessage("Erro ao excluir", "error") }
+    })
+}
 
 const loadCurrentUser = async () => {
     try {
@@ -363,6 +458,18 @@ const sidebarOpen = ref(false)
                         <Users class="w-4 h-4" /> Gestão da Equipe
                     </button>
                     <button 
+                        @click="activeTab = 'pastas'"
+                        :class="[activeTab === 'pastas' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
+                    >
+                        <FolderOpen class="w-4 h-4" /> Pastas de Trabalho
+                    </button>
+                    <button 
+                        @click="activeTab = 'servicos'"
+                        :class="[activeTab === 'servicos' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
+                    >
+                        <Scale class="w-4 h-4" /> Tipos de Serviço
+                    </button>
+                    <button 
                         v-if="currentUser?.is_admin"
                         @click="activeTab = 'global'"
                         :class="[activeTab === 'global' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
@@ -487,6 +594,54 @@ const sidebarOpen = ref(false)
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Tab Content: Pastas de Trabalho -->
+            <div v-if="activeTab === 'pastas'" class="p-6">
+                <div class="mb-6">
+                    <h2 class="text-base font-semibold text-slate-900">Pastas de Trabalho / Áreas</h2>
+                    <p class="text-sm text-slate-500">Defina as áreas de atuação do escritório para categorizar seus processos.</p>
+                </div>
+
+                <div class="flex gap-4 mb-8">
+                    <input v-model="newPastaNome" type="text" placeholder="Ex: Direito Médico, Direito Civil..." class="block w-full max-w-sm rounded-lg border-slate-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" />
+                    <button @click="addPastaTrabalho" class="btn-primary flex items-center gap-2">
+                        <Plus class="w-4 h-4" /> Adicionar
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="item in pastasTrabalho" :key="item.id" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between group">
+                        <span class="font-bold text-slate-700">{{ item.nome }}</span>
+                        <button @click="deletePastaTrabalho(item.id)" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Tipos de Serviço -->
+            <div v-if="activeTab === 'servicos'" class="p-6">
+                <div class="mb-6">
+                    <h2 class="text-base font-semibold text-slate-900">Tipos de Serviço</h2>
+                    <p class="text-sm text-slate-500">Defina os tipos de serviços/contratos que o escritório realiza.</p>
+                </div>
+
+                <div class="flex gap-4 mb-8">
+                    <input v-model="newTipoNome" type="text" placeholder="Ex: Ação Cível, Revisão de Contrato..." class="block w-full max-w-sm rounded-lg border-slate-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" />
+                    <button @click="addTipoServico" class="btn-primary flex items-center gap-2">
+                        <Plus class="w-4 h-4" /> Adicionar
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="item in tiposServico" :key="item.id" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between group">
+                        <span class="font-bold text-slate-700">{{ item.nome }}</span>
+                        <button @click="deleteTipoServico(item.id)" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 class="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -632,6 +787,62 @@ const sidebarOpen = ref(false)
         </div>
     </div>
 
+    </div> <!-- Closes 323 -->
+
+    <!-- Notificações -->
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="notification.show" class="fixed bottom-4 right-4 z-[100] w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 border-l-4" :class="notification.type === 'success' ? 'border-emerald-500' : 'border-red-500'">
+        <div class="p-4">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <CheckCircle2 v-if="notification.type === 'success'" class="h-6 w-6 text-emerald-500" />
+              <AlertCircle v-else class="h-6 w-6 text-red-500" />
+            </div>
+            <div class="ml-3 w-0 flex-1 pt-0.5">
+              <p class="text-sm font-bold text-slate-900">{{ notification.message }}</p>
+            </div>
+            <div class="ml-4 flex flex-shrink-0">
+              <button @click="notification.show = false" class="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Modal de Confirmação -->
+    <div v-if="confirmDialog.show" class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
+                    <div>
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+                            <AlertCircle class="h-6 w-6 text-amber-600" aria-hidden="true" />
+                        </div>
+                        <div class="mt-3 text-center sm:mt-5">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900" id="modal-title">Confirmação</h3>
+                            <div class="mt-2 text-sm text-slate-500">
+                                {{ confirmDialog.message }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-6 flex gap-3">
+                        <button type="button" @click="confirmDialog.show = false" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:text-sm">Cancelar</button>
+                        <button type="button" @click="executeConfirm" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:text-sm">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    </div>
 </template>

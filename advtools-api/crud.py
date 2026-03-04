@@ -1,7 +1,7 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, and_, or_, distinct
+from sqlalchemy.orm import selectinload, joinedload
 from fastapi import HTTPException
 import models
 import schemas
@@ -160,28 +160,39 @@ async def delete_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int):
 # CRUD Servico
 # ==========================
 async def get_servicos(db: AsyncSession, escritorio_id: int):
-    result = await db.execute(select(models.Servico).filter(models.Servico.escritorio_id == escritorio_id))
+    result = await db.execute(
+        select(models.Servico)
+        .options(selectinload(models.Servico.tipo_servico))
+        .filter(models.Servico.escritorio_id == escritorio_id)
+    )
     return result.scalars().all()
 
 async def get_servicos_by_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int):
-    result = await db.execute(select(models.Servico).filter(
-        models.Servico.cliente_id == cliente_id,
-        models.Servico.escritorio_id == escritorio_id
-    ))
+    result = await db.execute(
+        select(models.Servico)
+        .options(selectinload(models.Servico.tipo_servico))
+        .filter(
+            models.Servico.cliente_id == cliente_id,
+            models.Servico.escritorio_id == escritorio_id
+        )
+    )
     return result.scalars().all()
 
 async def create_servico(db: AsyncSession, servico: schemas.ServicoCreate, escritorio_id: int):
     db_servico = models.Servico(**servico.dict(), escritorio_id=escritorio_id)
     db.add(db_servico)
     await db.commit()
-    await db.refresh(db_servico)
-    return db_servico
+    return await get_servico(db, db_servico.id, escritorio_id)
 
 async def get_servico(db: AsyncSession, servico_id: int, escritorio_id: int):
-    result = await db.execute(select(models.Servico).filter(
-        models.Servico.id == servico_id,
-        models.Servico.escritorio_id == escritorio_id
-    ))
+    result = await db.execute(
+        select(models.Servico)
+        .options(selectinload(models.Servico.tipo_servico))
+        .filter(
+            models.Servico.id == servico_id,
+            models.Servico.escritorio_id == escritorio_id
+        )
+    )
     return result.scalars().first()
 
 async def update_servico(db: AsyncSession, servico_id: int, servico: schemas.ServicoUpdate, escritorio_id: int):
@@ -195,8 +206,7 @@ async def update_servico(db: AsyncSession, servico_id: int, servico: schemas.Ser
         
     db.add(db_servico)
     await db.commit()
-    await db.refresh(db_servico)
-    return db_servico
+    return await get_servico(db, db_servico.id, escritorio_id)
 
 async def delete_servico(db: AsyncSession, servico_id: int, escritorio_id: int):
     db_servico = await get_servico(db, servico_id, escritorio_id)
@@ -527,3 +537,155 @@ async def get_documentacao_by_validacao(db: AsyncSession, token_validacao: str):
         models.DocumentoCliente.token_validacao == token_validacao
     ))
     return result.scalars().first()
+
+# ==========================
+# CRUD PROCESSOS JUDICIAIS
+# ==========================
+
+async def get_processos(db: AsyncSession, escritorio_id: int):
+    result = await db.execute(
+        select(models.Processo)
+        .options(
+            selectinload(models.Processo.partes),
+            selectinload(models.Processo.assuntos),
+            selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.pasta_trabalho),
+            selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
+        )
+        .filter(models.Processo.escritorio_id == escritorio_id)
+    )
+    return result.scalars().all()
+
+async def get_processos_by_cliente(db: AsyncSession, cliente_id: int, escritorio_id: int):
+    result = await db.execute(
+        select(models.Processo)
+        .options(
+            selectinload(models.Processo.partes),
+            selectinload(models.Processo.assuntos),
+            selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.pasta_trabalho),
+            selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
+        )
+        .filter(
+            models.Processo.cliente_id == cliente_id,
+            models.Processo.escritorio_id == escritorio_id
+        )
+    )
+    return result.scalars().all()
+
+async def get_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
+    result = await db.execute(
+        select(models.Processo)
+        .options(
+            selectinload(models.Processo.partes),
+            selectinload(models.Processo.assuntos),
+            selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.pasta_trabalho),
+            selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
+        )
+        .filter(
+            models.Processo.id == processo_id,
+            models.Processo.escritorio_id == escritorio_id
+        )
+    )
+    return result.scalars().first()
+
+async def create_processo(db: AsyncSession, processo: schemas.ProcessoCreate, escritorio_id: int):
+    db_processo = models.Processo(**processo.dict(), escritorio_id=escritorio_id)
+    db.add(db_processo)
+    await db.commit()
+    return await get_processo(db, db_processo.id, escritorio_id)
+
+async def update_processo(db: AsyncSession, processo_id: int, processo_update: schemas.ProcessoUpdate, escritorio_id: int):
+    db_processo = await get_processo(db, processo_id, escritorio_id)
+    if not db_processo:
+        return None
+    
+    update_data = processo_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_processo, key, value)
+        
+    db.add(db_processo)
+    await db.commit()
+    return await get_processo(db, db_processo.id, escritorio_id)
+
+async def delete_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
+    db_processo = await get_processo(db, processo_id, escritorio_id)
+    if not db_processo:
+        return False
+    
+    await db.delete(db_processo)
+    await db.commit()
+    return True
+
+# Partes, Assuntos e Movimentações
+async def create_processo_parte(db: AsyncSession, processo_id: int, parte: schemas.ProcessoParteCreate):
+    db_parte = models.ProcessoParte(**parte.dict(), processo_id=processo_id)
+    db.add(db_parte)
+    await db.commit()
+    await db.refresh(db_parte)
+    return db_parte
+
+async def create_processo_assunto(db: AsyncSession, processo_id: int, assunto: schemas.ProcessoAssuntoCreate):
+    db_assunto = models.ProcessoAssunto(**assunto.dict(), processo_id=processo_id)
+    db.add(db_assunto)
+    await db.commit()
+    await db.refresh(db_assunto)
+    return db_assunto
+
+async def create_movimentacao(db: AsyncSession, processo_id: int, movimentacao: schemas.MovimentacaoCreate):
+    db_mov = models.Movimentacao(**movimentacao.dict(), processo_id=processo_id)
+    db.add(db_mov)
+    await db.commit()
+    await db.refresh(db_mov)
+    return db_mov
+
+# ==========================
+# CONFIGURAÇÕES DO ESCRITÓRIO
+# ==========================
+
+async def get_pastas_trabalho(db: AsyncSession, escritorio_id: int):
+    result = await db.execute(select(models.PastaTrabalho).filter(models.PastaTrabalho.escritorio_id == escritorio_id))
+    return result.scalars().all()
+
+async def create_pasta_trabalho(db: AsyncSession, pasta: schemas.PastaTrabalhoCreate, escritorio_id: int):
+    db_pasta = models.PastaTrabalho(**pasta.dict(), escritorio_id=escritorio_id)
+    db.add(db_pasta)
+    await db.commit()
+    await db.refresh(db_pasta)
+    return db_pasta
+
+async def delete_pasta_trabalho(db: AsyncSession, pasta_id: int, escritorio_id: int):
+    result = await db.execute(select(models.PastaTrabalho).filter(
+        models.PastaTrabalho.id == pasta_id,
+        models.PastaTrabalho.escritorio_id == escritorio_id
+    ))
+    db_pasta = result.scalars().first()
+    if not db_pasta:
+        return False
+    await db.delete(db_pasta)
+    await db.commit()
+    return True
+
+async def get_tipos_servico(db: AsyncSession, escritorio_id: int):
+    result = await db.execute(select(models.TipoServico).filter(models.TipoServico.escritorio_id == escritorio_id))
+    return result.scalars().all()
+
+async def create_tipo_servico(db: AsyncSession, tipo: schemas.TipoServicoCreate, escritorio_id: int):
+    db_tipo = models.TipoServico(**tipo.dict(), escritorio_id=escritorio_id)
+    db.add(db_tipo)
+    await db.commit()
+    await db.refresh(db_tipo)
+    return db_tipo
+
+async def delete_tipo_servico(db: AsyncSession, tipo_id: int, escritorio_id: int):
+    result = await db.execute(select(models.TipoServico).filter(
+        models.TipoServico.id == tipo_id,
+        models.TipoServico.escritorio_id == escritorio_id
+    ))
+    db_tipo = result.scalars().first()
+    if not db_tipo:
+        return False
+    await db.delete(db_tipo)
+    await db.commit()
+    return True

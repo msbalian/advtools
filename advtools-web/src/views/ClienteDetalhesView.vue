@@ -23,6 +23,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Users,
+  Scale,
   Trash2,
   Download,
   UploadCloud,
@@ -58,6 +59,7 @@ const executeConfirm = async () => {
 
 const cliente = ref(null)
 const servicos = ref([])
+const processos = ref([])
 const partes = ref([])
 const documentos = ref([])
 const pastas = ref([])
@@ -98,6 +100,12 @@ const loadDetalhes = async () => {
     const resServicos = await apiFetch(`/api/clientes/${route.params.id}/servicos`)
     if (resServicos.ok) {
         servicos.value = await resServicos.json()
+    }
+
+    // Fetch Processos
+    const resProcessos = await apiFetch(`/api/processos/cliente/${route.params.id}`)
+    if (resProcessos.ok) {
+        processos.value = await resProcessos.json()
     }
 
     // Fetch Partes Envolvidas
@@ -815,6 +823,42 @@ onMounted(async () => {
                                     <div class="flex items-center">
                                        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Ativo</span>
                                     </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Card Processos Judiciais -->
+                    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+                        <div class="px-5 py-5 sm:px-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 flex items-center gap-2">
+                                <Scale class="w-5 h-5 text-primary-600" /> Processos Judiciais
+                            </h3>
+                            <div class="flex gap-2">
+                                <button @click="router.push('/processos')" class="text-xs font-medium text-primary-600 hover:text-primary-800 bg-primary-50 px-2 py-1 rounded-md transition-colors">
+                                    Ver Todos
+                                </button>
+                                <button @click="router.push(`/processos/novo?cliente_id=${cliente.id}`)" class="text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 px-2 py-1 rounded-md transition-colors">
+                                    + Novo
+                                </button>
+                            </div>
+                        </div>
+                        <ul role="list" class="divide-y divide-slate-100">
+                            <li v-if="processos.length === 0" class="px-5 py-8 text-center text-sm text-slate-500">
+                                Nenhum processo judicial vinculado a este cliente.
+                            </li>
+                            <li v-for="proc in processos" :key="proc.id" @click="router.push('/processos/' + proc.id)" class="px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex flex-col group-hover:pl-1 transition-all">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-semibold text-slate-900 group-hover:text-primary-700">{{ proc.titulo }}</span>
+                                            <span class="text-[9px] bg-emerald-100 text-emerald-700 font-black px-1.5 py-0.5 rounded uppercase">{{ proc.status }}</span>
+                                        </div>
+                                        <span class="text-xs text-primary-600 font-bold mt-1">
+                                            {{ proc.numero_processo }}
+                                        </span>
+                                    </div>
+                                    <ChevronRight class="w-4 h-4 text-slate-400" />
                                 </div>
                             </li>
                         </ul>

@@ -110,6 +110,35 @@ class Cliente(ClienteBase):
         from_attributes = True
 
 # ==========================
+# CONFIGURAÇÕES DO ESCRITÓRIO
+# ==========================
+class PastaTrabalhoBase(BaseModel):
+    nome: str
+
+class PastaTrabalhoCreate(PastaTrabalhoBase):
+    pass
+
+class PastaTrabalho(PastaTrabalhoBase):
+    id: int
+    escritorio_id: int
+
+    class Config:
+        from_attributes = True
+
+class TipoServicoBase(BaseModel):
+    nome: str
+
+class TipoServicoCreate(TipoServicoBase):
+    pass
+
+class TipoServico(TipoServicoBase):
+    id: int
+    escritorio_id: int
+
+    class Config:
+        from_attributes = True
+
+# ==========================
 # Servico / Contrato Schema
 # ==========================
 class ServicoBase(BaseModel):
@@ -137,6 +166,7 @@ class Servico(ServicoBase):
     cliente_id: int
     escritorio_id: int
     data_contratacao: datetime
+    tipo_servico: Optional[TipoServico] = None
 
     class Config:
         from_attributes = True
@@ -320,3 +350,125 @@ class GerarDocumentoRequest(BaseModel):
     titulo_documento: str
     usar_ia: bool = False
     instrucoes_ia: Optional[str] = None
+
+# ==========================
+# PROCESSOS JUDICIAIS & DATAJUD
+# ==========================
+
+class ProcessoParteBase(BaseModel):
+    tipo_parte: str
+    nome: str
+    cpf_cnpj: Optional[str] = None
+    tipo_pessoa: str = "Física"
+    advogado_nome: Optional[str] = None
+    advogado_oab: Optional[str] = None
+
+class ProcessoParteCreate(ProcessoParteBase):
+    pass
+
+class ProcessoParte(ProcessoParteBase):
+    id: int
+    processo_id: int
+
+    class Config:
+        from_attributes = True
+
+class ProcessoAssuntoBase(BaseModel):
+    codigo_tpu: Optional[int] = None
+    nome: str
+    principal: bool = False
+
+class ProcessoAssuntoCreate(ProcessoAssuntoBase):
+    pass
+
+class ProcessoAssunto(ProcessoAssuntoBase):
+    id: int
+    processo_id: int
+
+    class Config:
+        from_attributes = True
+
+class MovimentacaoBase(BaseModel):
+    tipo: str # externa, interna
+    codigo_movimento: Optional[int] = None
+    nome_movimento: str
+    complementos_json: Optional[str] = None
+    descricao: Optional[str] = None
+    orgao_julgador_codigo: Optional[int] = None
+    orgao_julgador_nome: Optional[str] = None
+    data_hora: datetime
+
+class MovimentacaoCreate(MovimentacaoBase):
+    registrado_por_id: Optional[int] = None
+
+class Movimentacao(MovimentacaoBase):
+    id: int
+    processo_id: int
+    data_registro: datetime
+    registrado_por_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+class ProcessoBase(BaseModel):
+    titulo: str
+    numero_processo: Optional[str] = None
+    tribunal: Optional[str] = None
+    grau: str = "G1"
+    data_ajuizamento: Optional[datetime] = None
+    nivel_sigilo: int = 0
+    classe_codigo: Optional[int] = None
+    classe_nome: Optional[str] = None
+    orgao_julgador_codigo: Optional[int] = None
+    orgao_julgador_nome: Optional[str] = None
+    orgao_julgador_municipio_ibge: Optional[int] = None
+    formato_codigo: Optional[int] = None
+    formato_nome: str = "Eletrônico"
+    sistema_codigo: Optional[int] = None
+    sistema_nome: Optional[str] = None
+    descricao: Optional[str] = None
+    status: str = "Ativo"
+    prioridade: str = "Normal"
+    valor_causa: Optional[float] = None
+    area_direito: Optional[str] = None
+    fase_processual: Optional[str] = None
+    polo: str = "Autor"
+    cliente_id: Optional[int] = None
+    advogado_responsavel_id: Optional[int] = None
+    pasta_trabalho_id: Optional[int] = None
+    servico_id: Optional[int] = None
+
+class ProcessoCreate(ProcessoBase):
+    pass
+
+class ProcessoUpdate(BaseModel):
+    titulo: Optional[str] = None
+    numero_processo: Optional[str] = None
+    tribunal: Optional[str] = None
+    status: Optional[str] = None
+    prioridade: Optional[str] = None
+    descricao: Optional[str] = None
+    advogado_responsavel_id: Optional[int] = None
+    cliente_id: Optional[int] = None
+    servico_id: Optional[int] = None
+
+class ProcessoResponse(ProcessoBase):
+    id: int
+    escritorio_id: int
+    data_criacao: datetime
+    data_atualizacao: datetime
+    
+    partes: List[ProcessoParte] = []
+    assuntos: List[ProcessoAssunto] = []
+    movimentacoes: List[Movimentacao] = []
+    pasta_trabalho: Optional[PastaTrabalho] = None
+    servico: Optional[Servico] = None
+
+    class Config:
+        from_attributes = True
+
+# Schema para busca no DataJud
+class DataJudBuscaRequest(BaseModel):
+    numero_cnj: str
+    tribunal: Optional[str] = None
+    cliente_id: Optional[int] = None

@@ -88,14 +88,28 @@ class ParteEnvolvida(Base):
     escritorio = relationship("Escritorio")
 
 
+class PastaTrabalho(Base):
+    __tablename__ = "pastas_trabalho"
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    nome = Column(String(255), nullable=False)
+    escritorio = relationship("Escritorio")
+
+class TipoServico(Base):
+    __tablename__ = "tipos_servico"
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    nome = Column(String(255), nullable=False)
+    escritorio = relationship("Escritorio")
+
 class Servico(Base):
     __tablename__ = "servicos"
 
     id = Column(Integer, primary_key=True, index=True)
     escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False)
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False)
-    tipo_servico_id = Column(Integer, nullable=True) # Optional foreign key later
-    processo_id = Column(Integer, nullable=True) # Optional foreign key later
+    tipo_servico_id = Column(Integer, ForeignKey("tipos_servico.id"), nullable=True)
+    processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True)
     descricao = Column(Text)
     status = Column(String(50), default='Ativo')
     
@@ -112,6 +126,8 @@ class Servico(Base):
 
     escritorio = relationship("Escritorio")
     cliente = relationship("Cliente", back_populates="servicos")
+    processo = relationship("Processo", back_populates="servicos", foreign_keys=[processo_id])
+    tipo_servico = relationship("TipoServico")
 
 class ModeloDocumento(Base):
     __tablename__ = "modelos_documento"
@@ -136,7 +152,7 @@ class PastaDocumento(Base):
     # Vínculos Opcionais
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
     servico_id = Column(Integer, ForeignKey("servicos.id"), nullable=True, index=True)
-    processo_id = Column(Integer, nullable=True) # Processo not defined yet
+    processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True, index=True)
     
     # Subpastas
     parent_id = Column(Integer, ForeignKey("pastas_documento.id"), nullable=True, index=True)
@@ -146,6 +162,7 @@ class PastaDocumento(Base):
     escritorio = relationship("Escritorio")
     cliente = relationship("Cliente")
     servico = relationship("Servico")
+    processo = relationship("Processo")
     subpastas = relationship("PastaDocumento", backref="parent", remote_side=[id])
     documentos = relationship("DocumentoCliente", back_populates="pasta")
 
@@ -221,3 +238,100 @@ class SignatarioPosicao(Base):
     docHeight = Column("docheight", Float, nullable=False)
 
     signatario = relationship("Signatario", back_populates="posicoes")
+
+
+class Processo(Base):
+    __tablename__ = "processos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
+    advogado_responsavel_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    pasta_trabalho_id = Column(Integer, ForeignKey("pastas_trabalho.id"), nullable=True)
+
+    # Dados DataJud (Capa)
+    numero_processo = Column(String(50), index=True) # Formato CNJ
+    tribunal = Column(String(20)) # Sigla (TJSP, TRF3, etc)
+    grau = Column(String(5), default='G1')
+    data_ajuizamento = Column(DateTime, nullable=True)
+    nivel_sigilo = Column(Integer, default=0)
+    classe_codigo = Column(Integer)
+    classe_nome = Column(String(255))
+    orgao_julgador_codigo = Column(Integer)
+    orgao_julgador_nome = Column(String(255))
+    orgao_julgador_municipio_ibge = Column(Integer)
+    formato_codigo = Column(Integer)
+    formato_nome = Column(String(100), default='Eletrônico')
+    sistema_codigo = Column(Integer)
+    sistema_nome = Column(String(100))
+
+    # Dados Internos
+    titulo = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    status = Column(String(50), default='Ativo')
+    prioridade = Column(String(50), default='Normal')
+    valor_causa = Column(Float)
+    area_direito = Column(String(100))
+    fase_processual = Column(String(100))
+    polo = Column(String(50), default='Autor') # Polo que o escritório representa
+
+    data_criacao = Column(DateTime, default=func.now())
+    data_atualizacao = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    escritorio = relationship("Escritorio")
+    cliente = relationship("Cliente")
+    advogado_responsavel = relationship("Usuario")
+    servico_id = Column(Integer, ForeignKey("servicos.id", ondelete="SET NULL"), nullable=True)
+    servico = relationship("Servico", foreign_keys=[servico_id])
+    servicos = relationship("Servico", back_populates="processo", foreign_keys="[Servico.processo_id]")
+    partes = relationship("ProcessoParte", back_populates="processo", cascade="all, delete-orphan")
+    assuntos = relationship("ProcessoAssunto", back_populates="processo", cascade="all, delete-orphan")
+    movimentacoes = relationship("Movimentacao", back_populates="processo", cascade="all, delete-orphan")
+    pasta_trabalho = relationship("PastaTrabalho")
+
+
+class ProcessoParte(Base):
+    __tablename__ = "processo_partes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    processo_id = Column(Integer, ForeignKey("processos.id", ondelete="CASCADE"), nullable=False)
+    tipo_parte = Column(String(100), nullable=False) # Polo Ativo, Polo Passivo, etc
+    nome = Column(String(255), nullable=False)
+    cpf_cnpj = Column(String(50))
+    tipo_pessoa = Column(String(50), default='Física')
+    advogado_nome = Column(String(255))
+    advogado_oab = Column(String(50))
+
+    processo = relationship("Processo", back_populates="partes")
+
+
+class ProcessoAssunto(Base):
+    __tablename__ = "processo_assuntos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    processo_id = Column(Integer, ForeignKey("processos.id", ondelete="CASCADE"), nullable=False)
+    codigo_tpu = Column(Integer)
+    nome = Column(String(255), nullable=False)
+    principal = Column(Boolean, default=False)
+
+    processo = relationship("Processo", back_populates="assuntos")
+
+
+class Movimentacao(Base):
+    __tablename__ = "movimentacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    processo_id = Column(Integer, ForeignKey("processos.id", ondelete="CASCADE"), nullable=False)
+    tipo = Column(String(50), nullable=False) # externa (DataJud), interna (Escritório)
+    codigo_movimento = Column(Integer)
+    nome_movimento = Column(String(255), nullable=False)
+    complementos_json = Column(Text) # Detalhes da movimentação
+    descricao = Column(Text)
+    orgao_julgador_codigo = Column(Integer)
+    orgao_julgador_nome = Column(String(255))
+    data_hora = Column(DateTime, nullable=False)
+    data_registro = Column(DateTime, default=func.now())
+    registrado_por_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+
+    processo = relationship("Processo", back_populates="movimentacoes")
+    registrado_por = relationship("Usuario")

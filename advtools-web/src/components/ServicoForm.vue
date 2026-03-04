@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch, computed, reactive } from 'vue'
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { ref, watch, computed, onMounted } from 'vue'
+import { Plus, Trash2, RefreshCw } from 'lucide-vue-next'
 import { vMaska } from 'maska/vue'
 import ClientCombobox from './ClientCombobox.vue'
+import { apiFetch } from '../utils/api'
 
 const props = defineProps({
   modelValue: {
@@ -11,7 +12,7 @@ const props = defineProps({
   },
   clientes: {
     type: Array,
-    required: true
+    default: () => []
   },
   isSubmitting: {
     type: Boolean,
@@ -25,13 +26,39 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'submit', 'cancel'])
 
-const form = ref({ ...props.modelValue })
+const form = ref({ 
+  tipo_servico_id: null,
+  ...props.modelValue 
+})
+
+const localClientes = ref([...props.clientes])
+const tiposServico = ref([])
+
+const carregarOpcoes = async () => {
+    try {
+        const promises = [apiFetch('/api/configuracoes/tipos-servico')]
+        
+        // Se não vierem clientes via props, buscar (importante para busca inteligente funcionar)
+        if (props.clientes.length === 0) {
+            promises.push(apiFetch('/api/clientes'))
+        }
+        
+        const [resTipos, resClie] = await Promise.all(promises)
+        
+        if (resTipos.ok) tiposServico.value = await resTipos.json()
+        if (resClie && resClie.ok) localClientes.value = await resClie.json()
+    } catch (e) {
+        console.error("Erro ao carregar opções do serviço", e)
+    }
+}
+
+onMounted(carregarOpcoes)
 
 // Estrutura para a Tabela Dinâmica de Pagamentos
 const pagamentos = ref([])
 
 watch(() => props.modelValue, (newVal) => {
-  form.value = { ...newVal }
+  form.value = { ...form.value, ...newVal }
   // Se já houver pagamentos em JSON, decodificar, senão, criar linha vazia inicial
   if (form.value.condicoes_pagamento) {
     try {
@@ -39,7 +66,7 @@ watch(() => props.modelValue, (newVal) => {
     } catch {
        pagamentos.value = [{ tipo: 'Pix', valor: null, data: '', obs: '' }]
     }
-  } else {
+  } else if (!props.isEditing) {
     pagamentos.value = [{ tipo: 'Pix', valor: null, data: '', obs: '' }]
   }
 }, { deep: true, immediate: true })
@@ -89,22 +116,33 @@ const handleSubmit = () => {
              <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Cliente Vinculado *</label>
              <ClientCombobox 
                v-model="form.cliente_id" 
-               :options="clientes" 
+               :options="localClientes" 
                @change="updateField('cliente_id', $event.id)"
              />
           </div>
 
-          <div class="sm:col-span-4">
-            <label class="block text-sm font-medium leading-6 text-slate-900">Descrição Comercial / Nº Processo *</label>
+          <div class="sm:col-span-3">
+            <label class="block text-sm font-medium leading-6 text-slate-900">Tipo de Serviço *</label>
             <div class="mt-2">
-              <input type="text" :value="form.descricao" @input="updateField('descricao', $event.target.value)" required placeholder="Ex: Ação Trabalhista - Reclamação" class="block w-full rounded-md border-0 px-3 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 transition-shadow">
+              <select v-model="form.tipo_servico_id" required class="block w-full rounded-md border-0 px-3 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 transition-shadow appearance-none">
+                <option :value="null">Selecione o tipo...</option>
+                <option v-for="tipo in tiposServico" :key="tipo.id" :value="tipo.id">{{ tipo.nome }}</option>
+              </select>
+              <p v-if="tiposServico.length === 0" class="mt-1 text-[10px] text-slate-400 italic">Cadastre os tipos nas configurações.</p>
             </div>
           </div>
 
-          <div class="sm:col-span-2">
+          <div class="sm:col-span-3">
             <label class="block text-sm font-medium leading-6 text-slate-900">Porcentagem no Êxito (%)</label>
             <div class="mt-2">
               <input type="text" :value="form.porcentagem_exito" @input="updateField('porcentagem_exito', $event.target.value)" placeholder="Ex: 30%" class="block w-full rounded-md border-0 px-3 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 transition-shadow">
+            </div>
+          </div>
+
+          <div class="sm:col-span-6">
+            <label class="block text-sm font-medium leading-6 text-slate-900">Descrição Comercial / Notas Internas *</label>
+            <div class="mt-2">
+              <textarea :value="form.descricao" @input="updateField('descricao', $event.target.value)" required rows="3" placeholder="Detalhes do contrato, escopo do trabalho..." class="block w-full rounded-md border-0 px-3 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 transition-shadow"></textarea>
             </div>
           </div>
           

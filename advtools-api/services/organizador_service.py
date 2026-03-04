@@ -77,8 +77,8 @@ def converter_imagem_para_pdf(image_path: str) -> bytes:
 
 async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, escritorio_id: int, pasta_id: int):
     """Tarefa de background para organizar a pasta."""
-    from database import SessionLocal
-    async with SessionLocal() as db:
+    from database import AsyncSessionLocal
+    async with AsyncSessionLocal() as db:
         try:
             # 1. Setup
             job_manager.update_job(job_id, status="running", message="Iniciando organização...")
@@ -101,7 +101,14 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                 return
 
             escritorio = await crud.get_escritorio(db, escritorio_id)
-            api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
+            # Prioriza a chave do banco. Se não houver, avisa o usuário.
+            api_key = escritorio.gemini_api_key if escritorio else None
+            
+            if not api_key:
+                job_manager.update_job(job_id, status="failed", 
+                                     message="Chave de API do Gemini não configurada. Por favor, cadastre sua chave nas Configurações do Escritório para usar o Organizador Inteligente.")
+                return
+
             storage = get_storage_provider(escritorio)
             
             despesas = []
@@ -128,6 +135,17 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                         mime_type = f"image/{ext}" if ext != 'jpg' else "image/jpeg"
                 else:
                     texto = await extrair_texto_documento(source_path)
+                    # Fallback para PDF escaneado (sem texto): tenta extrair primeira imagem
+                    if not texto and ext == 'pdf':
+                        try:
+                            reader = PdfReader(source_path)
+                            for page in reader.pages:
+                                if page.images:
+                                    img_obj = page.images[0]
+                                    image_b64 = base64.b64encode(img_obj.data).decode('utf-8')
+                                    mime_type = "image/jpeg" # pypdf costuma extrair como jpeg ou png
+                                    break
+                        except: pass
 
                 # Chamar IA Multimodal
                 metadados = await analisar_documento_para_organizacao(api_key, texto, image_b64, mime_type if image_b64 else None)

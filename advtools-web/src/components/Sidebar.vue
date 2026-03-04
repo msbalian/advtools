@@ -20,6 +20,7 @@ const route = useRoute()
 
 const props = defineProps({
   escritorio: { type: Object, default: null },
+  usuario: { type: Object, default: null },
   sidebarOpen: { type: Boolean, default: false }
 })
 
@@ -29,10 +30,21 @@ const navigation = [
   { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Clientes e Serviços', icon: Users, path: '/clientes' },
   { name: 'Processos (DataJud)', icon: Scale, path: '/processos' },
-  { name: 'Modelos de Docs', icon: PenTool, path: '/modelos' },
+  { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
   { name: 'Financeiro', icon: BadgeDollarSign, path: '#' },
 ]
+
+const navigationAdmin = computed(() => {
+  if (props.usuario?.is_admin) {
+    return [
+      { name: 'Gestão Global', icon: ShieldCheck, path: '/configuracoes?tab=global' }
+    ]
+  }
+  return []
+})
+
+import { ShieldCheck } from 'lucide-vue-next'
 
 // Aspect Ratio Detection
 const isRectangular = ref(false)
@@ -68,7 +80,7 @@ const isActive = (path) => {
 <template>
   <div>
     <!-- Mobile Sidebar -->
-    <div v-if="sidebarOpen" class="fixed inset-0 z-50 md:hidden flex">
+    <div v-if="sidebarOpen" class="fixed inset-0 z-[60] md:hidden flex">
       <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="emit('close')"></div>
       <aside class="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl transition-transform transform">
         <div class="absolute top-0 right-0 -mr-12 pt-4">
@@ -91,6 +103,19 @@ const isActive = (path) => {
             <component :is="item.icon" :class="[isActive(item.path) ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600', 'mr-3 h-5 w-5']" />
             {{ item.name }}
           </router-link>
+
+          <!-- Admin Section Mobile -->
+          <div v-if="navigationAdmin.length > 0" class="pt-4 mt-4 border-t border-slate-100">
+            <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administração</p>
+            <router-link v-for="item in navigationAdmin" 
+                         :key="item.name" 
+                         :to="item.path" 
+                         @click="emit('close')"
+                         :class="[isActive(item.path) ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-indigo-50/30 hover:text-indigo-600', 'group flex items-center px-4 py-3 text-sm rounded-xl transition-all']">
+              <component :is="item.icon" :class="[isActive(item.path) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500', 'mr-3 h-5 w-5']" />
+              {{ item.name }}
+            </router-link>
+          </div>
         </nav>
 
         <!-- Mobile Footer Branding -->
@@ -132,6 +157,21 @@ const isActive = (path) => {
           <component :is="item.icon" :class="[isActive(item.path) ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600', 'mr-3 h-5 w-5 transition-transform group-hover:scale-110']" />
           {{ item.name }}
         </router-link>
+
+        <!-- Admin Section Desktop -->
+        <div v-if="navigationAdmin.length > 0" class="pt-6 mt-6 border-t border-slate-100">
+           <div class="px-6 mb-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Administração</div>
+           <router-link v-for="item in navigationAdmin" 
+                       :key="item.name" 
+                       :to="item.path" 
+                       :class="[isActive(item.path) 
+                         ? 'bg-indigo-50 text-indigo-700 shadow-[inset_4px_0_0_0_#4f46e5]' 
+                         : 'text-slate-500 hover:bg-indigo-50/50 hover:text-indigo-600', 
+                         'group flex items-center px-5 py-3.5 text-sm font-bold transition-all duration-200 rounded-xl mb-1']">
+            <component :is="item.icon" :class="[isActive(item.path) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500', 'mr-3 h-5 w-5 transition-transform group-hover:scale-110']" />
+            {{ item.name }}
+          </router-link>
+        </div>
       </nav>
       
       <!-- Premium Office Footer (Relocated Branding) -->

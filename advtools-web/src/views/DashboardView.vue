@@ -120,7 +120,7 @@ onUnmounted(() => {
     <div class="flex-1 flex flex-col overflow-hidden">
       
       <!-- Top Header -->
-      <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30">
+      <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-50">
         <div class="flex items-center flex-1 gap-4">
           <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 text-slate-500 hover:text-slate-700">
             <Menu class="w-6 h-6" />
@@ -177,7 +177,7 @@ onUnmounted(() => {
       <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         
         <!-- Welcome Section -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 animate-fade-in-up relative z-50">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 animate-fade-in-up relative z-10">
           <div>
             <h1 class="text-2xl font-bold text-slate-900">Visão Geral</h1>
             <p class="mt-1 text-sm text-slate-500">Acompanhe seus processos, prazos e métricas do escritório.</p>

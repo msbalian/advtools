@@ -7,7 +7,6 @@ from typing import Dict, Any
 # Lista de modelos para redundância (Nomes completos conforme exigido pela API)
 MODELOS_DISPONIVEIS = [
     "models/gemini-2.0-flash",
-    "models/gemini-2.5-flash",
     "models/gemini-1.5-flash",
     "models/gemini-1.5-pro",
     "models/gemini-pro"
@@ -22,6 +21,9 @@ async def redigir_documento_com_ia(api_key: str, modelo_texto: str, context: Dic
     """
     if not api_key:
         return "ERRO: Gemini API Key não configurada nas configurações do escritório."
+
+    # Sanitiza a chave
+    api_key = api_key.strip()
 
     # Prompt rico com o contexto jurídico
     prompt = f"""
@@ -53,8 +55,8 @@ async def redigir_documento_com_ia(api_key: str, modelo_texto: str, context: Dic
 
     # Tenta vários modelos em sequência e versões de API (Redundância Máxima)
     ultimo_erro = "Nenhum modelo disponível respondeu"
-    for version in API_VERSIONS:
-        for modelo in MODELOS_DISPONIVEIS:
+    for modelo in MODELOS_DISPONIVEIS:
+        for version in API_VERSIONS:
             url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
             try:
                 response = requests.post(url, headers=headers, json=payload, timeout=40)

@@ -335,7 +335,7 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
             instrucoes = request.instrucoes_ia or "Redija o documento completo, adaptando o modelo fornecido aos dados do cliente e garantindo que toda a peça esteja juridicamente coerente."
             
             conteudo_gerado = await redigir_documento_com_ia(
-                api_key=escritorio.gemini_api_key,
+                api_key=api_key,
                 modelo_texto=modelo_full_text,
                 context=context,
                 instrucoes=instrucoes

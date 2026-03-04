@@ -18,6 +18,7 @@ from reportlab.lib.pagesizes import A4
 
 import models
 import crud
+from config import Config
 import schemas
 from services.ai_service import analisar_documento_para_organizacao
 from services.storage_service import get_storage_provider
@@ -102,11 +103,11 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
 
             escritorio = await crud.get_escritorio(db, escritorio_id)
             # Prioriza a chave do banco. Se não houver, avisa o usuário.
-            api_key = escritorio.gemini_api_key if escritorio else None
+            api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
             
             if not api_key:
                 job_manager.update_job(job_id, status="failed", 
-                                     message="Chave de API do Gemini não configurada. Por favor, cadastre sua chave nas Configurações do Escritório para usar o Organizador Inteligente.")
+                                     message="Chave de API do Gemini não configurada. Por favor, cadastre sua chave nas Configurações do Escritório ou no servidor para usar o Organizador Inteligente.")
                 return
 
             storage = get_storage_provider(escritorio)

@@ -189,6 +189,45 @@ const deleteFolder = async (id) => {
 }
 
 
+const isOrganizing = ref(false)
+const currentJobId = ref(null)
+const jobProgress = ref({ status: '', progress: 0, message: '' })
+const progressModalOpen = ref(false)
+
+const pollJobStatus = async () => {
+    if (!currentJobId.value) return
+    
+    try {
+        const res = await apiFetch(`/api/pastas/jobs/${currentJobId.value}`)
+        if (res.ok) {
+            const job = await res.json()
+            jobProgress.value = job
+            
+            if (job.status === 'completed') {
+                isOrganizing.value = false
+                currentJobId.value = null
+                showToast("Organização concluída!")
+                await loadDocumentosInternos()
+                setTimeout(() => { progressModalOpen.value = false }, 2000)
+                return
+            }
+            
+            if (job.status === 'failed') {
+                isOrganizing.value = false
+                currentJobId.value = null
+                showToast("Erro: " + job.message, "error")
+                setTimeout(() => { progressModalOpen.value = false }, 3000)
+                return
+            }
+            
+            setTimeout(pollJobStatus, 1500)
+        }
+    } catch (e) {
+        console.error("Erro ao consultar job", e)
+        setTimeout(pollJobStatus, 3000)
+    }
+}
+
 const organizarPasta = async () => {
     if (currentFolderId.value === -1) return
     

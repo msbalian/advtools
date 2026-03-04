@@ -24,6 +24,8 @@ wheels/
 .pytest_cache/
 
 # Virtual Environments
+.venv/
+.venv/*
 venv/
 venv/*
 _venv/

@@ -58,6 +58,18 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: '/processos',
+            name: 'processos',
+            component: () => import('./views/ProcessosView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/processos/:id',
+            name: 'processo_detalhes',
+            component: () => import('./views/ProcessoDetalheView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/documentos/:id/assinaturas',
             name: 'gerenciar_assinaturas',
             component: () => import('./views/AssinaturasGerenciarView.vue'),

@@ -1,7 +1,7 @@
 """make cliente_id nullable in documentos_cliente
 
 Revision ID: 8c4e143d54c6
-Revises: d3c3ba90d8d8
+Revises: e7b23d90f1a2
 Create Date: 2026-03-03 10:07:43.021304
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '8c4e143d54c6'
-down_revision: Union[str, Sequence[str], None] = 'd3c3ba90d8d8'
+down_revision: Union[str, Sequence[str], None] = 'e7b23d90f1a2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

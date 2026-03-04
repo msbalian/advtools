@@ -1,7 +1,0 @@
-{
-    "venvPath": ".",
-    "venv": "venv_adv",
-    "extraPaths": [
-        "advtools-api"
-    ]
-}

@@ -5,6 +5,13 @@ Revises: 9b1f25a5a25d
 Create Date: 2026-03-04 12:38:04.863673
 
 """
+"""Add servico_id to Processo
+
+Revision ID: 0ffc78776994
+Revises: 9b1f25a5a25d
+Create Date: 2026-03-04 12:38:04.863673
+
+"""
 from typing import Sequence, Union
 
 from alembic import op

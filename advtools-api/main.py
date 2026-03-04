@@ -55,11 +55,13 @@ app.include_router(escritorios_router.router_singular)
 from routers import clientes as clientes_router
 from routers import servicos as servicos_router
 from routers import partes as partes_router
+from routers import processos as processos_router
 
 app.include_router(clientes_router.router)
 app.include_router(servicos_router.router)
 app.include_router(partes_router.router)
 app.include_router(partes_router.router_clientes_partes)
+app.include_router(processos_router.router)
 
 # ==========================
 # ROTAS DE MODELOS
@@ -79,7 +81,9 @@ from routers import assinaturas as assinaturas_router
 app.include_router(assinaturas_router.router_assinaturas)
 app.include_router(assinaturas_router.router_assinativas_public)
 from routers import superadmin as superadmin_router
+from routers import configuracoes as configuracoes_router
 app.include_router(superadmin_router.router)
+app.include_router(configuracoes_router.router)
 
 # ==========================
 # ROTAS APP DEFAULT

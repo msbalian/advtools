@@ -84,30 +84,31 @@ async def analisar_documento_para_organizacao(api_key: str, text_content: str = 
     if not api_key:
         return {"categoria": "Outros", "nome_sugerido": "Documento sem Analise", "is_financeiro": False}
 
-    prompt = """
-    Analise o conteúdo deste documento jurídico ou financeiro e retorne um JSON estrito.
-    Se for uma IMAGEM, descreva o que é (ex: Print de WhatsApp, Foto de RG, Nota Fiscal).
-    Se for TEXTO, identifique o tipo de documento.
+    prompt = f"""
+    Analise o conteúdo deste documento jurídico ou financeiro brasileiro e retorne um JSON estrito.
+    O objetivo é organizar uma pasta de documentos de um processo ou cliente.
 
-    ESTRUTURA DO JSON DE RETORNO:
-    {
-        "categoria": "Tipo de documento (ex: Procuração, RG/CPF, Comprovante de Residência, Despesa, Contrato, Petição)",
-        "nome_sugerido": "Nome curto e limpo para o arquivo (ex: Procuracao_Assinada)",
-        "is_financeiro": true/false,
-        "valor": 0.0,
+    INFORMAÇÕES DISPONÍVEIS:
+    - CONTEÚDO EXTRAÍDO: {text_content[:2000] if text_content else "Nenhum texto extraído (ver imagem)"}
+    - POSSUI IMAGEM: {"Sim" if image_base64 else "Não"}
+
+    ESTRUTURA OBRIGATÓRIA DO JSON:
+    {{
+        "categoria": "Tipo (ex: Procuração, RG, CNH, Comprovante_Residencia, Nota_Fiscal, Recibo, Peticao_Inicial, Despesa)",
+        "nome_sugerido": "Nome curto e técnico (ex: CNH_Joao_Silva, Nota_Fiscal_Energia_03_2024)",
+        "is_financeiro": true/false (true apenas para comprovantes de gastos/pagamentos),
+        "valor": float ou null,
         "data": "YYYY-MM-DD ou null",
-        "descricao": "Descrição curta se for financeiro"
-    }
+        "descricao": "Resumo da despesa"
+    }}
 
-    REGRAS:
-    1. Se for despesa (nota fiscal, recibo, boleto pago), is_financeiro deve ser true.
-    2. O nome_sugerido não deve ter extensão (.pdf, .jpg).
-    3. RETORNE APENAS O JSON.
+    REGRAS CRÍTICAS:
+    1. Se não tiver certeza absoluta, tente classificar pela aparência ou palavras-chave.
+    2. NUNCA use "Documento não identificado" se houver QUALQUER pista do que se trata.
+    3. Retorne APENAS o JSON, sem explicações.
     """
 
     content_parts = []
-    if text_content:
-        content_parts.append({"text": f"CONTEÚDO DO TEXTO:\n{text_content}"})
     if image_base64:
         content_parts.append({
             "inline_data": {
@@ -115,40 +116,59 @@ async def analisar_documento_para_organizacao(api_key: str, text_content: str = 
                 "data": image_base64
             }
         })
-    
     content_parts.append({"text": prompt})
 
     payload = {
-        "contents": [{"parts": content_parts}]
+        "contents": [{"parts": content_parts}],
+        "safetySettings": [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+        ],
+        "generationConfig": {
+            "response_mime_type": "application/json"
+        }
     }
     headers = {'Content-Type': 'application/json'}
 
-    # Tenta modelos que suportam Visão
     modelos_vision = ["models/gemini-1.5-flash", "models/gemini-1.5-pro"]
     
     for version in API_VERSIONS:
         for modelo in modelos_vision:
             url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
             try:
+                print(f"DEBUG AI: Processando com {modelo} ({version})...")
                 response = requests.post(url, headers=headers, json=payload, timeout=40)
+                
                 if response.status_code == 200:
                     res_data = response.json()
                     if 'candidates' in res_data and len(res_data['candidates']) > 0:
-                        raw_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
-                        # Limpa possíveis markdown boxes ```json ... ```
-                        json_str = raw_text.replace('```json', '').replace('```', '').strip()
-                        try:
-                            return json.loads(json_str)
-                        except:
-                            # Tenta extrair entre chaves se a IA falou algo extra
-                            start = json_str.find('{')
-                            end = json_str.rfind('}')
-                            if start != -1 and end != -1:
-                                return json.loads(json_str[start:end+1])
-            except:
+                        candidate = res_data['candidates'][0]
+                        if 'content' in candidate and 'parts' in candidate['content']:
+                            raw_text = candidate['content']['parts'][0]['text'].strip()
+                            print(f"DEBUG AI: Sucesso! Resposta: {raw_text[:60]}...")
+                            
+                            json_str = raw_text.replace('```json', '').replace('```', '').strip()
+                            try:
+                                return json.loads(json_str)
+                            except:
+                                start = json_str.find('{')
+                                end = json_str.rfind('}')
+                                if start != -1 and end != -1:
+                                    return json.loads(json_str[start:end+1])
+                        else:
+                            print(f"DEBUG AI: Candidate sem conteúdo. FinishReason: {candidate.get('finishReason')}")
+                    else:
+                        print(f"DEBUG AI: Nenhum candidate retornado. Response: {res_data}")
+                else:
+                    print(f"DEBUG AI: Erro na API {modelo}: {response.status_code} - {response.text[:200]}")
+            except Exception as e:
+                print(f"DEBUG AI: Exceção na chamada {modelo}: {str(e)}")
                 continue
 
-    return {"categoria": "Outros", "nome_sugerido": "Documento_Nao_Identificado", "is_financeiro": False}
+    # Fallback único para sabermos se chegamos aqui
+    return {"categoria": "Outros", "nome_sugerido": "IA_FALHOU_IDENTIFICAR", "is_financeiro": False}
 
 
 

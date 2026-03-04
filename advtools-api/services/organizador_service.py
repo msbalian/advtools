@@ -149,12 +149,14 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
 
                 # Chamar IA Multimodal
                 metadados = await analisar_documento_para_organizacao(api_key, texto, image_b64, mime_type if image_b64 else None)
+                print(f"DEBUG AI: Metadados processados para {doc.nome}: {metadados}")
                 
                 if "error" in metadados:
                     logger.warning(f"IA falhou para {doc.id}: {metadados['error']}")
                     continue
 
                 novo_nome_base = metadados.get("nome_sugerido", doc.nome)
+                # Limpa caracteres especiais, mas mantém espaços e hífens para organização humana
                 novo_nome_base = "".join([c for c in novo_nome_base if c.isalnum() or c in (' ', '_', '-')]).strip()
                 novo_nome_exibicao = f"{idx:02d}. {novo_nome_base}"
                 
@@ -163,13 +165,10 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                 final_ext = "pdf"
                 
                 if ext in ['jpg', 'jpeg', 'png', 'webp']:
-                    job_manager.update_job(job_id, message=f"Convertendo imagem para PDF: {doc.nome}")
+                    job_manager.update_job(job_id, message=f"Convertendo {doc.nome} para PDF...")
                     final_content = converter_imagem_para_pdf(source_path)
                 elif ext == 'docx':
-                    job_manager.update_job(job_id, message=f"Extraindo DOCX...")
-                    # Para DOCX, no Windows sem Office/LibreOffice, converter via lib é difícil.
-                    # Vamos manter DOCX por enquanto ou sugerir converter o conteúdo extraído?
-                    # Por agora, mantenho DOCX mas renomeio. (Idealmente docx2pdf requer UI/Word no Windows)
+                    job_manager.update_job(job_id, message=f"Extraindo conteúdo Word de {doc.nome}...")
                     final_ext = "docx" 
                     with open(source_path, 'rb') as f: final_content = f.read()
                 else:
@@ -194,6 +193,10 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
                         "descricao": metadados.get("descricao"),
                         "valor": metadados.get("valor")
                     })
+                
+                # Atualiza progresso após completar o arquivo
+                progress = int((idx / total_docs) * 95)
+                job_manager.update_job(job_id, progress=progress)
 
             # 3. Planilha
             if despesas:

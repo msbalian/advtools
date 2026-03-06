@@ -300,6 +300,11 @@ const deleteParte = async (id) => {
     })
 }
 
+const formatDate = (dateString) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('pt-BR')
+}
+
 // Lógica de Documentos e Pastas removida: Gerenciada agora pelo componente FileExplorer
 
 onMounted(async () => {

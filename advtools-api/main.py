@@ -63,6 +63,9 @@ app.include_router(partes_router.router)
 app.include_router(partes_router.router_clientes_partes)
 app.include_router(processos_router.router)
 
+from routers import tarefas as tarefas_router
+app.include_router(tarefas_router.router)
+
 # ==========================
 # ROTAS DE MODELOS
 # ==========================

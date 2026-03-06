@@ -17,9 +17,6 @@ async def get_processos_service(db: AsyncSession, escritorio_id: int):
 async def get_processos_by_cliente_service(db: AsyncSession, cliente_id: int, escritorio_id: int):
     return await crud.get_processos_by_cliente(db, cliente_id=cliente_id, escritorio_id=escritorio_id)
 
-async def get_processos_by_cliente_service(db: AsyncSession, cliente_id: int, escritorio_id: int):
-    return await crud.get_processos_by_cliente(db, cliente_id=cliente_id, escritorio_id=escritorio_id)
-
 async def get_processo_service(db: AsyncSession, processo_id: int, escritorio_id: int):
     processo = await crud.get_processo(db, processo_id, escritorio_id)
     if not processo:

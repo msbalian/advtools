@@ -461,6 +461,7 @@ class ProcessoResponse(ProcessoBase):
     partes: List[ProcessoParte] = []
     assuntos: List[ProcessoAssunto] = []
     movimentacoes: List[Movimentacao] = []
+    tarefas: List['TarefaResponse'] = []
     pasta_trabalho: Optional[PastaTrabalho] = None
     servico: Optional[Servico] = None
 
@@ -481,3 +482,55 @@ class DashboardStats(BaseModel):
     assinaturas_pendentes: int
     clientes_ativos: int
     receita_mes: float
+
+# ==========================
+# TAREFAS
+# ==========================
+# Definimos um schema simplificado de usuário para evitar recursão circular
+class UsuarioTarefaInfo(BaseModel):
+    id: int
+    nome: str
+    email: EmailStr
+
+    class Config:
+        from_attributes = True
+
+class ProcessoTarefaInfo(BaseModel):
+    id: int
+    numero_processo: Optional[str] = None
+    titulo: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class TarefaBase(BaseModel):
+    titulo: str
+    descricao: Optional[str] = None
+    status: str = "Pendente"
+    prioridade: str = "Normal"
+    data_vencimento: Optional[datetime] = None
+    processo_id: Optional[int] = None
+    responsavel_id: Optional[int] = None
+
+class TarefaCreate(TarefaBase):
+    pass
+
+class TarefaUpdate(BaseModel):
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    status: Optional[str] = None
+    prioridade: Optional[str] = None
+    data_vencimento: Optional[datetime] = None
+    responsavel_id: Optional[int] = None
+
+class TarefaResponse(TarefaBase):
+    id: int
+    escritorio_id: int
+    criado_por_id: int
+    data_criacao: datetime
+    data_atualizacao: datetime
+    responsavel: Optional[UsuarioTarefaInfo] = None
+    processo: Optional[ProcessoTarefaInfo] = None
+
+    class Config:
+        from_attributes = True

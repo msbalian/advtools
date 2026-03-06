@@ -20,7 +20,8 @@ import {
   LogOut,
   ChevronDown,
   Briefcase,
-  Plus
+  Plus,
+  Building2
 } from 'lucide-vue-next'
 import GlobalClientSearch from '../components/GlobalClientSearch.vue'
 import { apiFetch } from '../utils/api'
@@ -82,6 +83,7 @@ onMounted(() => {
     carregarEscritorio()
     carregarUsuario()
     carregarStats()
+    carregarTarefas()
 })
 
 const stats = computed(() => [
@@ -130,11 +132,23 @@ const processos = [
   { id: '0000111-22.2021.5.02.0001', cliente: 'Maria Oliveira', tribunal: 'TRT2', status: 'Audiência Marcada', date: '15/10/2023', badgeRef: 'bg-purple-50 text-purple-700 ring-purple-600/20' },
 ]
 
-const tarefas = [
-  { id: 1, title: 'Revisar Petição Inicial - Caso Silva', time: '10:00 AM', priority: 'high' },
-  { id: 2, title: 'Reunião Cliente TechCorp (Online)', time: '14:00 PM', priority: 'medium' },
-  { id: 3, title: 'Verificar assinaturas do Contrato 042', time: '16:30 PM', priority: 'low' },
-]
+const tarefas = ref([])
+
+const carregarTarefas = async () => {
+    try {
+        // Buscamos apenas pendentes e em andamento para o dashboard
+        const res = await apiFetch('/api/tarefas?limit=10')
+        if (res.ok) {
+            const allTasks = await res.json()
+            // Filtramos apenas as que não estão concluídas/canceladas
+            tarefas.value = allTasks
+                .filter(t => t.status !== 'Concluída' && t.status !== 'Cancelada')
+                .slice(0, 5) // Mostramos apenas as 5 mais urgentes
+        }
+    } catch (e) {
+        console.error("Erro ao carregar tarefas", e)
+    }
+}
 
 const showSignDropdown = ref(false)
 const signContainer = ref(null)
@@ -330,25 +344,46 @@ onUnmounted(() => {
           <div class="lg:col-span-1 flex flex-col gap-6">
              <div class="card p-0 animate-fade-in-up" style="animation-delay: 0.5s;">
                 <div class="px-6 py-5 border-b border-slate-200 bg-white">
-                  <h2 class="text-base font-semibold leading-6 text-slate-900">Agenda de Hoje</h2>
+                  <h2 class="text-base font-semibold leading-6 text-slate-900">(Próximas Tarefas)</h2>
                 </div>
                 <div class="p-2">
-                   <ul class="divide-y divide-slate-100">
-                      <li v-for="tarefa in tarefas" :key="tarefa.id" class="p-4 flex items-start gap-4 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group">
+                   <ul v-if="tarefas.length > 0" class="divide-y divide-slate-100">
+                      <li v-for="tarefa in tarefas" :key="tarefa.id" @click="router.push(`/processos/${tarefa.processo_id}`)" class="p-4 flex items-start gap-4 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group">
                          <div class="flex-shrink-0 mt-0.5">
-                            <Clock v-if="tarefa.priority === 'medium'" class="w-5 h-5 text-slate-400 group-hover:text-primary-500" />
-                            <AlertCircle v-else-if="tarefa.priority === 'high'" class="w-5 h-5 text-red-400 group-hover:text-red-500" />
+                            <Clock v-if="tarefa.prioridade === 'Normal'" class="w-5 h-5 text-slate-400 group-hover:text-primary-500" />
+                            <AlertCircle v-else-if="tarefa.prioridade === 'Alta' || tarefa.prioridade === 'Urgente'" class="w-5 h-5 text-red-400 group-hover:text-red-500" />
                             <CheckCircle2 v-else class="w-5 h-5 text-emerald-400 group-hover:text-emerald-500" />
                          </div>
                          <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-slate-900">{{ tarefa.title }}</p>
-                            <p class="text-xs text-slate-500">{{ tarefa.time }}</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-semibold text-slate-900 truncate">{{ tarefa.titulo }}</p>
+                                <span :class="[
+                                    tarefa.status === 'Pendente' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700',
+                                    'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium'
+                                ]">
+                                    {{ tarefa.status }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                   {{ tarefa.data_vencimento ? new Date(tarefa.data_vencimento).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'Sem prazo' }}
+                                </p>
+                                <div v-if="tarefa.responsavel" class="flex items-center gap-1.5 py-0.5 px-2 bg-slate-50 rounded-full border border-slate-100">
+                                    <div class="w-3.5 h-3.5 rounded-full bg-primary-100 flex items-center justify-center text-[8px] font-bold text-primary-700">
+                                        {{ tarefa.responsavel.nome.charAt(0).toUpperCase() }}
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 font-medium">{{ tarefa.responsavel.nome.split(' ')[0] }}</span>
+                                </div>
+                            </div>
                          </div>
                       </li>
                    </ul>
+                   <div v-else class="py-12 text-center">
+                      <p class="text-sm text-slate-400 font-medium">Nenhuma tarefa pendente.</p>
+                   </div>
                 </div>
                 <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 text-center rounded-b-xl">
-                   <button class="text-sm font-medium text-primary-600 hover:text-primary-700">Adicionar Tarefa +</button>
+                   <button @click="router.push('/processos')" class="text-sm font-medium text-primary-600 hover:text-primary-700">Ver Processos e Tarefas &rarr;</button>
                 </div>
              </div>
 

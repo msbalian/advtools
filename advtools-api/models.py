@@ -287,6 +287,7 @@ class Processo(Base):
     partes = relationship("ProcessoParte", back_populates="processo", cascade="all, delete-orphan")
     assuntos = relationship("ProcessoAssunto", back_populates="processo", cascade="all, delete-orphan")
     movimentacoes = relationship("Movimentacao", back_populates="processo", cascade="all, delete-orphan")
+    tarefas = relationship("Tarefa", back_populates="processo", cascade="all, delete-orphan")
     pasta_trabalho = relationship("PastaTrabalho")
 
 
@@ -335,3 +336,26 @@ class Movimentacao(Base):
 
     processo = relationship("Processo", back_populates="movimentacoes")
     registrado_por = relationship("Usuario")
+
+class Tarefa(Base):
+    __tablename__ = "tarefas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True, index=True)
+    responsavel_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True, index=True)
+    criado_por_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    
+    titulo = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    status = Column(String(50), default="Pendente") # Pendente, Em Andamento, Concluída, Cancelada
+    prioridade = Column(String(50), default="Normal") # Baixa, Normal, Alta, Urgente
+    data_vencimento = Column(DateTime, nullable=True)
+    
+    data_criacao = Column(DateTime, default=func.now())
+    data_atualizacao = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    escritorio = relationship("Escritorio")
+    processo = relationship("Processo", back_populates="tarefas")
+    responsavel = relationship("Usuario", foreign_keys=[responsavel_id])
+    criado_por = relationship("Usuario", foreign_keys=[criado_por_id])

@@ -12,7 +12,8 @@ import {
   PenTool, 
   BadgeDollarSign, 
   X,
-  Wand2
+  Wand2,
+  CheckCircle2
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Processos Judiciais', icon: Scale, path: '/processos' },
   { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
+  { name: 'Tarefas e Prazos', icon: CheckCircle2, path: '/tarefas' },
   { name: 'Financeiro', icon: BadgeDollarSign, path: '#' },
 ]
 

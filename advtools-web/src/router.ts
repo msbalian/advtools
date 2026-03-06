@@ -64,6 +64,12 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: '/tarefas',
+            name: 'tarefas',
+            component: () => import('./views/TarefasView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/processos/:id',
             name: 'processo_detalhes',
             component: () => import('./views/ProcessoDetalheView.vue'),

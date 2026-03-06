@@ -5,6 +5,8 @@ import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
 import ProcessoForm from '../components/ProcessoForm.vue'
 import FileExplorer from '../components/FileExplorer.vue'
+import TarefaBadge from '../components/TarefaBadge.vue'
+import TarefaFormModal from '../components/TarefaFormModal.vue'
 import {
   ArrowLeft,
   Scale,
@@ -38,7 +40,11 @@ import {
   ChevronRight,
   FileUp,
   FileSearch,
-  Wand2
+  Wand2,
+  CheckSquare,
+  Check,
+  Edit2,
+  User
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -62,6 +68,11 @@ const currentUser = ref(null)
 // Pastas e Documentos
 const pastas = ref([])
 const documentos = ref([])
+const tarefas = ref([])
+const showTarefaModal = ref(false)
+const isEditingTarefa = ref(false)
+const isSubmittingTarefa = ref(false)
+const selectedTarefa = ref(null)
 const currentFolderId = ref(-1)
 const breadcrumbs = ref([{ id: -1, nome: 'Raiz' }])
 const isUploadingDoc = ref(false)
@@ -114,6 +125,8 @@ const carregarDados = async () => {
             const resProc = await apiFetch(`/api/processos/${route.params.id}`)
             if (resProc.ok) {
                 processo.value = await resProc.json()
+                // As tarefas já vêm no processo por causa do relacionamento e schema
+                tarefas.value = processo.value.tarefas || []
             } else {
                 throw new Error("Processo não encontrado")
             }
@@ -216,18 +229,98 @@ const formatDate = (dateStr, includeTime = false) => {
     return d.toLocaleDateString('pt-BR')
 }
 
+// Lógica de Tarefas
+const openNewTarefa = () => {
+    isEditingTarefa.value = false
+    selectedTarefa.value = {
+        titulo: '',
+        descricao: '',
+        status: 'Pendente',
+        prioridade: 'Normal',
+        data_vencimento: null,
+        processo_id: Number(route.params.id),
+        responsavel_id: null
+    }
+    showTarefaModal.value = true
+}
+
+const openEditTarefa = (tarefa) => {
+    isEditingTarefa.value = true
+    selectedTarefa.value = { ...tarefa }
+    showTarefaModal.value = true
+}
+
+const handleTarefaSubmit = async (dados) => {
+    isSubmittingTarefa.value = true
+    try {
+        const method = isEditingTarefa.value ? 'PATCH' : 'POST'
+        const url = isEditingTarefa.value ? `/api/tarefas/${dados.id}` : '/api/tarefas'
+        
+        const res = await apiFetch(url, {
+            method,
+            body: JSON.stringify(dados)
+        })
+
+        if (res.ok) {
+            showMessage(isEditingTarefa.value ? "Tarefa atualizada!" : "Tarefa criada!", "success")
+            showTarefaModal.value = false
+            // Recarregar tarefas
+            const resT = await apiFetch(`/api/tarefas?processo_id=${route.params.id}`)
+            if (resT.ok) tarefas.value = await resT.json()
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro ao salvar tarefa", "error")
+        }
+    } catch (e) {
+        showMessage("Erro de conexão.", "error")
+    } finally {
+        isSubmittingTarefa.value = false
+    }
+}
+
+const deleteTarefa = async (id) => {
+    confirmAction("Tem certeza que deseja excluir esta tarefa?", async () => {
+        try {
+            const res = await apiFetch(`/api/tarefas/${id}`, { method: 'DELETE' })
+            if (res.ok) {
+                showMessage("Tarefa excluída!")
+                tarefas.value = tarefas.value.filter(t => t.id !== id)
+            } else {
+                showMessage("Erro ao excluir tarefa", "error")
+            }
+        } catch (e) {
+            showMessage("Erro de conexão.", "error")
+        }
+    }, "Excluir Tarefa", "danger")
+}
+
+const toggleTarefaStatus = async (tarefa) => {
+    const newStatus = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída'
+    try {
+        const res = await apiFetch(`/api/tarefas/${tarefa.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: newStatus })
+        })
+        if (res.ok) {
+            tarefa.status = newStatus
+            showMessage(newStatus === 'Concluída' ? "Tarefa concluída! 🎉" : "Tarefa reaberta.")
+        }
+    } catch (e) {
+        showMessage("Erro ao atualizar status", "error")
+    }
+}
+
 // Watch for route changes (e.g. from /novo to /:id)
 watch(() => route.params.id, (newId) => {
     if (newId) carregarDados()
 })
-
-// Lógica de Pastas e Documentos removida: Gerenciada agora pelo componente FileExplorer
 
 onMounted(carregarDados)
 
 const tabs = [
     { id: 'resumo', name: 'Resumo', icon: Scale },
     { id: 'timeline', name: 'Movimentações', icon: History },
+    { id: 'tarefas', name: 'Tarefas', icon: CheckSquare },
     { id: 'partes', name: 'Partes e Assuntos', icon: Users },
     { id: 'documentos', name: 'Documentos', icon: FileText }
 ]
@@ -467,6 +560,80 @@ const tabs = [
                  </div>
               </div>
 
+              <!-- Tab Content: Tarefas -->
+              <div v-show="activeTab === 'tarefas'" class="bg-white p-8 rounded-[40px] shadow-sm ring-1 ring-slate-100 animate-fade-in-up">
+                 <div class="flex items-center justify-between mb-10">
+                    <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                       <CheckSquare class="w-5 h-5 text-primary-500" /> Tarefas do Processo
+                    </h3>
+                    <button @click="openNewTarefa" class="px-6 py-3 bg-primary-600 text-white font-black text-xs rounded-2xl hover:bg-primary-700 transition-all flex items-center gap-2 shadow-lg shadow-primary-500/20 active:scale-95">
+                       <Plus class="w-4 h-4" /> Nova Tarefa
+                    </button>
+                 </div>
+
+                 <div class="space-y-4">
+                    <div v-for="tarefa in tarefas" :key="tarefa.id" 
+                         class="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 group transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 relative overflow-hidden">
+                       
+                       <!-- Barra Lateral de Prioridade -->
+                       <div :class="['absolute left-0 top-0 bottom-0 w-1.5 transition-all', 
+                          tarefa.prioridade === 'Urgente' ? 'bg-red-500' : 
+                          tarefa.prioridade === 'Alta' ? 'bg-orange-500' : 
+                          tarefa.prioridade === 'Normal' ? 'bg-sky-500' : 'bg-slate-300']"></div>
+
+                       <div class="flex items-center gap-6">
+                          <!-- Checkbox Custom -->
+                          <button @click="toggleTarefaStatus(tarefa)" 
+                                  :class="['w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all', 
+                                  tarefa.status === 'Concluída' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white border-slate-200 text-slate-200 hover:border-primary-500']">
+                             <Check class="w-5 h-5" />
+                          </button>
+
+                          <div class="flex-1">
+                             <div class="flex items-center gap-3 mb-1">
+                                <h4 :class="['text-base font-black transition-all', tarefa.status === 'Concluída' ? 'text-slate-400 line-through' : 'text-slate-900']">
+                                   {{ tarefa.titulo }}
+                                </h4>
+                                <TarefaBadge type="prioridade" :value="tarefa.prioridade" />
+                                <TarefaBadge type="status" :value="tarefa.status" />
+                             </div>
+                             <p v-if="tarefa.descricao" class="text-xs text-slate-500 font-medium line-clamp-1">{{ tarefa.descricao }}</p>
+                             
+                             <div class="mt-4 flex items-center gap-6">
+                                <div v-if="tarefa.data_vencimento" class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                   <Calendar class="w-3.5 h-3.5" /> 
+                                   Vence {{ formatDate(tarefa.data_vencimento) }}
+                                </div>
+                                <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                   <User class="w-3.5 h-3.5" /> 
+                                   Responsável: {{ tarefa.responsavel_id ? 'Atribuído' : 'Não atribuído' }}
+                                </div>
+                             </div>
+                          </div>
+
+                          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button @click="openEditTarefa(tarefa)" class="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-primary-600 transition-colors">
+                                <Edit2 class="w-4 h-4" />
+                             </button>
+                             <button @click="deleteTarefa(tarefa.id)" class="p-2 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-600 transition-colors">
+                                <Trash2 class="w-4 h-4" />
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div v-if="!tarefas.length" class="text-center py-20 bg-slate-50/30 rounded-[40px] border-2 border-dashed border-slate-100">
+                       <div class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-4">
+                          <CheckSquare class="w-8 h-8 text-slate-200" />
+                       </div>
+                       <p class="text-slate-400 font-bold text-sm">Nenhuma tarefa vinculada a este processo.</p>
+                       <button @click="openNewTarefa" class="mt-4 text-primary-600 font-black text-xs uppercase tracking-widest hover:text-primary-700">
+                          Criar Primeira Tarefa
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
               <!-- Tab Content: Partes e Assuntos -->
               <div v-show="activeTab === 'partes'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
                  <!-- Partes -->
@@ -516,15 +683,15 @@ const tabs = [
               </div>
 
               <!-- Tab Content: Documentos -->
-                <div v-show="activeTab === 'documentos'" class="animate-fade-in-up">
-                    <FileExplorer 
-                        contextType="processo" 
-                        :contextId="processo.id" 
-                        :clienteId="processo.cliente_id"
-                        title="Pasta Digital do Processo"
-                    />
-                </div>
-            </template>
+              <div v-show="activeTab === 'documentos'" class="animate-fade-in-up">
+                  <FileExplorer 
+                      contextType="processo" 
+                      :contextId="processo.id" 
+                      :clienteId="processo.cliente_id"
+                      title="Pasta Digital do Processo"
+                  />
+              </div>
+           </template>
 
         </div>
       </main>
@@ -549,7 +716,8 @@ const tabs = [
         </div>
       </div>
     </div>
-<!-- Modais de Pasta e Progresso removidos: Gerenciados agora pelo componente FileExplorer -->
+
+    <TarefaFormModal :show="showTarefaModal" :tarefa="selectedTarefa" :isEditing="isEditingTarefa" :isSubmitting="isSubmittingTarefa" :processoId="Number(route.params.id)" @close="showTarefaModal = false" @submit="handleTarefaSubmit" />
   </div>
 </template>
 

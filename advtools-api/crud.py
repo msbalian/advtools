@@ -555,6 +555,7 @@ async def get_processos(db: AsyncSession, escritorio_id: int):
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -569,6 +570,7 @@ async def get_processos_by_cliente(db: AsyncSession, cliente_id: int, escritorio
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -586,6 +588,7 @@ async def get_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )

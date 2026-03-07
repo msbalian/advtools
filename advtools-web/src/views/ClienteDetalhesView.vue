@@ -33,12 +33,17 @@ import {
   ChevronRight,
   Sparkles,
   RefreshCw,
-  Loader2
+  Loader2,
+  CheckSquare,
+  Edit2,
+  Check
 } from 'lucide-vue-next'
 import ClienteForm from '../components/ClienteForm.vue'
 import ServicoForm from '../components/ServicoForm.vue'
 import ParteEnvolvidaForm from '../components/ParteEnvolvidaForm.vue'
 import FileExplorer from '../components/FileExplorer.vue'
+import TarefaBadge from '../components/TarefaBadge.vue'
+import TarefaFormModal from '../components/TarefaFormModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,6 +67,11 @@ const cliente = ref(null)
 const servicos = ref([])
 const processos = ref([])
 const partes = ref([])
+const tarefas = ref([])
+const showTarefaModal = ref(false)
+const isEditingTarefa = ref(false)
+const isSubmittingTarefa = ref(false)
+const selectedTarefa = ref(null)
 const isLoading = ref(true)
 const showProfileMenu = ref(false)
 const currentUser = ref(null)
@@ -109,6 +119,12 @@ const loadDetalhes = async () => {
     const resPartes = await apiFetch(`/api/clientes/${route.params.id}/partes`)
     if (resPartes.ok) {
         partes.value = await resPartes.json()
+    }
+
+    // Fetch Tarefas
+    const resTarefas = await apiFetch(`/api/tarefas?cliente_id=${route.params.id}`)
+    if (resTarefas.ok) {
+        tarefas.value = await resTarefas.json()
     }
 
   } catch (error) {
@@ -298,6 +314,88 @@ const deleteParte = async (id) => {
             showMessage("Erro ao excluir parte envolvida", "error")
         }
     })
+}
+
+// Lógica de Tarefas
+const openNewTarefa = () => {
+    isEditingTarefa.value = false
+    selectedTarefa.value = {
+        titulo: '',
+        descricao: '',
+        status: 'Pendente',
+        prioridade: 'Normal',
+        data_vencimento: null,
+        cliente_id: Number(route.params.id),
+        processo_id: null,
+        responsavel_id: null
+    }
+    showTarefaModal.value = true
+}
+
+const openEditTarefa = (tarefa) => {
+    isEditingTarefa.value = true
+    selectedTarefa.value = { ...tarefa }
+    showTarefaModal.value = true
+}
+
+const handleTarefaSubmit = async (dados) => {
+    isSubmittingTarefa.value = true
+    try {
+        const method = isEditingTarefa.value ? 'PATCH' : 'POST'
+        const url = isEditingTarefa.value ? `/api/tarefas/${dados.id}` : '/api/tarefas'
+        
+        const res = await apiFetch(url, {
+            method,
+            body: JSON.stringify(dados)
+        })
+
+        if (res.ok) {
+            showMessage(isEditingTarefa.value ? "Tarefa atualizada!" : "Tarefa criada!", "success")
+            showTarefaModal.value = false
+            // Recarregar tarefas
+            const resT = await apiFetch(`/api/tarefas?cliente_id=${route.params.id}`)
+            if (resT.ok) tarefas.value = await resT.json()
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro ao salvar tarefa", "error")
+        }
+    } catch (e) {
+        showMessage("Erro de conexão.", "error")
+    } finally {
+        isSubmittingTarefa.value = false
+    }
+}
+
+const deleteTarefa = async (id) => {
+    confirmAction("Tem certeza que deseja excluir esta tarefa?", async () => {
+        try {
+            const res = await apiFetch(`/api/tarefas/${id}`, { method: 'DELETE' })
+            if (res.ok) {
+                showMessage("Tarefa excluída!")
+                tarefas.value = tarefas.value.filter(t => t.id !== id)
+            } else {
+                showMessage("Erro ao excluir tarefa", "error")
+            }
+        } catch (e) {
+            showMessage("Erro de conexão.", "error")
+        }
+    }, "Excluir Tarefa", "danger")
+}
+
+const toggleTarefaStatus = async (tarefa) => {
+    const newStatus = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída'
+    try {
+        const res = await apiFetch(`/api/tarefas/${tarefa.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: newStatus })
+        })
+        if (res.ok) {
+            tarefa.status = newStatus
+            showMessage(newStatus === 'Concluída' ? "Tarefa concluída! 🎉" : "Tarefa reaberta.")
+        }
+    } catch (e) {
+        showMessage("Erro ao atualizar status", "error")
+    }
 }
 
 const formatDate = (dateString) => {
@@ -498,6 +596,58 @@ onMounted(async () => {
                                     </div>
                                     <div class="flex items-center">
                                        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Ativo</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Card Tarefas do Cliente -->
+                    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+                        <div class="px-5 py-5 sm:px-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 flex items-center gap-2">
+                                <CheckSquare class="w-5 h-5 text-emerald-600" /> Tarefas Pendentes
+                            </h3>
+                            <button @click="openNewTarefa" class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1 rounded-md transition-colors">
+                                + Nova Tarefa
+                            </button>
+                        </div>
+                        <ul role="list" class="divide-y divide-slate-100">
+                            <li v-if="tarefas.length === 0" class="px-5 py-8 text-center text-sm text-slate-500">
+                                Nenhuma tarefa vinculada a este cliente.
+                            </li>
+                            <li v-for="tarefa in tarefas" :key="tarefa.id" class="px-5 py-4 hover:bg-slate-50 transition-colors group">
+                                <div class="flex items-center gap-4">
+                                    <button @click="toggleTarefaStatus(tarefa)" 
+                                            :class="['w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0', 
+                                            tarefa.status === 'Concluída' ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-200 hover:border-emerald-500']">
+                                        <Check class="w-4 h-4" />
+                                    </button>
+                                    
+                                    <div class="flex-1 min-w-0" @click="openEditTarefa(tarefa)">
+                                        <div class="flex items-center gap-2">
+                                            <span :class="['text-sm font-semibold truncate transition-all', tarefa.status === 'Concluída' ? 'text-slate-400 line-through' : 'text-slate-900']">
+                                                {{ tarefa.titulo }}
+                                            </span>
+                                            <TarefaBadge type="prioridade" :value="tarefa.prioridade" />
+                                        </div>
+                                        <div class="flex items-center gap-3 mt-1">
+                                            <span v-if="tarefa.data_vencimento" class="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                                <Calendar class="w-3 h-3" /> {{ new Date(tarefa.data_vencimento).toLocaleDateString() }}
+                                            </span>
+                                            <span v-if="tarefa.processo_id" class="text-[10px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded leading-none">
+                                                Processo Vinculado
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <button @click="openEditTarefa(tarefa)" class="p-1.5 text-slate-400 hover:text-primary-600 transition-colors">
+                                            <Edit2 class="w-4 h-4" />
+                                        </button>
+                                        <button @click="deleteTarefa(tarefa.id)" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors">
+                                            <Trash2 class="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             </li>
@@ -760,4 +910,16 @@ onMounted(async () => {
             </div>
         </div>
     </div>
+
+    <!-- Modal Tarefa Customizado -->
+    <TarefaFormModal 
+        v-if="cliente"
+        :show="showTarefaModal"
+        :tarefa="selectedTarefa"
+        :isEditing="isEditingTarefa"
+        :isSubmitting="isSubmittingTarefa"
+        :clienteId="cliente.id"
+        @close="showTarefaModal = false"
+        @submit="handleTarefaSubmit"
+    />
 </template>

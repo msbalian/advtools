@@ -13,7 +13,8 @@ async def create_tarefa_service(db: AsyncSession, tarefa: schemas.TarefaCreate, 
     db.add(db_tarefa)
     await db.commit()
     await db.refresh(db_tarefa)
-    return db_tarefa
+    # Re-busca com relacionamentos carregados
+    return await get_tarefa_service(db, db_tarefa.id, escritorio_id)
 
 from typing import Optional
 from sqlalchemy.orm import selectinload
@@ -21,6 +22,7 @@ from sqlalchemy.orm import selectinload
 async def get_tarefas_service(db: AsyncSession, escritorio_id: int, processo_id: Optional[int] = None, responsavel_id: Optional[int] = None, cliente_id: Optional[int] = None, status: Optional[str] = None, limit: Optional[int] = None):
     query = select(models.Tarefa).options(
         selectinload(models.Tarefa.responsavel),
+        selectinload(models.Tarefa.cliente),
         selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente)
     ).where(models.Tarefa.escritorio_id == escritorio_id)
     
@@ -34,8 +36,7 @@ async def get_tarefas_service(db: AsyncSession, escritorio_id: int, processo_id:
         query = query.where(models.Tarefa.status == status)
         
     if cliente_id:
-        # Filtramos por cliente através do join com Processo
-        query = query.join(models.Processo).where(models.Processo.cliente_id == cliente_id)
+        query = query.where(models.Tarefa.cliente_id == cliente_id)
     
     query = query.order_by(models.Tarefa.data_vencimento.asc())
     if limit:
@@ -45,7 +46,11 @@ async def get_tarefas_service(db: AsyncSession, escritorio_id: int, processo_id:
     return result.scalars().all()
 
 async def get_tarefa_service(db: AsyncSession, tarefa_id: int, escritorio_id: int):
-    result = await db.execute(select(models.Tarefa).where(
+    result = await db.execute(select(models.Tarefa).options(
+        selectinload(models.Tarefa.responsavel),
+        selectinload(models.Tarefa.cliente),
+        selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente)
+    ).where(
         models.Tarefa.id == tarefa_id, 
         models.Tarefa.escritorio_id == escritorio_id
     ))

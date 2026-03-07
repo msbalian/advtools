@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { Plus, X, Calendar, Flag, User, Briefcase } from 'lucide-vue-next'
 import { apiFetch } from '../utils/api'
 
@@ -13,11 +13,16 @@ const props = defineProps({
       status: 'Pendente',
       prioridade: 'Normal',
       data_vencimento: null,
+      cliente_id: null,
       processo_id: null,
       responsavel_id: null
     })
   },
   processoId: {
+    type: Number,
+    default: null
+  },
+  clienteId: {
     type: Number,
     default: null
   },
@@ -29,6 +34,12 @@ const emit = defineEmits(['close', 'submit'])
 
 const form = ref({ ...props.tarefa })
 const usuarios = ref([])
+const clientes = ref([])
+const processos = ref([])
+const searchCliente = ref('')
+const searchProcesso = ref('')
+const showClienteDropdown = ref(false)
+const showProcessoDropdown = ref(false)
 
 const loadUsuarios = async () => {
   try {
@@ -39,13 +50,117 @@ const loadUsuarios = async () => {
   }
 }
 
+const loadClientes = async () => {
+  try {
+    const res = await apiFetch('/api/clientes')
+    if (res.ok) clientes.value = await res.json()
+  } catch (e) {
+    console.error("Erro ao carregar clientes", e)
+  }
+}
+
+const loadProcessos = async () => {
+  try {
+    const res = await apiFetch('/api/processos')
+    if (res.ok) processos.value = await res.json()
+  } catch (e) {
+    console.error("Erro ao carregar processos", e)
+  }
+}
+
+const filteredClientes = computed(() => {
+  if (!searchCliente.value) return clientes.value
+  const s = searchCliente.value.toLowerCase()
+  return clientes.value.filter(c => 
+    c.nome.toLowerCase().includes(s) || 
+    (c.documento && c.documento.includes(s))
+  )
+})
+
+const filteredProcessos = computed(() => {
+  let list = processos.value
+  
+  // Se tiver cliente selecionado, filtra apenas os dele
+  if (form.value.cliente_id) {
+    list = list.filter(p => p.cliente_id === form.value.cliente_id)
+  }
+  
+  if (!searchProcesso.value) return list
+  const s = searchProcesso.value.toLowerCase()
+  return list.filter(p => 
+    (p.numero_processo && p.numero_processo.includes(s)) || 
+    (p.titulo && p.titulo.toLowerCase().includes(s))
+  )
+})
+
+const selectedClienteNome = computed(() => {
+  const c = clientes.value.find(c => c.id === form.value.cliente_id)
+  return c ? c.nome : ''
+})
+
+const selectedProcessoNome = computed(() => {
+  const p = processos.value.find(p => p.id === form.value.processo_id)
+  return p ? (p.numero_processo ? `${p.numero_processo} - ${p.titulo}` : p.titulo) : ''
+})
+
+const selectCliente = (cliente) => {
+  form.value.cliente_id = cliente.id
+  searchCliente.value = cliente.nome
+  showClienteDropdown.value = false
+  // Ao trocar o cliente, limpa o processo se ele não pertencer ao novo cliente
+  if (form.value.processo_id) {
+    const proc = processos.value.find(p => p.id === form.value.processo_id)
+    if (proc && proc.cliente_id !== cliente.id) {
+      form.value.processo_id = null
+      searchProcesso.value = ''
+    }
+  }
+}
+
+const selectProcesso = (processo) => {
+  form.value.processo_id = processo.id
+  form.value.cliente_id = processo.cliente_id
+  searchProcesso.value = processo.numero_processo ? `${processo.numero_processo} - ${processo.titulo}` : processo.titulo
+  showProcessoDropdown.value = false
+  
+  // Se selecionou processo, automaticamente seleciona o cliente dele
+  if (!form.value.cliente_id && processo.cliente_id) {
+      const c = clientes.value.find(c => c.id === processo.cliente_id)
+      if (c) searchCliente.value = c.nome
+  }
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) {
     form.value = { ...props.tarefa }
     
-    // Garantir que se estivermos em um processo, o ID seja passado
+    // Contexto de Cliente
+    if (props.clienteId && !form.value.cliente_id) {
+        form.value.cliente_id = props.clienteId
+    }
+
+    // Contexto de Processo
     if (props.processoId && !form.value.processo_id) {
         form.value.processo_id = props.processoId
+        const proc = processos.value.find(p => p.id === props.processoId)
+        if (proc && !form.value.cliente_id) {
+            form.value.cliente_id = proc.cliente_id
+        }
+    }
+    
+    // Sincronizar busca com IDs existentes
+    if (form.value.cliente_id) {
+        const c = clientes.value.find(c => c.id === form.value.cliente_id)
+        if (c) searchCliente.value = c.nome
+    } else {
+        searchCliente.value = ''
+    }
+
+    if (form.value.processo_id) {
+        const p = processos.value.find(p => p.id === form.value.processo_id)
+        if (p) searchProcesso.value = p.numero_processo ? `${p.numero_processo} - ${p.titulo}` : p.titulo
+    } else {
+        searchProcesso.value = ''
     }
     
     // Formatar data para input datetime-local se existir
@@ -56,7 +171,19 @@ watch(() => props.show, (newVal) => {
   }
 })
 
-onMounted(loadUsuarios)
+onMounted(() => {
+    loadUsuarios()
+    loadClientes()
+    loadProcessos()
+    
+    // Fechar dropdowns ao clicar fora
+    window.addEventListener('click', (e) => {
+        if (!e.target.closest('.relative')) {
+            showClienteDropdown.value = false
+            showProcessoDropdown.value = false
+        }
+    })
+})
 
 const handleSubmit = () => {
   emit('submit', { ...form.value })
@@ -81,14 +208,62 @@ const handleSubmit = () => {
 
       <!-- Form -->
       <form @submit.prevent="handleSubmit" class="p-8 space-y-6">
-        <!-- Vínculo com Processo (Informativo) -->
-        <div v-if="tarefa?.processo" class="p-4 bg-primary-50 rounded-2xl border border-primary-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary-600 shadow-sm">
-            <Briefcase class="w-5 h-5" />
+        <!-- Vínculo com Cliente e Processo (Searchers) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Busca de Cliente -->
+          <div class="space-y-2 relative">
+            <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <User class="w-3 h-3" /> Cliente
+            </label>
+            <div class="relative">
+              <input v-model="searchCliente" type="text" 
+                     @focus="showClienteDropdown = true"
+                     placeholder="Buscar cliente..."
+                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary-500 transition-all font-bold text-slate-700 shadow-inner">
+              <button v-if="form.cliente_id" @click="form.cliente_id = null; searchCliente = ''; form.processo_id = null; searchProcesso = ''" 
+                      type="button" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-red-500">
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+            
+            <!-- Dropdown Clientes -->
+            <div v-if="showClienteDropdown && filteredClientes.length > 0" 
+                 class="absolute z-[110] left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl animate-fade-in">
+              <button v-for="c in filteredClientes" :key="c.id" type="button"
+                      @click="selectCliente(c)"
+                      class="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 flex flex-col">
+                <span class="font-bold text-slate-900">{{ c.nome }}</span>
+                <span class="text-[10px] text-slate-500">{{ c.documento || 'Sem documento' }}</span>
+              </button>
+            </div>
           </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-[9px] text-primary-400 font-black uppercase tracking-widest leading-none mb-1">Processo Vinculado</p>
-            <p class="text-sm font-bold text-primary-800 truncate">{{ tarefa.processo.numero_processo || tarefa.processo.titulo }}</p>
+
+          <!-- Busca de Processo -->
+          <div class="space-y-2 relative">
+            <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Briefcase class="w-3 h-3" /> Processo
+            </label>
+            <div class="relative">
+              <input v-model="searchProcesso" type="text"
+                     @focus="showProcessoDropdown = true"
+                     placeholder="Buscar processo..."
+                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary-500 transition-all font-bold text-slate-700 shadow-inner">
+              <button v-if="form.processo_id" @click="form.processo_id = null; searchProcesso = ''" 
+                      type="button" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-red-500">
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+
+            <!-- Dropdown Processos -->
+            <div v-if="showProcessoDropdown && filteredProcessos.length > 0" 
+                 class="absolute z-[110] left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl animate-fade-in">
+              <button v-for="p in filteredProcessos" :key="p.id" type="button"
+                      @click="selectProcesso(p)"
+                      class="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 flex flex-col">
+                <span v-if="p.numero_processo" class="text-[10px] text-primary-500 font-black">{{ p.numero_processo }}</span>
+                <span class="font-bold text-slate-900">{{ p.titulo }}</span>
+              </button>
+            </div>
           </div>
         </div>
 

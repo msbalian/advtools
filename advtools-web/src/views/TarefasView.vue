@@ -126,6 +126,8 @@ const abrirNovaTarefa = () => {
         status: 'Pendente',
         prioridade: 'Normal',
         data_vencimento: null,
+        cliente_id: null,
+        processo_id: null,
         responsavel_id: null
     }
     showTarefaModal.value = true
@@ -321,9 +323,9 @@ const formatData = (data) => {
                     <span class="truncate max-w-[250px]">Proc: {{ tarefa.processo.numero_processo || tarefa.processo.titulo }}</span>
                   </div>
 
-                  <div v-if="tarefa.processo?.cliente" class="flex items-center gap-1.5 text-xs text-slate-500">
+                  <div v-if="tarefa.cliente || tarefa.processo?.cliente" class="flex items-center gap-1.5 text-xs text-slate-500">
                     <UserIcon class="w-3.5 h-3.5" />
-                    <span class="truncate max-w-[150px]">{{ tarefa.processo.cliente.nome }}</span>
+                    <span class="truncate max-w-[150px] font-medium">{{ (tarefa.cliente || tarefa.processo?.cliente).nome }}</span>
                   </div>
                 </div>
               </div>

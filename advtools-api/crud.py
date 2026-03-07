@@ -308,7 +308,11 @@ async def get_pasta_by_id(db: AsyncSession, pasta_id: int, escritorio_id: int):
     return result.scalars().first()
 
 async def create_pasta(db: AsyncSession, pasta: schemas.PastaDocumentoCreate, escritorio_id: int):
-    db_pasta = models.PastaDocumento(**pasta.dict(), escritorio_id=escritorio_id)
+    pasta_data = pasta.dict()
+    if pasta_data.get('parent_id') == -1:
+        pasta_data['parent_id'] = None
+        
+    db_pasta = models.PastaDocumento(**pasta_data, escritorio_id=escritorio_id)
     db.add(db_pasta)
     await db.commit()
     await db.refresh(db_pasta)
@@ -378,7 +382,7 @@ async def create_documento_cliente(db: AsyncSession, documento: schemas.Document
     db_doc = models.DocumentoCliente(
         escritorio_id=escritorio_id,
         cliente_id=documento.cliente_id,
-        pasta_id=documento.pasta_id,
+        pasta_id=documento.pasta_id if documento.pasta_id != -1 else None,
         nome=documento.nome,
         arquivo_path=arquivo_path,
         tamanho=kwargs.get('tamanho')
@@ -556,6 +560,8 @@ async def get_processos(db: AsyncSession, escritorio_id: int):
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -571,6 +577,8 @@ async def get_processos_by_cliente(db: AsyncSession, cliente_id: int, escritorio
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -589,6 +597,8 @@ async def get_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )

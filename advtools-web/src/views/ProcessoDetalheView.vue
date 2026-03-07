@@ -238,6 +238,7 @@ const openNewTarefa = () => {
         status: 'Pendente',
         prioridade: 'Normal',
         data_vencimento: null,
+        cliente_id: processo.value.cliente_id,
         processo_id: Number(route.params.id),
         responsavel_id: null
     }
@@ -717,7 +718,14 @@ const tabs = [
       </div>
     </div>
 
-    <TarefaFormModal :show="showTarefaModal" :tarefa="selectedTarefa" :isEditing="isEditingTarefa" :isSubmitting="isSubmittingTarefa" :processoId="Number(route.params.id)" @close="showTarefaModal = false" @submit="handleTarefaSubmit" />
+    <TarefaFormModal :show="showTarefaModal" 
+                     :tarefa="selectedTarefa" 
+                     :isEditing="isEditingTarefa" 
+                     :isSubmitting="isSubmittingTarefa" 
+                     :processoId="Number(route.params.id)" 
+                     :clienteId="processo?.cliente_id"
+                     @close="showTarefaModal = false" 
+                     @submit="handleTarefaSubmit" />
   </div>
 </template>
 

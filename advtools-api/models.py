@@ -342,6 +342,7 @@ class Tarefa(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
     processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True, index=True)
     responsavel_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True, index=True)
     criado_por_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
@@ -356,6 +357,7 @@ class Tarefa(Base):
     data_atualizacao = Column(DateTime, default=func.now(), onupdate=func.now())
 
     escritorio = relationship("Escritorio")
+    cliente = relationship("Cliente")
     processo = relationship("Processo", back_populates="tarefas")
     responsavel = relationship("Usuario", foreign_keys=[responsavel_id])
     criado_por = relationship("Usuario", foreign_keys=[criado_por_id])

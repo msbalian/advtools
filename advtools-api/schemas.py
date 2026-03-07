@@ -509,6 +509,7 @@ class TarefaBase(BaseModel):
     status: str = "Pendente"
     prioridade: str = "Normal"
     data_vencimento: Optional[datetime] = None
+    cliente_id: Optional[int] = None
     processo_id: Optional[int] = None
     responsavel_id: Optional[int] = None
 
@@ -522,6 +523,8 @@ class TarefaUpdate(BaseModel):
     prioridade: Optional[str] = None
     data_vencimento: Optional[datetime] = None
     responsavel_id: Optional[int] = None
+    processo_id: Optional[int] = None
+    cliente_id: Optional[int] = None
 
 class TarefaResponse(TarefaBase):
     id: int
@@ -530,6 +533,7 @@ class TarefaResponse(TarefaBase):
     data_criacao: datetime
     data_atualizacao: datetime
     responsavel: Optional[UsuarioTarefaInfo] = None
+    cliente: Optional[Cliente] = None
     processo: Optional[ProcessoTarefaInfo] = None
 
     class Config:

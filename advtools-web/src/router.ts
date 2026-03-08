@@ -76,6 +76,12 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: '/arquivos',
+            name: 'arquivos',
+            component: () => import('./views/ArquivosView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/processos/:id',
             name: 'processo_detalhes',
             component: () => import('./views/ProcessoDetalheView.vue'),

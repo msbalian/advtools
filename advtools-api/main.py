@@ -44,7 +44,7 @@ async def catch_exceptions_middleware(request: Request, call_next):
 from routers import (
     auth, usuarios, escritorios, clientes, servicos, 
     partes, processos, financeiro, tarefas, 
-    documentos, pastas, assinaturas, superadmin, configuracoes
+    documentos, pastas, assinaturas, superadmin, configuracoes, arquivos
 )
 
 app.include_router(auth.router)
@@ -67,6 +67,7 @@ app.include_router(assinaturas.router_assinaturas)
 app.include_router(assinaturas.router_assinativas_public)
 app.include_router(superadmin.router)
 app.include_router(configuracoes.router)
+app.include_router(arquivos.router)
 
 # Finalizado setup de rotas
 

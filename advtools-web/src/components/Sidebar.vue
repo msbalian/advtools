@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   Plus,
   Building2,
-  ShieldCheck
+  ShieldCheck,
+  Folder
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
   { name: 'Tarefas e Prazos', icon: CheckCircle2, path: '/tarefas' },
+  { name: 'Arquivos', icon: Folder, path: '/arquivos' },
   { name: 'Financeiro', icon: BadgeDollarSign, path: '/financeiro' },
 ]
 

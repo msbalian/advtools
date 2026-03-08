@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, distinct
+from sqlalchemy import select, func, and_, or_, distinct, exists
 from sqlalchemy.orm import selectinload, joinedload
 from fastapi import HTTPException
 import models
@@ -786,11 +786,12 @@ async def get_dashboard_stats(db: AsyncSession, escritorio_id: int):
     )
     clientes_ativos = res_clie.scalar() or 0
 
-    # 3. Assinaturas Pendentes (Aguardando ou Parcial)
+    # 3. Assinaturas Pendentes (Aguardando ou Parcial) - Apenas se houver signatários
     res_ass = await db.execute(
         select(func.count(models.DocumentoCliente.id))
         .where(models.DocumentoCliente.escritorio_id == escritorio_id)
         .where(models.DocumentoCliente.status_assinatura.in_(['Aguardando', 'Parcial']))
+        .where(exists().where(models.Signatario.documento_id == models.DocumentoCliente.id))
     )
     assinaturas_pendentes = res_ass.scalar() or 0
 

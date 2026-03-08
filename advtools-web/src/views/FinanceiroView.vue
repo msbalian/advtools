@@ -19,6 +19,16 @@ import {
 } from 'lucide-vue-next'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
+import { 
+  Chart as ChartJS, 
+  ArcElement, 
+  Tooltip, 
+  Legend, 
+  Colors 
+} from 'chart.js'
+import { Doughnut } from 'vue-chartjs'
+
+ChartJS.register(ArcElement, Tooltip, Legend, Colors)
 
 const loading = ref(true)
 const escritorio = ref(null)
@@ -42,6 +52,7 @@ const filtroAtivo = ref(null) // null, 'atrasados', 'recebidos', 'pagos', 'a_rec
 const notification = ref({ show: false, message: '', type: 'success' })
 const confirmDialog = ref({ show: false, message: '', onConfirm: null, title: 'Confirmar Ação' })
 const activeMenu = ref(null) // ID da transação com menu aberto
+const chartType = ref('Despesa') // 'Receita' or 'Despesa'
 
 const showMessage = (msg, type = 'success') => {
     notification.value = { show: true, message: msg, type }
@@ -113,6 +124,43 @@ const transacoesFiltradas = computed(() => {
     )
 })
 
+const chartData = computed(() => {
+    const transacoes = transacoesFiltradas.value.filter(t => t.tipo === chartType.value)
+    const porCategoria = {}
+    transacoes.forEach(t => {
+        porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + t.valor
+    })
+
+    const labels = Object.keys(porCategoria)
+    const data = Object.values(porCategoria)
+
+    return {
+        labels,
+        datasets: [{
+            data,
+            backgroundColor: chartType.value === 'Receita' 
+                ? [
+                    '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#059669', '#047857'
+                  ]
+                : [
+                    '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#dc2626', '#b91c1c'
+                  ],
+            hoverOffset: 4
+        }]
+    }
+})
+
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom',
+            labels: { boxWidth: 10, font: { size: 11 } }
+        }
+    }
+}
+
 const formatCurrency = (val) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 }
@@ -176,8 +224,8 @@ const editarTransacao = (t) => {
 }
 
 const salvarTransacao = async () => {
-    // Se estiver editando e for recorrente, pergunta se quer atualizar a série
-    if (isEditing.value && form.value.recorrencia_id) {
+    // Se estiver editando e for recorrente, pergunta se quer atualizar a série (id != null)
+    if (isEditing.value && form.value.recorrencia_id != null) {
         confirmAction(
             "Este lançamento faz parte de uma recorrência. Deseja atualizar apenas este lançamento ou todas as parcelas futuras pendentes?",
             async () => {
@@ -221,7 +269,7 @@ const executarSalvar = async () => {
 const excluirTransacao = (t) => {
     activeMenu.value = null
     
-    if (t.recorrencia_id) {
+    if (t.recorrencia_id != null) {
         confirmAction(
             "Este lançamento faz parte de uma recorrência. Deseja excluir apenas este lançamento ou todas as parcelas futuras pendentes?",
             async () => {
@@ -284,38 +332,66 @@ onMounted(carregarDados)
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="card p-6 border-l-4 border-emerald-500">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500 uppercase">Receitas (Mês)</span>
-            <ArrowUpCircle class="w-6 h-6 text-emerald-500" />
-          </div>
-          <p class="text-2xl font-bold text-slate-900">{{ formatCurrency(fluxoCaixa.total_receitas) }}</p>
+      <!-- Stats Cards & Chart -->
+      <div class="flex flex-col lg:flex-row gap-4 mb-6">
+        <!-- Ultra Compact Stats - Now horizontal -->
+        <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="card p-3 border-l-2 border-emerald-500 flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Receitas</span>
+                <p class="text-base font-bold text-slate-900 leading-tight">{{ formatCurrency(fluxoCaixa.total_receitas) }}</p>
+              </div>
+              <ArrowUpCircle class="w-4 h-4 text-emerald-500" />
+            </div>
+
+            <div class="card p-3 border-l-2 border-red-500 flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Despesas</span>
+                <p class="text-base font-bold text-slate-900 leading-tight">{{ formatCurrency(fluxoCaixa.total_despesas) }}</p>
+              </div>
+              <ArrowDownCircle class="w-4 h-4 text-red-500" />
+            </div>
+
+            <div class="card p-3 border-l-2 border-amber-500 bg-amber-50/20 flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Atrasados</span>
+                <p class="text-base font-bold text-amber-700 leading-tight">{{ formatCurrency(fluxoCaixa.total_atrasado) }}</p>
+              </div>
+              <AlertCircle class="w-4 h-4 text-amber-500" />
+            </div>
+
+            <div class="card p-3 border-l-2 border-primary-500 flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Saldo</span>
+                <p class="text-base font-bold text-slate-900 leading-tight">{{ formatCurrency(fluxoCaixa.saldo) }}</p>
+              </div>
+              <TrendingUp class="w-4 h-4 text-primary-500" />
+            </div>
         </div>
 
-        <div class="card p-6 border-l-4 border-red-500">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500 uppercase">Despesas (Mês)</span>
-            <ArrowDownCircle class="w-6 h-6 text-red-500" />
+        <!-- Chart Card Switching -->
+        <div class="w-full lg:w-[280px] card p-3 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ chartType === 'Receita' ? 'Fontes de Receita' : 'Distribuição de Gastos' }}</h3>
+            <div class="flex bg-slate-100 p-0.5 rounded-lg">
+                <button 
+                  @click="chartType = 'Receita'" 
+                  :class="[chartType === 'Receita' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500']"
+                  class="text-[9px] font-bold px-2 py-0.5 rounded-md transition-all"
+                >REC</button>
+                <button 
+                  @click="chartType = 'Despesa'" 
+                  :class="[chartType === 'Despesa' ? 'bg-white shadow-sm text-red-600' : 'text-slate-500']"
+                  class="text-[9px] font-bold px-2 py-0.5 rounded-md transition-all"
+                >DES</button>
+            </div>
           </div>
-          <p class="text-2xl font-bold text-slate-900">{{ formatCurrency(fluxoCaixa.total_despesas) }}</p>
-        </div>
-
-        <div class="card p-6 border-l-4 border-amber-500 bg-amber-50/20">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-600 uppercase">Inadimplência</span>
-            <AlertCircle class="w-6 h-6 text-amber-500" />
+          <div class="h-[100px] relative">
+            <Doughnut v-if="chartData.labels.length > 0" :data="chartData" :options="chartOptions" />
+            <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-[9px] italic">
+              Sem dados
+            </div>
           </div>
-          <p class="text-2xl font-bold text-amber-700">{{ formatCurrency(fluxoCaixa.total_atrasado) }}</p>
-        </div>
-
-        <div class="card p-6 border-l-4 border-primary-500">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500 uppercase">Saldo Operacional</span>
-            <TrendingUp class="w-6 h-6 text-primary-500" />
-          </div>
-          <p class="text-2xl font-bold text-slate-900">{{ formatCurrency(fluxoCaixa.saldo) }}</p>
         </div>
       </div>
 
@@ -459,28 +535,12 @@ onMounted(carregarDados)
         </table>
       </div>
 
-      <!-- Toast Notification -->
       <div v-if="notification.show" 
            :class="[notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600']"
-           class="fixed bottom-8 right-8 z-[2000] px-6 py-3 rounded-2xl text-white font-bold shadow-2xl flex items-center gap-3 animate-fade-in-up">
+           class="fixed bottom-8 right-8 z-[3000] px-6 py-3 rounded-2xl text-white font-bold shadow-2xl flex items-center gap-3 animate-fade-in-up">
         <CheckCircle2 v-if="notification.type === 'success'" class="w-5 h-5" />
         <AlertCircle v-else class="w-5 h-5" />
         {{ notification.message }}
-      </div>
-
-      <!-- Confirm Dialog -->
-      <div v-if="confirmDialog.show" class="fixed inset-0 z-[2001] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full border border-slate-100 flex flex-col items-center text-center animate-fade-in-up">
-          <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
-            <AlertCircle class="w-8 h-8 text-red-600" />
-          </div>
-          <h3 class="text-xl font-bold text-slate-900 mb-2">{{ confirmDialog.title }}</h3>
-          <p class="text-slate-500 mb-8">{{ confirmDialog.message }}</p>
-          <div class="flex gap-4 w-full">
-            <button @click="executeCancel" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors">{{ confirmDialog.cancelText || 'Cancelar' }}</button>
-            <button @click="executeConfirm" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">{{ confirmDialog.confirmText || 'Confirmar' }}</button>
-          </div>
-        </div>
       </div>
     </main>
 
@@ -525,9 +585,7 @@ onMounted(carregarDados)
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-1">Categoria</label>
                   <select v-model="form.categoria" class="input w-full">
-                    <option v-for="cat in categorias.filter(c => c.tipo === form.tipo)" :key="cat.id">
-                        {{ cat.nome }}
-                    </option>
+                    <option v-for="cat in categorias.filter(c => c.tipo === form.tipo)" :key="cat.id" :value="cat.nome">{{ cat.nome }}</option>
                     <option v-if="categorias.filter(c => c.tipo === form.tipo).length === 0">Outros</option>
                   </select>
                 </div>
@@ -566,6 +624,21 @@ onMounted(carregarDados)
             <button @click="salvarTransacao" class="btn-primary shadow-primary-500/20">{{ isEditing ? 'Salvar Alterações' : 'Criar Lançamento' }}</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog (Moved outside for better stacking) -->
+  <div v-if="confirmDialog.show" class="fixed inset-0 z-[3001] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full border border-slate-100 flex flex-col items-center text-center animate-fade-in-up">
+      <div class="h-16 w-16 bg-primary-50 rounded-full flex items-center justify-center mb-4">
+        <Clock class="w-8 h-8 text-primary-600" />
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">{{ confirmDialog.title }}</h3>
+      <p class="text-slate-500 mb-8">{{ confirmDialog.message }}</p>
+      <div class="flex gap-4 w-full">
+        <button @click="executeCancel" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors">{{ confirmDialog.cancelText || 'Cancelar' }}</button>
+        <button @click="executeConfirm" class="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">{{ confirmDialog.confirmText || 'Confirmar' }}</button>
       </div>
     </div>
   </div>

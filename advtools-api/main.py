@@ -41,52 +41,34 @@ async def catch_exceptions_middleware(request: Request, call_next):
             status_code=500,
             content={"detail": f"Erro interno: {str(exc)}", "traceback": traceback.format_exc()}
         )
-from routers import auth as auth_router
+from routers import (
+    auth, usuarios, escritorios, clientes, servicos, 
+    partes, processos, financeiro, tarefas, 
+    documentos, pastas, assinaturas, superadmin, configuracoes
+)
 
-app.include_router(auth_router.router)
+app.include_router(auth.router)
+app.include_router(usuarios.router)
+app.include_router(escritorios.router)
+app.include_router(escritorios.router_singular)
+app.include_router(clientes.router)
+app.include_router(servicos.router)
+app.include_router(partes.router)
+app.include_router(partes.router_clientes_partes)
+app.include_router(processos.router)
+app.include_router(financeiro.router)
+app.include_router(tarefas.router)
+app.include_router(pastas.router)
+app.include_router(documentos.router_modelos)
+app.include_router(documentos.router_documentos)
+app.include_router(documentos.router_clientes_docs)
+app.include_router(documentos.router_redator)
+app.include_router(assinaturas.router_assinaturas)
+app.include_router(assinaturas.router_assinativas_public)
+app.include_router(superadmin.router)
+app.include_router(configuracoes.router)
 
-from routers import usuarios as usuarios_router
-from routers import escritorios as escritorios_router
-
-app.include_router(usuarios_router.router)
-app.include_router(escritorios_router.router)
-app.include_router(escritorios_router.router_singular)
-
-from routers import clientes as clientes_router
-from routers import servicos as servicos_router
-from routers import partes as partes_router
-from routers import processos as processos_router
-
-app.include_router(clientes_router.router)
-app.include_router(servicos_router.router)
-app.include_router(partes_router.router)
-app.include_router(partes_router.router_clientes_partes)
-app.include_router(processos_router.router)
-
-from routers import tarefas as tarefas_router
-app.include_router(tarefas_router.router)
-
-# ==========================
-# ROTAS DE MODELOS
-# ==========================
-
-from routers import documentos as documentos_router
-from routers import pastas as pastas_router
-
-app.include_router(pastas_router.router)
-app.include_router(documentos_router.router_modelos)
-app.include_router(documentos_router.router_documentos)
-app.include_router(documentos_router.router_clientes_docs)
-app.include_router(documentos_router.router_redator)
-
-from routers import assinaturas as assinaturas_router
-
-app.include_router(assinaturas_router.router_assinaturas)
-app.include_router(assinaturas_router.router_assinativas_public)
-from routers import superadmin as superadmin_router
-from routers import configuracoes as configuracoes_router
-app.include_router(superadmin_router.router)
-app.include_router(configuracoes_router.router)
+# Finalizado setup de rotas
 
 # ==========================
 # ROTAS APP DEFAULT

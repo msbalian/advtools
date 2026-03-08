@@ -348,7 +348,7 @@ onUnmounted(() => {
                 </div>
                 <div class="p-2">
                    <ul v-if="tarefas.length > 0" class="divide-y divide-slate-100">
-                      <li v-for="tarefa in tarefas" :key="tarefa.id" @click="router.push(`/processos/${tarefa.processo_id}`)" class="p-4 flex items-start gap-4 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group">
+                      <li v-for="tarefa in tarefas" :key="tarefa.id" @click="router.push(`/tarefas?edit=${tarefa.id}`)" class="p-4 flex items-start gap-4 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group">
                          <div class="flex-shrink-0 mt-0.5">
                             <Clock v-if="tarefa.prioridade === 'Normal'" class="w-5 h-5 text-slate-400 group-hover:text-primary-500" />
                             <AlertCircle v-else-if="tarefa.prioridade === 'Alta' || tarefa.prioridade === 'Urgente'" class="w-5 h-5 text-red-400 group-hover:text-red-500" />
@@ -383,7 +383,7 @@ onUnmounted(() => {
                    </div>
                 </div>
                 <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 text-center rounded-b-xl">
-                   <button @click="router.push('/processos')" class="text-sm font-medium text-primary-600 hover:text-primary-700">Ver Processos e Tarefas &rarr;</button>
+                   <button @click="router.push('/tarefas')" class="text-sm font-medium text-primary-600 hover:text-primary-700">Ver Tarefas &rarr;</button>
                 </div>
              </div>
 

@@ -361,3 +361,31 @@ class Tarefa(Base):
     processo = relationship("Processo", back_populates="tarefas")
     responsavel = relationship("Usuario", foreign_keys=[responsavel_id])
     criado_por = relationship("Usuario", foreign_keys=[criado_por_id])
+
+
+class Transacao(Base):
+    __tablename__ = "transacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
+    processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True, index=True)
+    servico_id = Column(Integer, ForeignKey("servicos.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    tipo = Column(String(20), nullable=False) # Receita, Despesa
+    categoria = Column(String(100), nullable=False) # Honorários, Aluguel, etc
+    valor = Column(Float, nullable=False)
+    descricao = Column(Text)
+    status = Column(String(50), default="Pendente") # Pendente, Pago, Atrasado, Cancelado
+    
+    data_vencimento = Column(DateTime, nullable=False)
+    data_pagamento = Column(DateTime, nullable=True)
+    forma_pagamento = Column(String(100))
+    
+    data_criacao = Column(DateTime, default=func.now())
+    data_atualizacao = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    escritorio = relationship("Escritorio")
+    cliente = relationship("Cliente")
+    processo = relationship("Processo")
+    servico = relationship("Servico")

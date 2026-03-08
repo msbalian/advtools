@@ -13,7 +13,10 @@ import {
   BadgeDollarSign, 
   X,
   Wand2,
-  CheckCircle2
+  CheckCircle2,
+  Plus,
+  Building2,
+  ShieldCheck
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -34,7 +37,7 @@ const navigation = [
   { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
   { name: 'Tarefas e Prazos', icon: CheckCircle2, path: '/tarefas' },
-  { name: 'Financeiro', icon: BadgeDollarSign, path: '#' },
+  { name: 'Financeiro', icon: BadgeDollarSign, path: '/financeiro' },
 ]
 
 const navigationAdmin = computed(() => {
@@ -45,8 +48,6 @@ const navigationAdmin = computed(() => {
   }
   return []
 })
-
-import { ShieldCheck } from 'lucide-vue-next'
 
 // Aspect Ratio Detection
 const isRectangular = ref(false)

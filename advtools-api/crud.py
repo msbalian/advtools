@@ -184,7 +184,59 @@ async def create_servico(db: AsyncSession, servico: schemas.ServicoCreate, escri
     db_servico = models.Servico(**servico.dict(), escritorio_id=escritorio_id)
     db.add(db_servico)
     await db.commit()
+    await db.refresh(db_servico)
+    
+    # Sincroniza pagamentos com a tabela de transações
+    await sincronizar_pagamentos_servico(db, db_servico)
+    
     return await get_servico(db, db_servico.id, escritorio_id)
+
+async def sincronizar_pagamentos_servico(db: AsyncSession, servico: models.Servico):
+    if not servico.condicoes_pagamento:
+        return
+        
+    try:
+        pagamentos = json.loads(servico.condicoes_pagamento)
+        if not isinstance(pagamentos, list):
+            return
+            
+        # Para simplificar na automação, removemos as transações pendentes/atrasadas vinculadas ao serviço 
+        # e as recriamos com base no novo JSON. Se já estiver 'Pago', mantemos.
+        from sqlalchemy import delete
+        await db.execute(
+            delete(models.Transacao).where(
+                models.Transacao.servico_id == servico.id,
+                models.Transacao.status.in_(['Pendente', 'Atrasado'])
+            )
+        )
+        
+        for p in pagamentos:
+            valor = float(p.get('valor') or 0)
+            data_str = p.get('data')
+            if not valor or not data_str:
+                continue
+                
+            try:
+                data_vencimento = datetime.strptime(data_str, "%d/%m/%Y")
+            except ValueError:
+                continue
+            
+            nova_transacao = models.Transacao(
+                escritorio_id=servico.escritorio_id,
+                cliente_id=servico.cliente_id,
+                servico_id=servico.id,
+                tipo="Receita",
+                categoria="Honorários",
+                valor=valor,
+                descricao=f"Parcela de serviço: {servico.descricao or 'Serviço'}",
+                status="Pendente",
+                data_vencimento=data_vencimento
+            )
+            db.add(nova_transacao)
+        
+        await db.commit()
+    except Exception as e:
+        print(f"Erro ao sincronizar pagamentos do serviço {servico.id}: {e}")
 
 async def get_servico(db: AsyncSession, servico_id: int, escritorio_id: int):
     result = await db.execute(
@@ -208,6 +260,12 @@ async def update_servico(db: AsyncSession, servico_id: int, servico: schemas.Ser
         
     db.add(db_servico)
     await db.commit()
+    await db.refresh(db_servico)
+    
+    # Sincroniza pagamentos se as condições mudaram
+    if "condicoes_pagamento" in update_data:
+        await sincronizar_pagamentos_servico(db, db_servico)
+        
     return await get_servico(db, db_servico.id, escritorio_id)
 
 async def delete_servico(db: AsyncSession, servico_id: int, escritorio_id: int):
@@ -764,4 +822,98 @@ async def get_dashboard_stats(db: AsyncSession, escritorio_id: int):
         "clientes_ativos": clientes_ativos,
         "assinaturas_pendentes": assinaturas_pendentes,
         "receita_mes": receita_total
+    }
+
+# ==========================
+# CRUD FINANCEIRO (TRANSAÇÕES)
+# ==========================
+async def get_transacoes(db: AsyncSession, escritorio_id: int, mes: Optional[int] = None, ano: Optional[int] = None):
+    query = select(models.Transacao).options(
+        selectinload(models.Transacao.cliente),
+        selectinload(models.Transacao.processo)
+    ).filter(models.Transacao.escritorio_id == escritorio_id)
+    
+    if mes and ano:
+        import datetime
+        start_date = datetime.date(ano, mes, 1)
+        if mes == 12:
+            end_date = datetime.date(ano + 1, 1, 1)
+        else:
+            end_date = datetime.date(ano, mes + 1, 1)
+        query = query.filter(models.Transacao.data_vencimento >= start_date, models.Transacao.data_vencimento < end_date)
+    
+    result = await db.execute(query.order_by(models.Transacao.data_vencimento.desc()))
+    return result.scalars().all()
+
+async def create_transacao(db: AsyncSession, transacao: schemas.TransacaoCreate, escritorio_id: int):
+    db_transacao = models.Transacao(**transacao.dict(), escritorio_id=escritorio_id)
+    db.add(db_transacao)
+    await db.commit()
+    await db.refresh(db_transacao)
+    
+    # Recarrega com relacionamentos para evitar MissingGreenlet na serialização
+    result = await db.execute(
+        select(models.Transacao)
+        .options(selectinload(models.Transacao.cliente), selectinload(models.Transacao.processo))
+        .filter(models.Transacao.id == db_transacao.id)
+    )
+    return result.scalars().first()
+
+async def update_transacao(db: AsyncSession, transacao_id: int, transacao_update: schemas.TransacaoUpdate, escritorio_id: int):
+    result = await db.execute(select(models.Transacao).filter(
+        models.Transacao.id == transacao_id,
+        models.Transacao.escritorio_id == escritorio_id
+    ))
+    db_transacao = result.scalars().first()
+    if not db_transacao:
+        return None
+        
+    update_data = transacao_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_transacao, key, value)
+        
+    db.add(db_transacao)
+    await db.commit()
+    await db.refresh(db_transacao)
+    
+    # Recarrega com relacionamentos para evitar MissingGreenlet na serialização
+    result = await db.execute(
+        select(models.Transacao)
+        .options(selectinload(models.Transacao.cliente), selectinload(models.Transacao.processo))
+        .filter(models.Transacao.id == db_transacao.id)
+    )
+    return result.scalars().first()
+
+async def delete_transacao(db: AsyncSession, transacao_id: int, escritorio_id: int):
+    result = await db.execute(select(models.Transacao).filter(
+        models.Transacao.id == transacao_id,
+        models.Transacao.escritorio_id == escritorio_id
+    ))
+    db_transacao = result.scalars().first()
+    if not db_transacao:
+        return False
+    await db.delete(db_transacao)
+    await db.commit()
+    return True
+
+async def get_fluxo_caixa(db: AsyncSession, escritorio_id: int, mes: int, ano: int):
+    transacoes = await get_transacoes(db, escritorio_id, mes, ano)
+    
+    total_receitas = sum(t.valor for t in transacoes if t.tipo == 'Receita' and t.status != 'Cancelado')
+    total_despesas = sum(t.valor for t in transacoes if t.tipo == 'Despesa' and t.status != 'Cancelado')
+    
+    from datetime import datetime
+    hoje = datetime.now()
+    total_atrasado = sum(t.valor for t in transacoes if t.tipo == 'Receita' and t.status == 'Pendente' and t.data_vencimento < hoje)
+    
+    mes_nome = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes-1]
+    
+    return {
+        "mes": mes_nome,
+        "ano": ano,
+        "total_receitas": total_receitas,
+        "total_despesas": total_despesas,
+        "total_atrasado": total_atrasado,
+        "saldo": total_receitas - total_despesas,
+        "transacoes": transacoes
     }

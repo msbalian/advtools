@@ -538,3 +538,56 @@ class TarefaResponse(TarefaBase):
 
     class Config:
         from_attributes = True
+
+# ==========================
+# FINANCEIRO (TRANSAÇÕES)
+# ==========================
+class TransacaoBase(BaseModel):
+    tipo: str
+    categoria: str
+    valor: float
+    descricao: Optional[str] = None
+    status: str = "Pendente"
+    data_vencimento: datetime
+    data_pagamento: Optional[datetime] = None
+    forma_pagamento: Optional[str] = None
+    cliente_id: Optional[int] = None
+    processo_id: Optional[int] = None
+    servico_id: Optional[int] = None
+
+class TransacaoCreate(TransacaoBase):
+    pass
+
+class TransacaoUpdate(BaseModel):
+    tipo: Optional[str] = None
+    categoria: Optional[str] = None
+    valor: Optional[float] = None
+    descricao: Optional[str] = None
+    status: Optional[str] = None
+    data_vencimento: Optional[datetime] = None
+    data_pagamento: Optional[datetime] = None
+    forma_pagamento: Optional[str] = None
+    cliente_id: Optional[int] = None
+    processo_id: Optional[int] = None
+    servico_id: Optional[int] = None
+
+class TransacaoResponse(TransacaoBase):
+    id: int
+    escritorio_id: int
+    data_criacao: datetime
+    data_atualizacao: datetime
+    
+    cliente: Optional[Cliente] = None
+    processo: Optional[ProcessoTarefaInfo] = None
+
+    class Config:
+        from_attributes = True
+
+class FluxoCaixaMes(BaseModel):
+    mes: str
+    ano: int
+    total_receitas: float
+    total_despesas: float
+    total_atrasado: float
+    saldo: float
+    transacoes: List[TransacaoResponse]

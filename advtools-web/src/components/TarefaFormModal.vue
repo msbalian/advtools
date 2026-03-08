@@ -284,6 +284,19 @@ const handleSubmit = () => {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
+          <!-- Status -->
+          <div class="space-y-2">
+            <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Plus class="w-3 h-3" /> Status
+            </label>
+            <select v-model="form.status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary-500 transition-all font-bold text-slate-700 shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207L10%2012L15%207%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_1rem_center] bg-no-repeat">
+              <option value="Pendente">Pendente</option>
+              <option value="Em Andamento">Em Andamento</option>
+              <option value="Concluída">Concluída</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+
           <!-- Prioridade -->
           <div class="space-y-2">
             <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -296,15 +309,15 @@ const handleSubmit = () => {
               <option value="Urgente">Urgente</option>
             </select>
           </div>
+        </div>
 
-          <!-- Data Vencimento -->
-          <div class="space-y-2">
-            <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Calendar class="w-3 h-3" /> Prazo
-            </label>
-            <input v-model="form.data_vencimento" type="datetime-local"
-                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary-500 transition-all font-bold text-slate-700 shadow-inner">
-          </div>
+        <!-- Data Vencimento -->
+        <div class="space-y-2">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Calendar class="w-3 h-3" /> Prazo
+          </label>
+          <input v-model="form.data_vencimento" type="datetime-local"
+                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary-500 transition-all font-bold text-slate-700 shadow-inner">
         </div>
 
         <!-- Responsável -->

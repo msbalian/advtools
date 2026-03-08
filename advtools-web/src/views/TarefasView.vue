@@ -16,7 +16,8 @@ import {
   User,
   Menu,
   Trash2,
-  X
+  X,
+  Check
 } from 'lucide-vue-next'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
@@ -81,6 +82,26 @@ const carregarDadosIniciais = async () => {
         if (resClientes.ok) clientes.value = await resClientes.json()
         
         await carregarTarefas()
+        
+        // Se vier com parâmetro ?edit=ID, abre o modal de edição
+        if (route.query.edit) {
+            const tarefaId = Number(route.query.edit)
+            const tarefa = tarefas.value.find(t => t.id === tarefaId)
+            if (tarefa) {
+                editarTarefa(tarefa)
+            } else {
+                // Se não estiver na lista (pode ser antiga ou de outro escritório), busca individualmente
+                try {
+                    const res = await apiFetch(`/api/tarefas/${tarefaId}`)
+                    if (res.ok) {
+                        const tFull = await res.json()
+                        editarTarefa(tFull)
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar tarefa para edição automática", e)
+                }
+            }
+        }
     } catch (e) {
         console.error("Erro ao carregar dados iniciais", e)
     } finally {
@@ -184,6 +205,23 @@ const deleteTarefa = (tarefaId) => {
         "Excluir Tarefa",
         "danger"
     )
+}
+
+const toggleTarefaStatus = async (tarefa) => {
+    const newStatus = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída'
+    try {
+        const res = await apiFetch(`/api/tarefas/${tarefa.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: newStatus })
+        })
+        if (res.ok) {
+            tarefa.status = newStatus
+            showMessage(newStatus === 'Concluída' ? "Tarefa concluída! 🎉" : "Tarefa reaberta.")
+            await carregarTarefas()
+        }
+    } catch (e) {
+        showMessage("Erro ao atualizar status", "error")
+    }
 }
 
 onMounted(carregarDadosIniciais)
@@ -294,16 +332,19 @@ const formatData = (data) => {
           <div v-for="tarefa in tarefasFiltradas" :key="tarefa.id" 
                class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 transition-all cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4">
             
-            <div @click="editarTarefa(tarefa)" class="flex items-start gap-4 flex-1">
-              <div class="mt-1">
-                <AlertCircle v-if="tarefa.prioridade === 'Urgente' || tarefa.prioridade === 'Alta'" class="w-5 h-5 text-red-500" />
-                <Clock v-else-if="tarefa.prioridade === 'Normal'" class="w-5 h-5 text-amber-500" />
-                <CheckCircle2 v-else class="w-5 h-5 text-emerald-500" />
-              </div>
-              
-              <div class="min-w-0 flex-1">
+            <div class="flex items-start gap-4 flex-1">
+              <!-- Checkbox Custom -->
+              <button @click.stop="toggleTarefaStatus(tarefa)" 
+                      :class="['mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0', 
+                      tarefa.status === 'Concluída' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white border-slate-200 text-slate-200 hover:border-primary-500']">
+                 <Check class="w-4 h-4" />
+              </button>
+
+              <div @click="editarTarefa(tarefa)" class="min-w-0 flex-1">
                 <div class="flex items-center gap-3 mb-1.5">
-                  <h3 class="font-bold text-slate-900 truncate group-hover:text-primary-600 transition-colors leading-tight">{{ tarefa.titulo }}</h3>
+                  <h3 :class="['font-bold truncate group-hover:text-primary-600 transition-colors leading-tight', tarefa.status === 'Concluída' ? 'text-slate-400 line-through' : 'text-slate-900']">
+                    {{ tarefa.titulo }}
+                  </h3>
                   <div class="flex gap-2">
                     <TarefaBadge type="status" :value="tarefa.status" />
                     <TarefaBadge type="prioridade" :value="tarefa.prioridade" />

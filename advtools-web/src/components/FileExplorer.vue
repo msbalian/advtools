@@ -85,8 +85,12 @@ const executeConfirm = async () => {
 const getEndpoints = () => {
   if (props.contextType === 'escritorio') {
     return {
-      docs: `/api/documentos/escritorio?pasta_id=${currentFolderId.value}`,
-      pastas: `/api/pastas?cliente_id=0&parent_id=${currentFolderId.value}`,
+      docs: props.title === 'Modelos de Automação' 
+        ? `/api/documentos/escritorio?tags=modelo` 
+        : `/api/documentos/escritorio?pasta_id=${currentFolderId.value}`,
+      pastas: props.title === 'Modelos de Automação'
+        ? `/api/pastas?cliente_id=0&parent_id=-999` // Força lista vazia de pastas se for modelos
+        : `/api/pastas?cliente_id=0&parent_id=${currentFolderId.value}`,
       upload: `/api/documentos/escritorio`,
       createFolder: `/api/pastas`
     }
@@ -380,8 +384,16 @@ const organizarPasta = async () => {
 // Ordenação e Filtro
 const sortedContent = computed(() => {
     const query = searchQuery.value.toLowerCase()
-    const filteredPastas = pastas.value.filter(p => p.nome.toLowerCase().includes(query))
-    const filteredDocs = documentos.value.filter(d => d.nome.toLowerCase().includes(query))
+    let filteredPastas = pastas.value.filter(p => p.nome.toLowerCase().includes(query))
+    let filteredDocs = documentos.value.filter(d => d.nome.toLowerCase().includes(query))
+    
+    // Filtro especial para Modelos de Automação (apenas .docx)
+    if (props.title === 'Modelos de Automação') {
+        filteredDocs = filteredDocs.filter(d => {
+            const ext = getFileExtension(d.arquivo_path).toLowerCase()
+            return ext === 'docx' || ext === 'doc'
+        })
+    }
     
     const sorter = (a, b) => {
         if (sortBy.value === 'data') {

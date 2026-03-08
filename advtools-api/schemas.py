@@ -539,9 +539,50 @@ class TarefaResponse(TarefaBase):
     class Config:
         from_attributes = True
 
+    class Config:
+        from_attributes = True
+
 # ==========================
-# FINANCEIRO (TRANSAÇÕES)
+# CATEGORIAS FINANCEIRAS
 # ==========================
+class CategoriaFinanceiraBase(BaseModel):
+    tipo: str
+    nome: str
+
+class CategoriaFinanceiraCreate(CategoriaFinanceiraBase):
+    pass
+
+class CategoriaFinanceiraResponse(CategoriaFinanceiraBase):
+    id: int
+    escritorio_id: int
+    data_criacao: datetime
+
+    class Config:
+        from_attributes = True
+
+# ==========================
+# RECORRÊNCIA (RECURRING)
+# ==========================
+class RecorrenciaBase(BaseModel):
+    tipo: str
+    categoria: str
+    valor: float
+    descricao: Optional[str] = None
+    frequencia: str = "Mensal"
+    data_inicio: datetime
+    data_fim: Optional[datetime] = None
+
+class RecorrenciaCreate(RecorrenciaBase):
+    pass
+
+class RecorrenciaResponse(RecorrenciaBase):
+    id: int
+    escritorio_id: int
+    data_criacao: datetime
+
+    class Config:
+        from_attributes = True
+
 class TransacaoBase(BaseModel):
     tipo: str
     categoria: str
@@ -554,9 +595,12 @@ class TransacaoBase(BaseModel):
     cliente_id: Optional[int] = None
     processo_id: Optional[int] = None
     servico_id: Optional[int] = None
+    recorrencia_id: Optional[int] = None
 
 class TransacaoCreate(TransacaoBase):
-    pass
+    # Campos para criação de recorrência em lote via POST /transacoes
+    repetir: Optional[bool] = False
+    data_fim_recorrencia: Optional[datetime] = None
 
 class TransacaoUpdate(BaseModel):
     tipo: Optional[str] = None
@@ -570,6 +614,10 @@ class TransacaoUpdate(BaseModel):
     cliente_id: Optional[int] = None
     processo_id: Optional[int] = None
     servico_id: Optional[int] = None
+    recorrencia_id: Optional[int] = None
+    
+    # Controle de atualização em lote
+    update_series: Optional[bool] = False
 
 class TransacaoResponse(TransacaoBase):
     id: int
@@ -579,9 +627,7 @@ class TransacaoResponse(TransacaoBase):
     
     cliente: Optional[Cliente] = None
     processo: Optional[ProcessoTarefaInfo] = None
-
-    class Config:
-        from_attributes = True
+    recorrencia_id: Optional[int] = None
 
 class FluxoCaixaMes(BaseModel):
     mes: str

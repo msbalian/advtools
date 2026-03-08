@@ -24,6 +24,7 @@ const loading = ref(true)
 const escritorio = ref(null)
 const currentUser = ref(null)
 const sidebarOpen = ref(false)
+const categorias = ref([])
 
 const fluxoCaixa = ref({
     total_receitas: 0,
@@ -47,12 +48,19 @@ const showMessage = (msg, type = 'success') => {
     setTimeout(() => { notification.value.show = false }, 4000)
 }
 
-const confirmAction = (message, onConfirm, title = 'Confirmar Ação') => {
-    confirmDialog.value = { show: true, message, onConfirm, title }
+const confirmAction = (message, onConfirm, title = 'Confirmar Ação', onCancel = null, confirmText = 'Confirmar', cancelText = 'Cancelar') => {
+    confirmDialog.value = { show: true, message, onConfirm, title, onCancel, confirmText, cancelText }
 }
 
 const executeConfirm = async () => {
     if (confirmDialog.value.onConfirm) await confirmDialog.value.onConfirm()
+    confirmDialog.value.show = false
+}
+
+const executeCancel = async () => {
+    if (confirmDialog.value.onCancel) {
+        await confirmDialog.value.onCancel()
+    }
     confirmDialog.value.show = false
 }
 
@@ -68,6 +76,9 @@ const carregarDados = async () => {
         if (resFluxo.ok) fluxoCaixa.value = await resFluxo.json()
         if (resEsc.ok) escritorio.value = await resEsc.json()
         if (resMe.ok) currentUser.value = await resMe.json()
+
+        const resCats = await apiFetch('/api/financeiro/categorias')
+        if (resCats.ok) categorias.value = await resCats.json()
     } catch (e) {
         console.error("Erro ao carregar dados financeiros", e)
     } finally {
@@ -122,7 +133,9 @@ const form = ref({
     descricao: '',
     status: 'Pendente',
     data_vencimento: new Date().toISOString().split('T')[0],
-    cliente_id: null
+    cliente_id: null,
+    repetir: false,
+    data_fim_recorrencia: null
 })
 
 const abrirNovaTransacao = () => {
@@ -134,7 +147,9 @@ const abrirNovaTransacao = () => {
         descricao: '',
         status: 'Pendente',
         data_vencimento: new Date().toISOString().split('T')[0],
-        cliente_id: null
+        cliente_id: null,
+        repetir: false,
+        data_fim_recorrencia: null
     }
     showModal.value = true
 }
@@ -152,13 +167,37 @@ const editarTransacao = (t) => {
         descricao: t.descricao,
         status: t.status,
         data_vencimento: data_venc,
-        cliente_id: t.cliente_id
+        cliente_id: t.cliente_id,
+        recorrencia_id: t.recorrencia_id,
+        update_series: false
     }
     activeMenu.value = null
     showModal.value = true
 }
 
 const salvarTransacao = async () => {
+    // Se estiver editando e for recorrente, pergunta se quer atualizar a série
+    if (isEditing.value && form.value.recorrencia_id) {
+        confirmAction(
+            "Este lançamento faz parte de uma recorrência. Deseja atualizar apenas este lançamento ou todas as parcelas futuras pendentes?",
+            async () => {
+                form.value.update_series = true
+                await executarSalvar()
+            },
+            "Atualizar Recorrência",
+            async () => {
+                form.value.update_series = false
+                await executarSalvar()
+            },
+            "Toda a Série",
+            "Apenas Este"
+        )
+    } else {
+        await executarSalvar()
+    }
+}
+
+const executarSalvar = async () => {
     try {
         const method = isEditing.value ? 'PUT' : 'POST'
         const url = isEditing.value ? `/api/financeiro/transacoes/${form.value.id}` : '/api/financeiro/transacoes'
@@ -179,23 +218,43 @@ const salvarTransacao = async () => {
     }
 }
 
-const excluirTransacao = (id) => {
+const excluirTransacao = (t) => {
     activeMenu.value = null
-    confirmAction(
-        "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
-        async () => {
-            try {
-                const res = await apiFetch(`/api/financeiro/transacoes/${id}`, { method: 'DELETE' })
-                if (res.ok) {
-                    showMessage("Transação excluída com sucesso!")
-                    carregarDados()
-                }
-            } catch (e) {
-                showMessage("Erro ao excluir", "error")
-            }
-        },
-        "Excluir Lançamento"
-    )
+    
+    if (t.recorrencia_id) {
+        confirmAction(
+            "Este lançamento faz parte de uma recorrência. Deseja excluir apenas este lançamento ou todas as parcelas futuras pendentes?",
+            async () => {
+                await executarExclusao(t.id, true)
+            },
+            "Excluir Recorrência",
+            async () => {
+                await executarExclusao(t.id, false)
+            },
+            "Toda a Série",
+            "Apenas Este"
+        )
+    } else {
+        confirmAction(
+            "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
+            async () => {
+                await executarExclusao(t.id, false)
+            },
+            "Excluir Lançamento"
+        )
+    }
+}
+
+const executarExclusao = async (id, deleteSeries) => {
+    try {
+        const res = await apiFetch(`/api/financeiro/transacoes/${id}?delete_series=${deleteSeries}`, { method: 'DELETE' })
+        if (res.ok) {
+            showMessage("Transação excluída com sucesso!")
+            carregarDados()
+        }
+    } catch (e) {
+        showMessage("Erro ao excluir", "error")
+    }
 }
 
 const baixarRelatorio = () => {
@@ -336,7 +395,7 @@ onMounted(carregarDados)
       </div>
 
       <!-- Transactions Table -->
-      <div class="card p-0 overflow-hidden min-h-[400px]">
+      <div class="card p-0 overflow-visible min-h-[400px]">
         <table class="min-w-full divide-y divide-slate-200">
           <thead class="bg-slate-50">
             <tr>
@@ -384,7 +443,7 @@ onMounted(carregarDados)
                     <button @click="editarTransacao(t)" class="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg">
                       <Clock class="w-4 h-4 text-slate-400" /> Editar
                     </button>
-                    <button @click="excluirTransacao(t.id)" class="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-bold">
+                    <button @click="excluirTransacao(t)" class="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-bold">
                       <X class="w-4 h-4" /> Excluir
                     </button>
                   </div>
@@ -418,8 +477,8 @@ onMounted(carregarDados)
           <h3 class="text-xl font-bold text-slate-900 mb-2">{{ confirmDialog.title }}</h3>
           <p class="text-slate-500 mb-8">{{ confirmDialog.message }}</p>
           <div class="flex gap-4 w-full">
-            <button @click="confirmDialog.show = false" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
-            <button @click="executeConfirm" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Confirmar</button>
+            <button @click="executeCancel" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors">{{ confirmDialog.cancelText || 'Cancelar' }}</button>
+            <button @click="executeConfirm" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">{{ confirmDialog.confirmText || 'Confirmar' }}</button>
           </div>
         </div>
       </div>
@@ -466,14 +525,10 @@ onMounted(carregarDados)
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-1">Categoria</label>
                   <select v-model="form.categoria" class="input w-full">
-                    <option v-if="form.tipo === 'Receita'">Honorários</option>
-                    <option v-if="form.tipo === 'Receita'">Consultoria</option>
-                    <option v-if="form.tipo === 'Receita'">Reembolso</option>
-                    <option v-if="form.tipo === 'Despesa'">Aluguel</option>
-                    <option v-if="form.tipo === 'Despesa'">Salários</option>
-                    <option v-if="form.tipo === 'Despesa'">SaaS/Software</option>
-                    <option v-if="form.tipo === 'Despesa'">Impostos</option>
-                    <option>Outros</option>
+                    <option v-for="cat in categorias.filter(c => c.tipo === form.tipo)" :key="cat.id">
+                        {{ cat.nome }}
+                    </option>
+                    <option v-if="categorias.filter(c => c.tipo === form.tipo).length === 0">Outros</option>
                   </select>
                 </div>
                 <div>
@@ -489,6 +544,19 @@ onMounted(carregarDados)
                   <option value="Pago">Pago / Recebido</option>
                   <option value="Cancelado">Cancelado</option>
                 </select>
+              </div>
+
+              <div v-if="!isEditing" class="pt-2">
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                      <input type="checkbox" v-model="form.repetir" class="w-4 h-4 rounded text-primary-600 border-slate-300 focus:ring-primary-500" />
+                      <span class="text-sm font-semibold text-slate-700 group-hover:text-primary-600 transition-colors">Repetir mensalmente</span>
+                  </label>
+                  
+                  <div v-if="form.repetir" class="mt-3 animate-fade-in">
+                      <label class="block text-sm font-semibold text-slate-700 mb-1">Repetir até</label>
+                      <input type="date" v-model="form.data_fim_recorrencia" class="input w-full" />
+                      <p class="mt-1 text-xs text-slate-400">Serão gerados lançamentos mensais até esta data.</p>
+                  </div>
               </div>
             </div>
           </div>

@@ -17,11 +17,14 @@ import {
   X,
   Cloud,
   Settings2,
-  ShieldCheck,
-  Search,
   Plus,
   FolderOpen,
-  Scale
+  Scale,
+  CreditCard,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  ShieldCheck,
+  Search
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -51,8 +54,11 @@ const logoPreview = ref(null)
 // =======================
 const pastasTrabalho = ref([])
 const tiposServico = ref([])
+const categoriasFinanceiras = ref([])
 const newPastaNome = ref('')
 const newTipoNome = ref('')
+const newCategoriaNome = ref('')
+const newCategoriaTipo = ref('Receita')
 
 // =======================
 // ESTADO: EQUIPE
@@ -113,6 +119,9 @@ const loadConfiguracoesExtras = async () => {
         ])
         if (resPastas.ok) pastasTrabalho.value = await resPastas.json()
         if (resTipos.ok) tiposServico.value = await resTipos.json()
+        
+        const resCats = await apiFetch('/api/financeiro/categorias')
+        if (resCats.ok) categoriasFinanceiras.value = await resCats.json()
     } catch (e) {
         console.error("Erro ao carregar configurações extras", e)
     }
@@ -183,6 +192,36 @@ const deleteTipoServico = (id) => {
             if (res.ok) {
                 await loadConfiguracoesExtras()
                 showMessage("Tipo excluído!")
+            }
+        } catch (e) { showMessage("Erro ao excluir", "error") }
+    })
+}
+
+const addCategoriaFinanceira = async () => {
+    if (!newCategoriaNome.value) {
+        showMessage("Por favor, digite o nome da categoria.", "error");
+        return;
+    }
+    try {
+        const res = await apiFetch('/api/financeiro/categorias', {
+            method: 'POST',
+            body: JSON.stringify({ nome: newCategoriaNome.value, tipo: newCategoriaTipo.value })
+        })
+        if (res.ok) {
+            newCategoriaNome.value = ''
+            await loadConfiguracoesExtras()
+            showMessage("Categoria financeira adicionada!")
+        }
+    } catch (e) { showMessage("Erro de conexão", "error") }
+}
+
+const deleteCategoriaFinanceira = (id) => {
+    confirmAction("Deseja excluir esta categoria financeira?", async () => {
+        try {
+            const res = await apiFetch(`/api/financeiro/categorias/${id}`, { method: 'DELETE' })
+            if (res.ok) {
+                await loadConfiguracoesExtras()
+                showMessage("Categoria excluída!")
             }
         } catch (e) { showMessage("Erro ao excluir", "error") }
     })
@@ -470,6 +509,12 @@ const sidebarOpen = ref(false)
                         <Scale class="w-4 h-4" /> Tipos de Serviço
                     </button>
                     <button 
+                        @click="activeTab = 'financeiro'"
+                        :class="[activeTab === 'financeiro' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
+                    >
+                        <CreditCard class="w-4 h-4" /> Financeiro
+                    </button>
+                    <button 
                         v-if="currentUser?.is_admin"
                         @click="activeTab = 'global'"
                         :class="[activeTab === 'global' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
@@ -641,6 +686,69 @@ const sidebarOpen = ref(false)
                         <button @click="deleteTipoServico(item.id)" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
                             <Trash2 class="w-4 h-4" />
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Financeiro (Categorias) -->
+            <div v-if="activeTab === 'financeiro'" class="p-6">
+                <div class="mb-6">
+                    <h2 class="text-base font-semibold text-slate-900">Categorias Financeiras</h2>
+                    <p class="text-sm text-slate-500">Gerencie as categorias de receitas e despesas do seu escritório.</p>
+                </div>
+
+                <div class="flex flex-wrap gap-4 mb-8 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">NOME DA CATEGORIA</label>
+                        <input v-model="newCategoriaNome" type="text" placeholder="Ex: Honorários, Aluguel..." class="input w-full" />
+                    </div>
+                    <div class="w-32">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">TIPO</label>
+                        <select v-model="newCategoriaTipo" class="input w-full">
+                            <option value="Receita">Receita</option>
+                            <option value="Despesa">Despesa</option>
+                        </select>
+                    </div>
+                    <button @click="addCategoriaFinanceira" class="btn-primary flex items-center gap-2">
+                        <Plus class="w-4 h-4" /> Adicionar
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Receitas -->
+                    <div>
+                        <h3 class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <ArrowUpCircle class="w-4 h-4" /> Receitas
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div v-for="cat in categoriasFinanceiras.filter(c => c.tipo === 'Receita')" :key="cat.id" class="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex items-center justify-between group">
+                                <span class="font-bold text-emerald-800">{{ cat.nome }}</span>
+                                <button @click="deleteCategoriaFinanceira(cat.id)" class="p-1.5 text-emerald-300 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div v-if="!categoriasFinanceiras.some(c => c.tipo === 'Receita')" class="col-span-full py-4 text-center text-slate-400 text-sm border-2 border-dashed border-slate-100 rounded-xl">
+                                Nenhuma categoria de receita cadastrada.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Despesas -->
+                    <div>
+                        <h3 class="text-xs font-bold text-red-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <ArrowDownCircle class="w-4 h-4" /> Despesas
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div v-for="cat in categoriasFinanceiras.filter(c => c.tipo === 'Despesa')" :key="cat.id" class="p-4 bg-red-50/50 rounded-xl border border-red-100 flex items-center justify-between group">
+                                <span class="font-bold text-red-800">{{ cat.nome }}</span>
+                                <button @click="deleteCategoriaFinanceira(cat.id)" class="p-1.5 text-red-300 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div v-if="!categoriasFinanceiras.some(c => c.tipo === 'Despesa')" class="col-span-full py-4 text-center text-slate-400 text-sm border-2 border-dashed border-slate-100 rounded-xl">
+                                Nenhuma categoria de despesa cadastrada.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

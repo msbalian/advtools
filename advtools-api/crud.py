@@ -96,6 +96,63 @@ async def create_office(db: AsyncSession, office: schemas.EscritorioCreate):
     await db.refresh(db_office)
     return db_office
 
+async def delete_recorrencia(db: AsyncSession, recorrencia_id: int):
+    result = await db.execute(select(models.Recorrencia).filter(models.Recorrencia.id == recorrencia_id))
+    db_recorrencia = result.scalars().first()
+    if db_recorrencia:
+        await db.delete(db_recorrencia)
+        await db.commit()
+        return True
+    return False
+
+# ==========================
+# CATEGORIAS FINANCEIRAS
+# ==========================
+
+async def get_categorias_financeiras(db: AsyncSession, escritorio_id: int):
+    result = await db.execute(
+        select(models.CategoriaFinanceira)
+        .where(models.CategoriaFinanceira.escritorio_id == escritorio_id)
+        .order_by(models.CategoriaFinanceira.nome.asc())
+    )
+    return result.scalars().all()
+
+async def create_categoria_financeira(db: AsyncSession, categoria: schemas.CategoriaFinanceiraCreate, escritorio_id: int):
+    db_categoria = models.CategoriaFinanceira(**categoria.dict(), escritorio_id=escritorio_id)
+    db.add(db_categoria)
+    await db.commit()
+    await db.refresh(db_categoria)
+    return db_categoria
+
+async def update_categoria_financeira(db: AsyncSession, categoria_id: int, categoria_update: schemas.CategoriaFinanceiraCreate, escritorio_id: int):
+    result = await db.execute(select(models.CategoriaFinanceira).filter(
+        models.CategoriaFinanceira.id == categoria_id,
+        models.CategoriaFinanceira.escritorio_id == escritorio_id
+    ))
+    db_categoria = result.scalars().first()
+    if not db_categoria:
+        return None
+        
+    for key, value in categoria_update.dict().items():
+        setattr(db_categoria, key, value)
+        
+    db.add(db_categoria)
+    await db.commit()
+    await db.refresh(db_categoria)
+    return db_categoria
+
+async def delete_categoria_financeira(db: AsyncSession, categoria_id: int, escritorio_id: int):
+    result = await db.execute(select(models.CategoriaFinanceira).filter(
+        models.CategoriaFinanceira.id == categoria_id,
+        models.CategoriaFinanceira.escritorio_id == escritorio_id
+    ))
+    db_categoria = result.scalars().first()
+    if not db_categoria:
+        return False
+    await db.delete(db_categoria)
+    await db.commit()
+    return True
+
 async def get_escritorio(db: AsyncSession, escritorio_id: int):
     result = await db.execute(select(models.Escritorio).filter(models.Escritorio.id == escritorio_id))
     return result.scalars().first()
@@ -847,7 +904,55 @@ async def get_transacoes(db: AsyncSession, escritorio_id: int, mes: Optional[int
     return result.scalars().all()
 
 async def create_transacao(db: AsyncSession, transacao: schemas.TransacaoCreate, escritorio_id: int):
-    db_transacao = models.Transacao(**transacao.dict(), escritorio_id=escritorio_id)
+    # Se for uma transação recorrente
+    if transacao.repetir and transacao.data_fim_recorrencia:
+        from dateutil.relativedelta import relativedelta
+        
+        # Cria o registro da recorrência
+        db_recorrencia = models.Recorrencia(
+            escritorio_id=escritorio_id,
+            tipo=transacao.tipo,
+            categoria=transacao.categoria,
+            valor=transacao.valor,
+            descricao=transacao.descricao,
+            frequencia="Mensal", # Por enquanto apenas mensal como padrão
+            data_inicio=transacao.data_vencimento,
+            data_fim=transacao.data_fim_recorrencia
+        )
+        db.add(db_recorrencia)
+        await db.flush() # Para pegar o ID
+        
+        # Gera as transações
+        data_atual = transacao.data_vencimento
+        primeira_transacao = None
+        
+        while data_atual <= transacao.data_fim_recorrencia:
+            nova_t = models.Transacao(
+                **transacao.dict(exclude={'repetir', 'data_fim_recorrencia', 'data_vencimento', 'recorrencia_id'}),
+                escritorio_id=escritorio_id,
+                data_vencimento=data_atual,
+                recorrencia_id=db_recorrencia.id
+            )
+            db.add(nova_t)
+            if not primeira_transacao:
+                primeira_transacao = nova_t
+            
+            # Incrementa um mês
+            data_atual += relativedelta(months=1)
+            
+        await db.commit()
+        await db.refresh(primeira_transacao)
+        
+        # Para retorno, pegamos a primeira da série (ou a que o usuário "criou")
+        result = await db.execute(
+            select(models.Transacao)
+            .options(selectinload(models.Transacao.cliente), selectinload(models.Transacao.processo))
+            .filter(models.Transacao.id == primeira_transacao.id)
+        )
+        return result.scalars().first()
+
+    # Fluxo normal (não recorrente)
+    db_transacao = models.Transacao(**transacao.dict(exclude={'repetir', 'data_fim_recorrencia'}), escritorio_id=escritorio_id)
     db.add(db_transacao)
     await db.commit()
     await db.refresh(db_transacao)
@@ -870,6 +975,32 @@ async def update_transacao(db: AsyncSession, transacao_id: int, transacao_update
         return None
         
     update_data = transacao_update.dict(exclude_unset=True)
+    update_series = update_data.pop('update_series', False)
+    
+    # Se for para atualizar a série inteira (recorrência)
+    if update_series and db_transacao.recorrencia_id:
+        # Campos que podem ser atualizados na série (valor, categoria, descricao)
+        bulk_fields = {k: v for k, v in update_data.items() if k in ['valor', 'categoria', 'descricao', 'tipo']}
+        
+        if bulk_fields:
+            from sqlalchemy import update as sql_update
+            await db.execute(
+                sql_update(models.Transacao)
+                .where(
+                    models.Transacao.recorrencia_id == db_transacao.recorrencia_id,
+                    models.Transacao.status == 'Pendente', # Apenas pendentes para não alterar histórico pago
+                    models.Transacao.escritorio_id == escritorio_id
+                )
+                .values(**bulk_fields)
+            )
+            # Atualiza também o registro da recorrência pai
+            await db.execute(
+                sql_update(models.Recorrencia)
+                .where(models.Recorrencia.id == db_transacao.recorrencia_id)
+                .values(**bulk_fields)
+            )
+
+    # Aplica atualização no registro atual (ou em todos se não for bulk mas o registro atual precisar)
     for key, value in update_data.items():
         setattr(db_transacao, key, value)
         
@@ -885,7 +1016,7 @@ async def update_transacao(db: AsyncSession, transacao_id: int, transacao_update
     )
     return result.scalars().first()
 
-async def delete_transacao(db: AsyncSession, transacao_id: int, escritorio_id: int):
+async def delete_transacao(db: AsyncSession, transacao_id: int, escritorio_id: int, delete_series: bool = False):
     result = await db.execute(select(models.Transacao).filter(
         models.Transacao.id == transacao_id,
         models.Transacao.escritorio_id == escritorio_id
@@ -893,7 +1024,24 @@ async def delete_transacao(db: AsyncSession, transacao_id: int, escritorio_id: i
     db_transacao = result.scalars().first()
     if not db_transacao:
         return False
-    await db.delete(db_transacao)
+        
+    if delete_series and db_transacao.recorrencia_id:
+        from sqlalchemy import delete
+        # Deleta todas as transações pendentes da série
+        await db.execute(
+            delete(models.Transacao)
+            .where(
+                models.Transacao.recorrencia_id == db_transacao.recorrencia_id,
+                models.Transacao.status == 'Pendente',
+                models.Transacao.escritorio_id == escritorio_id
+            )
+        )
+        # Se não sobrar nenhuma transação, deleta a recorrência
+        # (Para simplificar, vamos manter a recorrência se houver transações pagas, 
+        # mas aqui o usuário pediu para refletir em todas, então vamos focar nas pendentes)
+    else:
+        await db.delete(db_transacao)
+        
     await db.commit()
     return True
 

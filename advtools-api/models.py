@@ -363,6 +363,36 @@ class Tarefa(Base):
     criado_por = relationship("Usuario", foreign_keys=[criado_por_id])
 
 
+class CategoriaFinanceira(Base):
+    __tablename__ = "categorias_financeiras"
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id", ondelete="CASCADE"))
+    tipo = Column(String) # Receita ou Despesa
+    nome = Column(String)
+    data_criacao = Column(DateTime, default=func.now())
+
+    escritorio = relationship("Escritorio")
+
+class Recorrencia(Base):
+    __tablename__ = "recorrencias"
+
+    id = Column(Integer, primary_key=True, index=True)
+    escritorio_id = Column(Integer, ForeignKey("escritorios.id"), nullable=False, index=True)
+    
+    tipo = Column(String(20), nullable=False) # Receita, Despesa
+    categoria = Column(String(100), nullable=False)
+    valor = Column(Float, nullable=False)
+    descricao = Column(Text)
+    frequencia = Column(String(50), default="Mensal") # Mensal, Semanal, etc
+    data_inicio = Column(DateTime, nullable=False)
+    data_fim = Column(DateTime, nullable=True) # Se null, é "infinito" ou controlado por outro meio
+    
+    data_criacao = Column(DateTime, default=func.now())
+    
+    escritorio = relationship("Escritorio")
+    transacoes = relationship("Transacao", back_populates="recorrencia", cascade="all, delete-orphan")
+
+
 class Transacao(Base):
     __tablename__ = "transacoes"
 
@@ -371,6 +401,7 @@ class Transacao(Base):
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)
     processo_id = Column(Integer, ForeignKey("processos.id"), nullable=True, index=True)
     servico_id = Column(Integer, ForeignKey("servicos.id", ondelete="SET NULL"), nullable=True, index=True)
+    recorrencia_id = Column(Integer, ForeignKey("recorrencias.id", ondelete="CASCADE"), nullable=True, index=True)
 
     tipo = Column(String(20), nullable=False) # Receita, Despesa
     categoria = Column(String(100), nullable=False) # Honorários, Aluguel, etc
@@ -389,3 +420,4 @@ class Transacao(Base):
     cliente = relationship("Cliente")
     processo = relationship("Processo")
     servico = relationship("Servico")
+    recorrencia = relationship("Recorrencia", back_populates="transacoes")

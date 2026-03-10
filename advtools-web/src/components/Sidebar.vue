@@ -17,7 +17,8 @@ import {
   Plus,
   Building2,
   ShieldCheck,
-  Folder
+  Folder,
+  Calendar as CalendarIcon
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'Processos Judiciais', icon: Scale, path: '/processos' },
   { name: 'Docs do Escritório', icon: PenTool, path: '/modelos' },
   { name: 'Redator Inteligente', icon: Wand2, path: '/redator' },
+  { name: 'Agenda Jurídica', icon: CalendarIcon, path: '/agenda' },
   { name: 'Tarefas e Prazos', icon: CheckCircle2, path: '/tarefas' },
   { name: 'Arquivos', icon: Folder, path: '/arquivos' },
   { name: 'Financeiro', icon: BadgeDollarSign, path: '/financeiro' },

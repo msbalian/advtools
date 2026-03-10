@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
+from datetime import datetime
 
 import schemas
 import models
@@ -23,6 +24,8 @@ async def read_tarefas(
     cliente_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
     limit: Optional[int] = Query(None),
+    data_inicio: Optional[datetime] = Query(None),
+    data_fim: Optional[datetime] = Query(None),
     current_user: models.Usuario = Depends(get_current_user), 
     db: AsyncSession = Depends(get_db)
 ):
@@ -33,7 +36,9 @@ async def read_tarefas(
         responsavel_id=responsavel_id,
         cliente_id=cliente_id,
         status=status,
-        limit=limit
+        limit=limit,
+        data_inicio=data_inicio,
+        data_fim=data_fim
     )
 
 @router.post("", response_model=schemas.TarefaResponse)

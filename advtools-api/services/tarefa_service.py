@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
+from typing import Optional
+from datetime import datetime
 import models
 import schemas
 from fastapi import HTTPException
@@ -19,12 +22,22 @@ async def create_tarefa_service(db: AsyncSession, tarefa: schemas.TarefaCreate, 
 from typing import Optional
 from sqlalchemy.orm import selectinload
 
-async def get_tarefas_service(db: AsyncSession, escritorio_id: int, processo_id: Optional[int] = None, responsavel_id: Optional[int] = None, cliente_id: Optional[int] = None, status: Optional[str] = None, limit: Optional[int] = None):
+async def get_tarefas_service(db: AsyncSession, escritorio_id: int, processo_id: Optional[int] = None, responsavel_id: Optional[int] = None, cliente_id: Optional[int] = None, status: Optional[str] = None, limit: Optional[int] = None, data_inicio: Optional[datetime] = None, data_fim: Optional[datetime] = None):
     query = select(models.Tarefa).options(
         selectinload(models.Tarefa.responsavel),
         selectinload(models.Tarefa.cliente),
         selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente)
     ).where(models.Tarefa.escritorio_id == escritorio_id)
+    
+    if data_inicio:
+        if data_inicio.tzinfo:
+            data_inicio = data_inicio.replace(tzinfo=None)
+        query = query.where(models.Tarefa.data_vencimento >= data_inicio)
+    
+    if data_fim:
+        if data_fim.tzinfo:
+            data_fim = data_fim.replace(tzinfo=None)
+        query = query.where(models.Tarefa.data_vencimento <= data_fim)
     
     if processo_id:
         query = query.where(models.Tarefa.processo_id == processo_id)

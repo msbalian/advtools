@@ -70,6 +70,12 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: '/agenda',
+            name: 'agenda',
+            component: () => import('./views/AgendaView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/financeiro',
             name: 'financeiro',
             component: () => import('./views/FinanceiroView.vue'),

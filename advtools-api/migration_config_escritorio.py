@@ -1,22 +1,10 @@
 import asyncio
-import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
-from dotenv import load_dotenv
+from config import Config
 
-# Carrega variáveis de ambiente
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL não configurada no .env")
-
-# Garante que usamos o driver asyncpg
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
-
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(Config.DATABASE_URL, echo=True)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 async def migrate():

@@ -1,16 +1,11 @@
 import asyncio
-import os
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
-from dotenv import load_dotenv
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+from config import Config
 
 async def migrate():
-    engine = create_async_engine(DATABASE_URL, echo=True)
+    engine = create_async_engine(Config.DATABASE_URL, echo=True)
     
     # 1. Tabelas
     async with engine.begin() as conn:

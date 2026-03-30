@@ -2,8 +2,9 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 import models
+from config import Config
 
-DATABASE_URL = "postgresql://postgres:0000@localhost:5432/advtools"
+DATABASE_URL = Config.DATABASE_URL.replace("+asyncpg", "")
 
 def check_client_data():
     engine = create_engine(DATABASE_URL)

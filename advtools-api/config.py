@@ -35,3 +35,7 @@ class Config:
     FIRST_ADMIN_NAME = os.getenv("FIRST_ADMIN_NAME", "Super Admin")
     FIRST_ADMIN_EMAIL = os.getenv("FIRST_ADMIN_EMAIL", "admin@advtools.com.br")
     FIRST_ADMIN_PASSWORD = os.getenv("FIRST_ADMIN_PASSWORD", "123456")
+
+    # Seed Escritório
+    FIRST_OFFICE_NAME = os.getenv("FIRST_OFFICE_NAME", "ADVtools Advocacia")
+    FIRST_OFFICE_DOC = os.getenv("FIRST_OFFICE_DOC", "00.000.000/0001-00")

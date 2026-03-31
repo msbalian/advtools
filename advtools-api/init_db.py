@@ -22,8 +22,12 @@ async def init_default_data():
         escritorio = result.scalars().first()
         
         if not escritorio:
-            print("Escritório padrão id=1 não encontrado. Criando 'ADVtools Advocacia'...")
-            escritorio = models.Escritorio(id=1, nome="ADVtools Advocacia", documento="00.000.000/0001-00")
+            print(f"Escritório padrão id=1 não encontrado. Criando '{Config.FIRST_OFFICE_NAME}'...")
+            escritorio = models.Escritorio(
+                id=1, 
+                nome=Config.FIRST_OFFICE_NAME, 
+                documento=Config.FIRST_OFFICE_DOC
+            )
             db.add(escritorio)
             await db.commit()
             print("✅ Escritório padrão criado.")

@@ -445,6 +445,20 @@ const handleExcluirGlobal = async (userId) => {
     })
 }
 
+const tabItems = computed(() => {
+    const items = [
+        { id: 'escritorio', label: 'Meu Escritório', icon: Building2 },
+        { id: 'equipe', label: 'Gestão da Equipe', icon: Users },
+        { id: 'pastas', label: 'Pastas de Trabalho', icon: FolderOpen },
+        { id: 'servicos', label: 'Tipos de Serviço', icon: Scale },
+        { id: 'financeiro', label: 'Financeiro', icon: CreditCard },
+    ]
+    if (currentUser.value?.is_admin) {
+        items.push({ id: 'global', label: 'Gestão Global', icon: ShieldCheck })
+    }
+    return items
+})
+
 const sidebarOpen = ref(false)
 </script>
 
@@ -469,60 +483,46 @@ const sidebarOpen = ref(false)
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-slate-900">Configurações do Sistema</h1>
-            <p class="text-sm text-slate-500 mt-1">Gerencie os dados do seu escritório e o acesso da sua equipe.</p>
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold text-slate-900 mb-2">Configurações do Sistema</h1>
+            <p class="text-slate-500 text-base mt-1">Gerencie os dados do seu escritório e o acesso da sua equipe com segurança e clareza.</p>
         </div>
 
         <div v-if="isLoading" class="flex justify-center items-center h-64">
-            <div class="text-slate-500">Carregando configurações...</div>
+            <div class="flex flex-col items-center gap-4">
+                <div class="w-12 h-12 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
+                <div class="text-slate-500 font-medium">Carregando configurações...</div>
+            </div>
         </div>
 
-        <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
-            <!-- Tabs -->
-            <div class="border-b border-slate-200">
-                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+        <div v-else class="flex flex-col lg:flex-row gap-8 items-start">
+            <!-- Sidebar Interna de Navegação -->
+            <aside class="w-full lg:w-72 flex-shrink-0 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden lg:sticky lg:top-24">
+                <div class="p-4 bg-slate-50 border-b border-slate-100 lg:hidden">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Navegação</span>
+                </div>
+                <nav class="flex flex-col p-2 space-y-1">
                     <button 
-                        @click="activeTab = 'escritorio'"
-                        :class="[activeTab === 'escritorio' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
+                        v-for="item in tabItems" 
+                        :key="item.id"
+                        @click="activeTab = item.id"
+                        :class="[
+                            activeTab === item.id 
+                                ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-100' 
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900', 
+                            'group flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-200 cursor-pointer'
+                        ]"
                     >
-                        <Building2 class="w-4 h-4" /> Meu Escritório
-                    </button>
-                    <button 
-                        @click="activeTab = 'equipe'"
-                        :class="[activeTab === 'equipe' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
-                    >
-                        <Users class="w-4 h-4" /> Gestão da Equipe
-                    </button>
-                    <button 
-                        @click="activeTab = 'pastas'"
-                        :class="[activeTab === 'pastas' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
-                    >
-                        <FolderOpen class="w-4 h-4" /> Pastas de Trabalho
-                    </button>
-                    <button 
-                        @click="activeTab = 'servicos'"
-                        :class="[activeTab === 'servicos' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
-                    >
-                        <Scale class="w-4 h-4" /> Tipos de Serviço
-                    </button>
-                    <button 
-                        @click="activeTab = 'financeiro'"
-                        :class="[activeTab === 'financeiro' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
-                    >
-                        <CreditCard class="w-4 h-4" /> Financeiro
-                    </button>
-                    <button 
-                        v-if="currentUser?.is_admin"
-                        @click="activeTab = 'global'"
-                        :class="[activeTab === 'global' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center gap-2']"
-                    >
-                        <ShieldCheck class="w-4 h-4" /> Gestão Global (Root)
+                        <component :is="item.icon" class="w-5 h-5 flex-shrink-0" :class="activeTab === item.id ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'" />
+                        {{ item.label }}
                     </button>
                 </nav>
-            </div>
+            </aside>
+
+            <!-- Área de Conteúdo Pro Max -->
+            <div class="flex-1 w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden min-h-[600px]">
 
             <!-- Tab Content: Escritório -->
             <div v-if="activeTab === 'escritorio'" class="p-6">
@@ -803,9 +803,10 @@ const sidebarOpen = ref(false)
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </main>
+            </div> <!-- Fim da Aba Global -->
+        </div> <!-- Fim da Área de Conteúdo -->
+    </div> <!-- Fim do Container Flex (v-else) -->
+</main>
 
     <!-- Modal Novo/Edição Usuário -->
     <div v-if="showUsuarioModal" class="relative z-50 pointer-events-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -895,7 +896,6 @@ const sidebarOpen = ref(false)
         </div>
     </div>
 
-    </div> <!-- Closes 323 -->
 
     <!-- Notificações -->
     <Transition
@@ -949,8 +949,8 @@ const sidebarOpen = ref(false)
                     </div>
                 </div>
             </div>
-        </div>
     </div>
-
     </div>
+    </div>
+  </div>
 </template>

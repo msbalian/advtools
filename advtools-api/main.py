@@ -1,7 +1,7 @@
 import os
 import logging
 import traceback
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,8 +12,18 @@ logging.basicConfig(filename='api_errors.log', level=logging.ERROR)
 
 # Este app é sua API core em FastAPI
 from config import Config
+from init_db import init_default_data
 
-app = FastAPI(title="ADVtools API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Inicialização (on startup)
+    try:
+        await init_default_data()
+    except Exception as e:
+        print(f"Erro na inicialização de dados: {e}")
+    yield
+
+app = FastAPI(title="ADVtools API", lifespan=lifespan)
 
 # Setup CORS
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")

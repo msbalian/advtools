@@ -1,4 +1,4 @@
-﻿
+
 alembic==1.18.4
 annotated-doc==0.0.4
 annotated-types==0.7.0
@@ -11,11 +11,11 @@ charset-normalizer==3.4.4
 click==8.3.1
 colorama==0.4.6
 cors==1.0.1
-cryptography==46.0.5
+cryptography==46.0.6
 dnspython==2.8.0
 docx2pdf==0.1.8
 docxtpl==0.20.2
-ecdsa==0.19.1
+ecdsa==0.19.2
 email-validator==2.3.0
 fastapi==0.134.0
 filelock==3.24.3
@@ -46,14 +46,14 @@ pillow==12.1.1
 proto-plus==1.27.1
 protobuf==5.29.6
 psycopg2-binary==2.9.11
-pyasn1==0.6.2
+pyasn1==0.6.3
 pyasn1_modules==0.4.2
 pycparser==3.0
 pydantic==2.12.5
 pydantic-settings==2.13.1
 pydantic_core==2.41.5
 pyparsing==3.3.2
-pypdf==6.7.4
+pypdf==6.9.2
 PySocks==1.7.1
 python-docx==1.2.0
 python-dotenv==1.2.1
@@ -62,7 +62,7 @@ python-multipart==0.0.22
 PyYAML==6.0.3
 qrcode==8.2
 reportlab==4.4.10
-requests==2.32.5
+requests==2.33.0
 requests-file==3.0.1
 requests-oauthlib==2.0.0
 rsa==4.9.1

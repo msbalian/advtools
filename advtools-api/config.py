@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import urllib.parse
 
 # Carrega o .env da raiz do projeto (um nível acima de advtools-api)
 _env_path = Path(__file__).resolve().parent.parent / ".env"
@@ -14,8 +15,13 @@ class Config:
     POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
     POSTGRES_DB = os.getenv("POSTGRES_DB", "advtools-db")
 
+    # Escapa caracteres especiais na senha e no usuário (necessário para asyncpg/SQLAlchemy)
+    # Senhas com espaços ("MINHA SENHA") precisam virar "MINHA%20SENHA" na URL
+    _quoted_user = urllib.parse.quote(POSTGRES_USER)
+    _quoted_password = urllib.parse.quote(POSTGRES_PASSWORD)
+
     DATABASE_URL = (
-        f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
+        f"postgresql+asyncpg://{_quoted_user}:{_quoted_password}"
         f"@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     )
 

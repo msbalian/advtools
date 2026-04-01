@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: advtools-postgres-prod
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - advtools_pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-advtools-db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Não expomos a porta para o host por segurança, a API acessa pela rede interna do docker
+    # ports:
+    #   - "5432:5432"
+
+  api:
+    build:
+      context: ./advtools-api
+      dockerfile: Dockerfile
+    container_name: advtools-api-prod
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # O Nginx host fara um proxy_pass para localhost:8000
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  advtools_pgdata_prod:
+    driver: local

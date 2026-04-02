@@ -57,7 +57,7 @@ const navigationAdmin = computed(() => {
 const isRectangular = ref(false)
 const logoUrl = computed(() => {
   if (props.escritorio?.logo_path) {
-    return `http://localhost:8000/static/${props.escritorio.logo_path}`
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${props.escritorio.logo_path}`
   }
   return null
 })

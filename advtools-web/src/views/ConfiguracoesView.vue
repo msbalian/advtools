@@ -242,7 +242,7 @@ const loadDadosEscritorio = async () => {
         if (!res.ok) throw new Error("Falha ao carregar escritório")
         escritorio.value = await res.json()
         if (escritorio.value.logo_path) {
-            logoPreview.value = `http://localhost:8000/static/${escritorio.value.logo_path}`
+            logoPreview.value = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${escritorio.value.logo_path}`
         }
     } catch (e) {
         console.error(e)

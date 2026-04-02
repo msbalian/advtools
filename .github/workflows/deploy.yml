@@ -20,14 +20,24 @@ jobs:
             echo "Acessando diretório do projeto..."
             cd /var/www/advtools
             
-            echo "Baixando novas atualizações do código (Git Pull)..."
-            git pull origin main
+            echo "Garantindo sincronia total com o repositório (Git Reset)..."
+            git fetch origin main
+            git reset --hard origin/main
             
-            echo "Recompilando imagens com as novidades (Docker Build)..."
+            echo "Buildando o Frontend (Web)..."
+            cd advtools-web
+            npm install
+            npm run build
+            cd ..
+            
+            echo "Recompilando imagens da API (Docker Build)..."
             docker compose -f docker-compose.prod.yml build
             
             echo "Recriando containers e colocando online (Docker Up)..."
             docker compose -f docker-compose.prod.yml up -d
+            
+            echo "Aguardando containers estabilizarem..."
+            sleep 5
             
             echo "Rodando as migrações do Alembic..."
             docker exec advtools-api-prod alembic upgrade head

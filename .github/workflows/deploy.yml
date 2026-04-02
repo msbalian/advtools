@@ -10,7 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Conectando na VPS via SSH e Aplicando Deploy
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Build do Frontend (Web)
+        working-directory: advtools-web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy da API e BD na VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST_IP }}
@@ -24,17 +38,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             
-            echo "Buildando o Frontend (Web)..."
-            cd advtools-web
-            npm install
-            npm run build
-            cd ..
-            
-            echo "Recompilando imagens da API (Docker Build)..."
-            docker compose -f docker-compose.prod.yml build
-            
-            echo "Recriando containers e colocando online (Docker Up)..."
-            docker compose -f docker-compose.prod.yml up -d
+            echo "Recriando containers e compilando novidades da API..."
+            docker compose -f docker-compose.prod.yml up -d --build
             
             echo "Aguardando containers estabilizarem..."
             sleep 5
@@ -42,4 +47,14 @@ jobs:
             echo "Rodando as migrações do Alembic..."
             docker exec advtools-api-prod alembic upgrade head
             
-            echo "Deploy concluído com sucesso!"
+            echo "Deploy da infra concluído!"
+
+      - name: Copia dist do Frontend Web para a VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "advtools-web/dist/*"
+          target: "/var/www/advtools/advtools-web/dist"
+          strip_components: 2

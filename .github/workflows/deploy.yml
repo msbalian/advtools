@@ -1,0 +1,35 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Conectando na VPS via SSH e Aplicando Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Acessando diretório do projeto..."
+            cd /var/www/advtools
+            
+            echo "Baixando novas atualizações do código (Git Pull)..."
+            git pull origin main
+            
+            echo "Recompilando imagens com as novidades (Docker Build)..."
+            docker compose -f docker-compose.prod.yml build
+            
+            echo "Recriando containers e colocando online (Docker Up)..."
+            docker compose -f docker-compose.prod.yml up -d
+            
+            echo "Rodando as migrações do Alembic..."
+            docker exec advtools-api-prod alembic upgrade head
+            
+            echo "Deploy concluído com sucesso!"

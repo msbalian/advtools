@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import os
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from typing import List, Optional
@@ -122,3 +124,32 @@ async def list_files_global(
     } for d in docs]
     
     return sorted(docs_data + modelos_data, key=lambda x: x["data_criacao"], reverse=True)
+
+@router.get("/download/{rel_path:path}")
+async def download_arquivo(
+    rel_path: str,
+    current_user: models.Usuario = Depends(get_current_user)
+):
+    """
+    Endpoint protegido para download de arquivos.
+    Verifica se o usuário está logado e serve o arquivo com os headers corretos.
+    """
+    # Segurança básica: Impedir navegação de diretório (..)
+    if ".." in rel_path or rel_path.startswith("/"):
+         raise HTTPException(status_code=400, detail="Caminho de arquivo inválido")
+
+    # O path no banco costuma ser "armazenamento/cliente_x/documentos/file.docx" 
+    # ou "logos/logo_x.png"
+    # Nosso base_dir do storage é 'static' (conforme StorageProvider)
+    base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+    file_path = os.path.join(base_dir, rel_path)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado no servidor")
+
+    # FileResponse gerencia o Content-Type via mimetypes e define o Content-Disposition
+    return FileResponse(
+        path=file_path,
+        filename=os.path.basename(file_path),
+        method="GET"
+    )

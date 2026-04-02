@@ -1,11 +1,19 @@
 import os
 import logging
 import traceback
+import mimetypes
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+# Registrar MIME types para evitar problemas em ambientes Linux (como o Docker slim)
+mimetypes.add_type('application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.docx')
+mimetypes.add_type('application/pdf', '.pdf')
+mimetypes.add_type('image/jpeg', '.jpg')
+mimetypes.add_type('image/jpeg', '.jpeg')
+mimetypes.add_type('image/png', '.png')
 
 # Configura log para arquivo para vermos erros 500 que uvicorn esconde
 logging.basicConfig(filename='api_errors.log', level=logging.ERROR)
@@ -29,8 +37,10 @@ app = FastAPI(title="ADVtools API", lifespan=lifespan)
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")
 origins = [o.strip() for o in cors_origins_str.split(",")]
 
-# Servir arquivos da pasta static (como as logomarcas)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Servir arquivos da pasta static (como as logomarcas) de forma absoluta
+static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+os.makedirs(static_path, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,11 +1,11 @@
 import os
-import shutil
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 import schemas
 import models
 import crud
+from services.storage_service import get_storage_provider
 
 async def create_escritorio_service(db: AsyncSession, escritorio_in: schemas.EscritorioCreate):
     escritorio = models.Escritorio(**escritorio_in.model_dump())
@@ -35,27 +35,26 @@ async def update_meu_escritorio_service(
     if not (current_user.is_admin or current_user.perfil == 'Admin'):
         raise HTTPException(status_code=403, detail="Apenas administradores podem alterar os dados do escritório.")
         
-    logo_path = None
+    update_data = {
+        "nome": nome,
+        "documento": documento,
+        "gemini_api_key": gemini_api_key
+    }
+    
     if logo:
+        escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
+        storage = get_storage_provider(escritorio)
+        
         # Extrair extensão e montar o nome do arquivo baseado no ID do escritório
-        ext = logo.filename.split('.')[-1] if '.' in logo.filename else 'png'
+        ext = logo.filename.split('.')[-1].lower() if '.' in logo.filename else 'png'
         filename = f"logo_{current_user.escritorio_id}.{ext}"
         
-        # Garantir que a pasta static/logos exista
-        os.makedirs("static/logos", exist_ok=True)
-        file_path = os.path.join("static/logos", filename)
+        content = await logo.read()
+        # Salva usando o provedor de storage na subpasta 'logos'
+        db_path = await storage.save_file(content, "logos", filename)
+        update_data["logo_path"] = db_path
         
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(logo.file, buffer)
-            
-        logo_path = f"logos/{filename}" # Caminho relativo servido pelo mount /static
-        
-    escritorio_update = schemas.EscritorioUpdate(
-        nome=nome,
-        documento=documento,
-        gemini_api_key=gemini_api_key,
-        logo_path=logo_path
-    )
+    escritorio_update = schemas.EscritorioUpdate(**update_data)
     
     updated_escritorio = await crud.update_escritorio(db, current_user.escritorio_id, escritorio_update)
     if not updated_escritorio:

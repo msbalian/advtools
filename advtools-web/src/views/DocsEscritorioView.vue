@@ -32,7 +32,7 @@ import {
   Sparkles,
   Loader2
 } from 'lucide-vue-next'
-import { apiFetch } from '../utils/api'
+import { apiFetch, downloadFile } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
 import FileExplorer from '../components/FileExplorer.vue'
 
@@ -236,15 +236,12 @@ const showToast = (msg, type = 'success') => {
   setTimeout(() => toast.value.show = false, 3000)
 }
 
-const getDownloadUrl = (path) => {
-    if (!path) return '#'
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    let cleanPath = path
-    // Suporte a arquivos legados sem o prefixo armazenamento/
-    if (!cleanPath.startsWith('armazenamento/') && !cleanPath.startsWith('static/')) {
-        cleanPath = `armazenamento/${cleanPath}`
+const handleDownload = async (item) => {
+    try {
+        await downloadFile(item.arquivo_path, item.nome + '.' + getFileExtension(item.arquivo_path).toLowerCase())
+    } catch (e) {
+        showToast(e.message, 'error')
     }
-    return `${baseUrl}/static/${cleanPath}`
 }
 
 const filteredItems = computed(() => {
@@ -445,9 +442,9 @@ onMounted(() => {
 
                         <div class="mt-auto px-6 py-5 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
                             <div class="flex gap-2">
-                                <a :href="getDownloadUrl(item.arquivo_path)" target="_blank" download class="p-3 bg-white text-slate-400 hover:text-primary-600 rounded-2xl transition-all border border-slate-100 shadow-sm hover:shadow-md" title="Download">
+                                <button @click="handleDownload(item)" class="p-3 bg-white text-slate-400 hover:text-primary-600 rounded-2xl transition-all border border-slate-100 shadow-sm hover:shadow-md" title="Download">
                                     <FileDown class="w-5 h-5" />
-                                </a>
+                                </button>
                                 <button @click="triggerReplace(item.id)" class="p-3 bg-white text-slate-400 hover:text-amber-500 rounded-2xl transition-all border border-slate-100 shadow-sm hover:shadow-md" title="Substituir">
                                     <UploadCloud class="w-5 h-5" />
                                 </button>

@@ -48,3 +48,34 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
 
     return response
 }
+
+/**
+ * Baixa um arquivo protegido do backend usando apiFetch (passando token)
+ */
+export async function downloadFile(relPath: string, filename?: string) {
+    // Se o path já vier com /static/ ou similar, limpamos para a rota de download
+    let cleanPath = relPath.replace(/^static\//, '').replace(/^armazenamento\//, 'armazenamento/')
+    
+    // Se não começar com armazenamento/, mas for um doc do cliente, adicionamos
+    if (!cleanPath.startsWith('armazenamento/') && !cleanPath.startsWith('logos/')) {
+        cleanPath = `armazenamento/${cleanPath}`
+    }
+
+    const res = await apiFetch(`/api/arquivos/download/${cleanPath}`)
+    if (!res.ok) {
+        throw new Error('Não foi possível baixar o arquivo. Verifique se ele ainda existe.')
+    }
+
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || cleanPath.split('/').pop() || 'arquivo'
+    document.body.appendChild(a)
+    a.click()
+    // Pequeno delay para garantir que o browser iniciou o download antes de remover o objeto
+    setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+    }, 100)
+}

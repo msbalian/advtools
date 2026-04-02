@@ -18,7 +18,7 @@ import {
   ChevronDown,
   Wand2
 } from 'lucide-vue-next'
-import { apiFetch } from '../utils/api'
+import { apiFetch, downloadFile } from '../utils/api'
 
 const props = defineProps({
   contextType: {
@@ -318,15 +318,16 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
 }
 
-const getDocumentUrl = (doc, assinado = false) => {
+const handleDownload = async (doc, assinado = false) => {
     const path = assinado ? doc.arquivo_assinado_path : doc.arquivo_path
-    if (!path) return '#'
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    let cleanPath = path
-    if (!cleanPath.startsWith('armazenamento/') && !cleanPath.startsWith('static/')) {
-        cleanPath = `armazenamento/${cleanPath}`
+    if (!path) return
+    try {
+        const ext = getFileExtension(path).toLowerCase()
+        const suffix = assinado ? '_assinado' : ''
+        await downloadFile(path, `${doc.nome}${suffix}.${ext}`)
+    } catch (e) {
+        showLocalMessage(e.message, 'error')
     }
-    return `${baseUrl}/static/${cleanPath}`
 }
 
 // Organizador Inteligente
@@ -548,14 +549,14 @@ watch(() => props.contextType, loadData)
 
             <div class="flex items-center gap-2">
               <div class="flex items-center gap-1">
-                <a :href="getDocumentUrl(doc)" target="_blank" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Baixar Original">
+                <button @click="handleDownload(doc)" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Baixar Original">
                   <Download class="w-4 h-4" />
-                </a>
-                <a v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" 
-                   :href="getDocumentUrl(doc, true)" target="_blank" 
+                </button>
+                <button v-if="doc.status_assinatura === 'Concluido' && doc.arquivo_assinado_path" 
+                   @click="handleDownload(doc, true)" 
                    class="px-3 py-1.5 text-[10px] font-black uppercase text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap">
                    Assinado
-                </a>
+                </button>
                 <button v-if="doc.status_assinatura !== 'Parcial' && doc.status_assinatura !== 'Concluido'" 
                         @click="triggerReplace(doc.id)" 
                         class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" 

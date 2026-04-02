@@ -27,10 +27,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - advtools_static_prod:/app/static
     ports:
       # O Nginx host fara um proxy_pass para localhost:8000
       - "127.0.0.1:8000:8000"
 
 volumes:
   advtools_pgdata_prod:
+    driver: local
+  advtools_static_prod:
     driver: local

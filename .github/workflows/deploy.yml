@@ -20,6 +20,8 @@ jobs:
 
       - name: Build do Frontend (Web)
         working-directory: advtools-web
+        env:
+          VITE_API_URL: "https://api.advtools.com.br"
         run: |
           npm ci
           npm run build

@@ -123,15 +123,24 @@
               <canvas ref="selfieCanvas" class="selfie-preview" v-show="selfieCaptured"></canvas>
             </div>
             <div class="camera-actions">
-              <button v-if="!cameraActive" @click="startCamera" class="btn-camera">
-                <i class="fas fa-video"></i> Ativar Câmera
-              </button>
-              <button v-else-if="!selfieCaptured" @click="captureSelfie" class="btn-camera capture">
-                <i class="fas fa-camera"></i> Capturar
-              </button>
-              <button v-else @click="retakeSelfie" class="btn-clear">
-                <i class="fas fa-redo"></i> Tirar Novamente
-              </button>
+              <div v-if="cameraError" class="camera-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>{{ cameraError }}</p>
+                <button @click="startCamera" class="btn-camera" style="margin-top: 10px;">
+                  <i class="fas fa-redo"></i> Tentar Novamente
+                </button>
+              </div>
+              <template v-else>
+                <button v-if="!cameraActive" @click="startCamera" class="btn-camera">
+                  <i class="fas fa-video"></i> Ativar Câmera
+                </button>
+                <button v-else-if="!selfieCaptured" @click="captureSelfie" class="btn-camera capture">
+                  <i class="fas fa-camera"></i> Capturar
+                </button>
+                <button v-else @click="retakeSelfie" class="btn-clear">
+                  <i class="fas fa-redo"></i> Tirar Novamente
+                </button>
+              </template>
             </div>
           </div>
 
@@ -225,7 +234,7 @@ async function loadSalaData() {
     if (signatario.value.cpf) cpf.value = signatario.value.cpf
     if (signatario.value.status === 'Assinado') jaAssinado.value = true
 
-    pdfUrl.value = `${API}${data.documento.arquivo_url}`
+    pdfUrl.value = `${API}/api/public/assinar/preview-pdf/${data.documento.id}`
     loaded.value = true
 
     await nextTick()
@@ -281,39 +290,33 @@ function clearCanvas() {
   hasDrawn = false
 }
 
+const cameraError = ref('')
+
 async function startCamera() {
+  cameraError.value = ''
   try {
-    // Tenta primeiro com restrição de câmera frontal ('user')
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }, 
-        audio: false 
-      })
-    } catch (errUser) {
-      console.warn('Falha ao abrir câmera frontal, tentando qualquer câmera disponível:', errUser)
-      // Fallback para qualquer câmera se 'user' falhar
-      mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: false 
-      })
-    }
-    
+    // Usa constraints mínimas - sem facingMode nem resolução específica
+    // Constraints muito específicas causam NotAllowedError no Chrome Android
+    // antes mesmo do browser perguntar ao usuário sobre a permissão
+    mediaStream = await navigator.mediaDevices.getUserMedia({ 
+      video: true, 
+      audio: false 
+    })
+
     if (videoEl.value) {
       videoEl.value.srcObject = mediaStream
-      // Garante o play mesmo em navegadores mobile restritivos
-      await videoEl.value.play().catch(e => console.error('Erro no autoplay:', e))
+      await videoEl.value.play().catch(e => console.warn('Autoplay falhou:', e))
     }
     cameraActive.value = true
   } catch (e: any) {
-    console.error('Erro fatal ao abrir câmera:', e)
-    let msg = 'Não foi possível acessar a câmera.'
-    if (e.name === 'NotAllowedError') msg = 'Permissão de câmera negada pelo usuário.'
-    else if (e.name === 'NotFoundError') msg = 'Nenhuma câmera encontrada no dispositivo.'
-    alert(msg)
+    console.error('Erro ao abrir câmera:', e.name, e.message)
+    if (e.name === 'NotAllowedError') {
+      cameraError.value = 'Permissão negada. Verifique as configurações de câmera do seu navegador e tente novamente.'
+    } else if (e.name === 'NotFoundError') {
+      cameraError.value = 'Nenhuma câmera encontrada no dispositivo.'
+    } else {
+      cameraError.value = `Erro ao acessar câmera: ${e.message}`
+    }
   }
 }
 
@@ -603,9 +606,22 @@ onBeforeUnmount(() => {
 }
 .camera-actions {
   display: flex;
+  flex-direction: column;
   gap: 8px;
+  align-items: center;
   justify-content: center;
 }
+.camera-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+.camera-error i { font-size: 1.4rem; margin-bottom: 6px; display: block; }
+.camera-error p { margin: 0 0 4px; }
 .btn-camera {
   background: #1e293b;
   color: #fff;

@@ -11,7 +11,12 @@ WORKDIR /app
 # Copiar os arquivos de requisitos primeiro para aproveitar o cache do Docker
 COPY requirements.txt .
 
-# Instalar dependências
+# Instalar LibreOffice (necessário para conversão DOCX → PDF em Linux)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libreoffice-writer \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Instalar dependências Python
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Copiar o restante do código da API

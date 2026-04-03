@@ -46,22 +46,45 @@ except Exception:
            pass
 
 async def convert_docx_to_pdf_async(in_path: str, out_path: str):
-    """Executa a conversão do DOCX para PDF em uma thread separada."""
+    """Converte DOCX para PDF. Usa LibreOffice em Linux/Docker e docx2pdf no Windows."""
+    import platform
+    import subprocess
+    
     abs_in = os.path.abspath(in_path)
     abs_out = os.path.abspath(out_path)
+    out_dir = os.path.dirname(abs_out)
     
     loop = asyncio.get_running_loop()
     
-    def do_convert():
-        import pythoncom
-        from docx2pdf import convert
-        pythoncom.CoInitialize()
-        try:
-            convert(abs_in, abs_out)
-        finally:
-            pythoncom.CoUninitialize()
-
-    await loop.run_in_executor(None, do_convert)
+    if platform.system() == 'Windows':
+        # Windows: usa docx2pdf (requer MS Word instalado)
+        def do_convert_win():
+            import pythoncom
+            from docx2pdf import convert
+            pythoncom.CoInitialize()
+            try:
+                convert(abs_in, abs_out)
+            finally:
+                pythoncom.CoUninitialize()
+        await loop.run_in_executor(None, do_convert_win)
+    else:
+        # Linux/Docker: usa LibreOffice CLI
+        def do_convert_linux():
+            os.makedirs(out_dir, exist_ok=True)
+            result = subprocess.run([
+                'libreoffice', '--headless', '--convert-to', 'pdf',
+                '--outdir', out_dir, abs_in
+            ], capture_output=True, text=True, timeout=60)
+            
+            if result.returncode != 0:
+                raise RuntimeError(f"LibreOffice falhou: {result.stderr}")
+            
+            # LibreOffice nomeia o output com o mesmo basename mas .pdf
+            lo_output = os.path.join(out_dir, os.path.splitext(os.path.basename(abs_in))[0] + '.pdf')
+            if lo_output != abs_out and os.path.exists(lo_output):
+                shutil.move(lo_output, abs_out)
+                
+        await loop.run_in_executor(None, do_convert_linux)
 
 # --- ROTAS DE MODELOS ---
 

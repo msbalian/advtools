@@ -138,10 +138,14 @@ async def preview_pdf_service(db: AsyncSession, documento_id: int):
         
         if os.path.exists(pdf_path):
             arquivo_exibicao = pdf_path
+        else:
+            # Conversão falhou — NÃO servir o .docx como PDF
+            raise HTTPException(
+                status_code=500, 
+                detail="Não foi possível converter o documento para visualização. Verifique se o LibreOffice está instalado no servidor."
+            )
             
     if not os.path.exists(arquivo_exibicao):
-        # Se for Drive, poderíamos retornar uma URL de Redirecionamento 
-        # mas o componente PDF do Vue precisa do stream do arquivo.
         raise HTTPException(status_code=404, detail="Arquivo físico de visualização não encontrado")
         
     return FileResponse(arquivo_exibicao, media_type="application/pdf")

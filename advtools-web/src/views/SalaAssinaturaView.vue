@@ -182,6 +182,8 @@ import VuePdfEmbed from 'vue-pdf-embed'
 const route = useRoute()
 const tokenAccess = route.params.token as string
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// URL base para chamadas internas (usa proxy Nginx em produção)
+const API_BASE = import.meta.env.PROD ? '' : API
 
 const loaded = ref(false)
 const error = ref('')
@@ -221,7 +223,7 @@ const canConfirm = computed(() => {
 
 async function loadSalaData() {
   try {
-    const res = await fetch(`${API}/api/public/assinar/${tokenAccess}`)
+    const res = await fetch(`${API_BASE}/api/public/assinar/${tokenAccess}`)
     if (!res.ok) {
       error.value = 'Link inválido ou expirado'
       loaded.value = true
@@ -234,7 +236,7 @@ async function loadSalaData() {
     if (signatario.value.cpf) cpf.value = signatario.value.cpf
     if (signatario.value.status === 'Assinado') jaAssinado.value = true
 
-    pdfUrl.value = `${API}/api/public/assinar/preview-pdf/${data.documento.id}`
+    pdfUrl.value = `${API_BASE}/api/public/assinar/preview-pdf/${data.documento.id}`
     loaded.value = true
 
     await nextTick()
@@ -362,7 +364,7 @@ async function confirmarAssinatura() {
   }
 
   try {
-    const res = await fetch(`${API}/api/public/assinar/${tokenAccess}/confirmar`, {
+    const res = await fetch(`${API_BASE}/api/public/assinar/${tokenAccess}/confirmar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

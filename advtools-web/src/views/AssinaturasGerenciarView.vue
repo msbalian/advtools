@@ -137,8 +137,13 @@
                 <a :href="getWhatsAppLink(sig)" target="_blank" class="btn-whatsapp" title="Enviar por WhatsApp">
                   <i class="fab fa-whatsapp"></i>
                 </a>
-                <button v-if="sig.status !== 'Assinado'" @click="removeSignatario(sig.id)" class="btn-danger-sm" title="Remover">
-                  <i class="fas fa-trash"></i>
+                <button 
+                  v-if="sig.status !== 'Assinado' && documento?.status_assinatura !== 'Concluido'" 
+                  @click="removeSignatario(sig.id)" 
+                  class="btn-remove" 
+                  title="Remover Signatário"
+                >
+                  <i class="fas fa-trash-alt"></i> Remover
                 </button>
               </div>
             </div>
@@ -403,7 +408,7 @@ async function loadQuickContacts() {
       const equipe = await reqEquipe.json()
       equipe.forEach((u: any) => {
         quickContacts.value.push({
-          nome: u.nome, email: u.email, cpf: u.cpf, funcao: 'Testemunha', tipo: 'Equipe'
+          nome: u.nome, email: u.email, cpf: u.cpf, funcao: 'Parte', tipo: 'Equipe'
         })
       })
     }
@@ -981,17 +986,25 @@ onMounted(async () => {
 }
 .btn-whatsapp:hover { background: #20ba5c; }
 
-.btn-danger-sm {
-  background: #fee2e2;
+.btn-remove {
+  background: #fff;
+  border: 1px solid #fee2e2;
   color: #dc2626;
-  border: none;
   border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition: all 0.2s;
 }
-.btn-danger-sm:hover { background: #dc2626; color: #fff; }
+.btn-remove:hover { 
+  background: #dc2626; 
+  color: #fff; 
+  border-color: #dc2626; 
+}
 
 .finalize-section {
   margin-top: 20px;

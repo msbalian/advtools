@@ -51,7 +51,9 @@ api_errors.log
 redator_debug.log
 
 # Uploads and temporary files
+advtools-api/static/armazenamento/
+advtools-api/static/temp/
+advtools-api/static/test_output/
 advtools-api/static/assinaturas/
 advtools-api/static/documentos_assinados/
 advtools-api/static/documentos_clientes/
-advtools-api/static/test_output/

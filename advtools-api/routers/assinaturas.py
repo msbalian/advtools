@@ -32,8 +32,9 @@ async def create_signatario(documento_id: int, signatario: schemas.SignatarioCre
     return await create_signatario_service(db, current_user, documento_id, signatario)
 
 @router_assinaturas.delete("/{documento_id}/signatarios/{signatario_id}")
-async def delete_signatario(documento_id: int, signatario_id: int, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):
-    return await delete_signatario_service(db, current_user, documento_id, signatario_id)
+async def delete_signatario(documento_id: int, signatario_id: int, request: Request, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):
+    base_url = str(request.base_url).rstrip('/')
+    return await delete_signatario_service(db, current_user, documento_id, signatario_id, base_url)
 
 @router_assinaturas.put("/{documento_id}/signatarios/{signatario_id}/posicao")
 async def update_signatario_posicao(documento_id: int, signatario_id: int, posicao: schemas.SignatarioPosicoesUpdate, db: AsyncSession = Depends(get_db), current_user: models.Usuario = Depends(get_current_user)):

@@ -32,11 +32,48 @@ async def create_signatario_service(db: AsyncSession, current_user: models.Usuar
         raise HTTPException(status_code=404, detail="Documento não encontrado")
     return db_sig
 
-async def delete_signatario_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, signatario_id: int):
+async def delete_signatario_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, signatario_id: int, base_url: str):
     success = await crud.delete_signatario(db, documento_id, signatario_id, current_user.escritorio_id)
     if not success:
         raise HTTPException(status_code=404, detail="Signatário não encontrado ou não autorizado")
-    return {"message": "Signatário removido"}
+        
+    # Reavaliar status do documento
+    # Buscamos os signatários e o documento com select explícito para evitar lazy loading
+    sig_res = await db.execute(select(models.Signatario).where(models.Signatario.documento_id == documento_id))
+    signatarios = sig_res.scalars().all()
+    
+    doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
+    if not doc:
+        return {"message": "Signatário removido"}
+    
+    await db.refresh(doc)
+    
+    if not signatarios:
+        doc.status_assinatura = 'Aguardando'
+        db.add(doc)
+        await db.commit()
+    else:
+        # Usamos uma lista de dicionários ou pegamos os dados agora para evitar greenlet later
+        assinados_count = 0
+        for s in signatarios:
+            if s.status == 'Assinado':
+                assinados_count += 1
+        
+        total = len(signatarios)
+        
+        if assinados_count == total:
+            # Todos os remanescentes já assinaram! Finalizar o documento.
+            return await _internal_finalizar_documento(db, doc, base_url)
+        elif assinados_count > 0:
+            doc.status_assinatura = 'Parcial'
+            db.add(doc)
+            await db.commit()
+        else:
+            doc.status_assinatura = 'Pendente'
+            db.add(doc)
+            await db.commit()
+
+    return {"message": "Signatário removido e status reavaliado"}
 
 async def update_signatario_posicao_service(db: AsyncSession, current_user: models.Usuario, documento_id: int, signatario_id: int, posicao: schemas.SignatarioPosicoesUpdate):
     doc = await crud.get_documento_by_id(db, documento_id, current_user.escritorio_id)
@@ -225,16 +262,24 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
         await db.commit()
         return {"message": "Assinatura confirmada com sucesso!"}
 
+    return await _internal_finalizar_documento(db, doc, base_url)
+
+async def _internal_finalizar_documento(db: AsyncSession, doc: models.DocumentoCliente, base_url: str):
+    await db.refresh(doc)
+    doc_id = doc.id
+    escritorio_id = doc.escritorio_id
+    arquivo_path = doc.arquivo_path
+    doc_nome = doc.nome
+    
     PASTA_TEMPORARIA = "static/temp"
     os.makedirs(PASTA_TEMPORARIA, exist_ok=True)
 
-    escritorio = await crud.get_escritorio(db, doc.escritorio_id)
-    storage = get_storage_provider(escritorio)
-
-    caminho_original = os.path.join("static", doc.arquivo_path)
+    # Resolve o caminho físico
+    caminho_original = f"static/{arquivo_path}"
     if not os.path.exists(caminho_original):
-        # Fallback para nova estrutura se necessário
-        caminho_original = os.path.join("static/armazenamento", doc.arquivo_path)
+        alt_path = f"static/armazenamento/{arquivo_path}"
+        if os.path.exists(alt_path):
+            caminho_original = alt_path
 
     caminho_pdf_base = caminho_original
 
@@ -247,13 +292,13 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
                 print(f"Erro ao converter DOCX para PDF: {e}")
                 caminho_pdf_base = None
 
-    # Lemos os bytes do PDF base
     if not caminho_pdf_base or not os.path.exists(caminho_pdf_base):
          raise HTTPException(status_code=500, detail="Erro ao preparar PDF base para assinatura.")
     
     with open(caminho_pdf_base, "rb") as f:
         pdf_base_bytes = f.read()
 
+    # Pega todos os signatários (pode ser chamado após mudança na lista)
     sigs_res = await db.execute(
         select(models.Signatario)
         .options(selectinload(models.Signatario.posicoes))
@@ -313,28 +358,33 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
 
     if not doc.token_validacao:
         new_token = _uuid.uuid4().hex
-        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(token_validacao=new_token))
-        await db.commit()
         doc.token_validacao = new_token
+        db.add(doc)
+        await db.commit()
+        await db.refresh(doc)
 
-    url_validacao = f"{base_url}/api/public/validar/{doc.token_validacao}"
+    token_validacao = doc.token_validacao
+    url_validacao = f"{base_url}/api/public/validar/{token_validacao}"
 
     hash_orig = doc.hash_original
     if not hash_orig:
         hash_orig = assinador_service.calcular_hash_bytes(pdf_base_bytes)
-        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(hash_original=hash_orig))
+        doc.hash_original = hash_orig
+        db.add(doc)
         await db.commit()
+        await db.refresh(doc)
 
     # Gerar Certificado em memória
     doc_dict = {
-        "nome": doc.nome,
+        "nome": doc_nome,
         "hash_original": hash_orig or "N/A"
     }
     try:
         certificado_bytes = assinador_service.gerar_certificado_pdf(doc_dict, sigs_list_unique, url_validacao=url_validacao)
     except Exception as e:
         print(f"Erro ao gerar certificado: {e}")
-        await db.execute(sql_update(models.DocumentoCliente).where(models.DocumentoCliente.id == doc_id).values(status_assinatura='Concluido'))
+        doc.status_assinatura = 'Concluido'
+        db.add(doc)
         await db.commit()
         return {"message": "Assinatura confirmada. Erro ao gerar certificado."}
 
@@ -342,12 +392,9 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
     final_pdf_bytes = b""
     try:
         writer = assinador_service.PdfWriter()
-        # Documento com assinaturas estampadas
         reader_estampado = assinador_service.PdfReader(io.BytesIO(pdf_estampado_bytes))
         for page in reader_estampado.pages:
             writer.add_page(page)
-            
-        # Manifesto/Certificado
         reader_cert = assinador_service.PdfReader(io.BytesIO(certificado_bytes))
         for page in reader_cert.pages:
             writer.add_page(page)
@@ -357,31 +404,32 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
         final_pdf_bytes = out_stream.getvalue()
     except Exception as e:
         print(f"ERRO CRÍTICO AO ANEXAR CERTIFICADO: {str(e)}")
-        # Fallback para o documento estampado se a mesclagem falhar
         final_pdf_bytes = pdf_estampado_bytes
 
     # Salvar o Documento Final Assinado no Storage
-    nome_final = f"assinado_{doc.id}_{_uuid.uuid4().hex[:6]}.pdf"
-    if doc.cliente_id:
-        relative_dir = f"cliente_{doc.cliente_id}/assinados"
+    escritorio = await crud.get_escritorio(db, escritorio_id)
+    storage = get_storage_provider(escritorio)
+    nome_final = f"assinado_{doc_id}_{_uuid.uuid4().hex[:6]}.pdf"
+    
+    # Refresh doc here one last time or use captured cliente_id
+    await db.refresh(doc)
+    cliente_id = doc.cliente_id
+    
+    if cliente_id:
+        relative_dir = f"cliente_{cliente_id}/assinados"
     else:
         relative_dir = "escritorio/documentos/assinados"
     
     db_final_path = await storage.save_file(final_pdf_bytes, relative_dir, nome_final)
     hash_final = assinador_service.calcular_hash_bytes(final_pdf_bytes)
 
-    await db.execute(
-        sql_update(models.DocumentoCliente)
-        .where(models.DocumentoCliente.id == doc_id)
-        .values(
-            status_assinatura='Concluido',
-            arquivo_assinado_path=db_final_path,
-            hash_assinado=hash_final
-        )
-    )
+    doc.status_assinatura = 'Concluido'
+    doc.arquivo_assinado_path = db_final_path
+    doc.hash_assinado = hash_final
+    db.add(doc)
     await db.commit()
 
-    return {"message": "Assinatura confirmada e documento finalizado!"}
+    return {"message": "Documento finalizado com sucesso!", "status": "Concluido"}
 
 async def public_validar_documento_service(db: AsyncSession, token_validacao: str):
     doc = await crud.get_documentacao_by_validacao(db, token_validacao)

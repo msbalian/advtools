@@ -114,7 +114,7 @@
           <!-- CPF -->
           <div class="cpf-section">
             <label>CPF (para constar no documento)</label>
-            <input v-model="cpf" type="text" placeholder="000.000.000-00" />
+            <input v-model="cpf" v-maska data-maska="###.###.###-##" type="text" placeholder="000.000.000-00" />
           </div>
 
           <!-- Consentimento -->
@@ -143,6 +143,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { vMaska } from 'maska/vue'
 
 const route = useRoute()
 const tokenAccess = route.params.token as string
@@ -219,13 +220,25 @@ function initCanvas() {
 }
 
 function getCanvasPos(e: MouseEvent) {
-  const rect = signCanvas.value!.getBoundingClientRect()
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  const canvas = signCanvas.value!
+  const rect = canvas.getBoundingClientRect()
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+  return { 
+    x: (e.clientX - rect.left) * scaleX, 
+    y: (e.clientY - rect.top) * scaleY 
+  }
 }
 function getTouchPos(e: TouchEvent) {
-  const rect = signCanvas.value!.getBoundingClientRect()
+  const canvas = signCanvas.value!
+  const rect = canvas.getBoundingClientRect()
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
   const touch = e.touches[0]
-  return { x: (touch?.clientX ?? 0) - rect.left, y: (touch?.clientY ?? 0) - rect.top }
+  return { 
+    x: ((touch?.clientX ?? 0) - rect.left) * scaleX, 
+    y: ((touch?.clientY ?? 0) - rect.top) * scaleY 
+  }
 }
 
 function startDraw(e: MouseEvent) { isDrawing = true; const p = getCanvasPos(e); ctx?.beginPath(); ctx?.moveTo(p.x, p.y); }

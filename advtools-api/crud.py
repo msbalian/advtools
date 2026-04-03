@@ -585,28 +585,9 @@ async def delete_signatario(db: AsyncSession, documento_id: int, signatario_id: 
     if not db_sig:
         return False
     
-    # Conta quantos signatários existem ANTES de deletar
-    from sqlalchemy import func
-    count_result = await db.execute(
-        select(func.count()).select_from(models.Signatario).where(
-            models.Signatario.documento_id == documento_id
-        )
-    )
-    total_antes = count_result.scalar() or 0
-    
     # Deleta o signatário
     await db.delete(db_sig)
     await db.commit()
-    
-    # Se era o último, reseta o status via SQL direto (evita conflitos de sessão ORM)
-    if total_antes <= 1:
-        from sqlalchemy import update as sql_update
-        await db.execute(
-            sql_update(models.DocumentoCliente)
-            .where(models.DocumentoCliente.id == documento_id)
-            .values(status_assinatura='Aguardando')
-        )
-        await db.commit()
     
     return True
 

@@ -42,12 +42,29 @@
         <div class="pdf-viewer-container">
           <div class="pdf-viewer-header">
             <span><i class="fas fa-eye"></i> Visualizar Documento</span>
-            <a :href="pdfUrl" target="_blank" class="download-btn" title="Abrir em nova aba">
-              <i class="fas fa-external-link-alt"></i> Abrir
-            </a>
+            <div class="pdf-controls">
+              <button class="btn-sm" @click="pdfPage = Math.max(1, pdfPage - 1)" :disabled="pdfPage <= 1">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="page-info">Pág {{ pdfPage }} / {{ numPages }}</span>
+              <button class="btn-sm" @click="pdfPage = Math.min(numPages, pdfPage + 1)" :disabled="pdfPage >= numPages">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+              <a :href="pdfUrl" target="_blank" class="download-btn" title="Abrir em nova aba">
+                <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
           </div>
           <div class="pdf-viewer-body">
-            <iframe :src="pdfUrl" class="pdf-iframe" frameborder="0"></iframe>
+            <div class="pdf-scroll-area">
+              <VuePdfEmbed 
+                v-if="pdfUrl" 
+                :source="pdfUrl" 
+                :page="pdfPage"
+                @loaded="onPdfLoaded"
+                class="pdf-canvas"
+              />
+            </div>
           </div>
         </div>
 
@@ -95,7 +112,14 @@
           <div v-show="activeTab === 'selfie'" class="tab-content">
             <p class="tab-desc">Tire uma selfie para autenticação:</p>
             <div class="camera-container">
-              <video ref="videoEl" autoplay playsinline class="camera-video" v-show="!selfieCaptured"></video>
+              <video 
+                ref="videoEl" 
+                autoplay 
+                playsinline 
+                muted 
+                class="camera-video" 
+                v-show="!selfieCaptured"
+              ></video>
               <canvas ref="selfieCanvas" class="selfie-preview" v-show="selfieCaptured"></canvas>
             </div>
             <div class="camera-actions">
@@ -144,6 +168,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { vMaska } from 'maska/vue'
+import VuePdfEmbed from 'vue-pdf-embed'
 
 const route = useRoute()
 const tokenAccess = route.params.token as string
@@ -157,6 +182,8 @@ const submitting = ref(false)
 const signatario = ref<any>({})
 const documento = ref<any>({})
 const pdfUrl = ref('')
+const pdfPage = ref(1)
+const numPages = ref(1)
 
 const activeTab = ref('desenho')
 const cpf = ref('')
@@ -256,14 +283,42 @@ function clearCanvas() {
 
 async function startCamera() {
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+    // Tenta primeiro com restrição de câmera frontal ('user')
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }, 
+        audio: false 
+      })
+    } catch (errUser) {
+      console.warn('Falha ao abrir câmera frontal, tentando qualquer câmera disponível:', errUser)
+      // Fallback para qualquer câmera se 'user' falhar
+      mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: false 
+      })
+    }
+    
     if (videoEl.value) {
       videoEl.value.srcObject = mediaStream
+      // Garante o play mesmo em navegadores mobile restritivos
+      await videoEl.value.play().catch(e => console.error('Erro no autoplay:', e))
     }
     cameraActive.value = true
-  } catch (e) {
-    alert('Não foi possível acessar a câmera.')
+  } catch (e: any) {
+    console.error('Erro fatal ao abrir câmera:', e)
+    let msg = 'Não foi possível acessar a câmera.'
+    if (e.name === 'NotAllowedError') msg = 'Permissão de câmera negada pelo usuário.'
+    else if (e.name === 'NotFoundError') msg = 'Nenhuma câmera encontrada no dispositivo.'
+    alert(msg)
   }
+}
+
+function onPdfLoaded(pdf: any) {
+  numPages.value = pdf.numPages
 }
 
 function captureSelfie() {
@@ -429,24 +484,44 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
 }
-.download-btn {
-  font-size: 0.8rem;
-  color: #2563eb;
-  text-decoration: none;
+.pdf-controls {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 12px;
+}
+.page-info {
+  font-size: 0.8rem;
+  color: #64748b;
+  min-width: 80px;
+  text-align: center;
+}
+.pdf-viewer-body {
+  background: #f1f5f9;
+  display: flex;
+  justify-content: center;
+}
+.pdf-scroll-area {
+  width: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+.pdf-canvas {
+  max-width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn-sm {
+  background: #fff;
+  border: 1px solid #e2e8f0;
   padding: 4px 10px;
   border-radius: 6px;
-  background: #eff6ff;
-  transition: background 0.2s;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.download-btn:hover { background: #dbeafe; }
-.pdf-iframe {
-  width: 100%;
-  height: 70vh;
-  border: none;
-}
+.btn-sm:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+.btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Sign Panel */
 .sign-panel {
@@ -602,7 +677,35 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 900px) {
-  .sala-grid { grid-template-columns: 1fr; }
-  .welcome-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .sala-grid { 
+    grid-template-columns: 1fr; 
+    padding: 10px;
+  }
+  .welcome-bar { 
+    flex-direction: column; 
+    gap: 12px; 
+    align-items: flex-start; 
+    margin: 10px 10px 0;
+  }
+  .pdf-scroll-area {
+    max-height: 50vh;
+  }
+  .sign-panel {
+    padding: 15px;
+  }
 }
+
+.download-btn {
+  font-size: 0.8rem;
+  color: #2563eb;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #eff6ff;
+  transition: background 0.2s;
+}
+.download-btn:hover { background: #dbeafe; }
 </style>

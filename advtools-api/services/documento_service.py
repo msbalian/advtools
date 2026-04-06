@@ -94,7 +94,7 @@ async def listar_modelos_service(db: AsyncSession, escritorio_id: int):
     modelos = res.scalars().all()
     if not modelos:
         return []
-    return [{"id": m.id, "nome": m.nome, "arquivo_path": m.arquivo_path, "data_criacao": m.data_criacao} for m in modelos]
+    return [{"id": m.id, "nome": m.nome, "arquivo_path": m.arquivo_path, "tamanho": m.tamanho, "data_criacao": m.data_criacao} for m in modelos]
 
 async def criar_modelo_service(db: AsyncSession, current_user: models.Usuario, nome: str, file: UploadFile):
     if not file.filename.endswith(".docx"):
@@ -106,8 +106,9 @@ async def criar_modelo_service(db: AsyncSession, current_user: models.Usuario, n
     content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     
-    # Modelos ficam em uma subpasta 'modelos' dentro da raiz do escritório/local
-    db_path = await storage.save_file(content, "modelos", unique_filename)
+    # Modelos ficam em uma subpasta 'modelos' dentro da raiz do escritório
+    relative_dir = f"escritorio_{current_user.escritorio_id}/modelos"
+    db_path = await storage.save_file(content, relative_dir, unique_filename)
         
     novo_modelo = models.ModeloDocumento(
         escritorio_id=current_user.escritorio_id,
@@ -163,7 +164,8 @@ async def substituir_modelo_service(db: AsyncSession, current_user: models.Usuar
     # Salva novo
     content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
-    db_path = await storage.save_file(content, "modelos", unique_filename)
+    relative_dir = f"escritorio_{current_user.escritorio_id}/modelos"
+    db_path = await storage.save_file(content, relative_dir, unique_filename)
         
     modelo.arquivo_path = db_path
     modelo.tamanho = len(content)
@@ -193,8 +195,8 @@ async def upload_documento_cliente_service(db: AsyncSession, current_user: model
     content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     
-    # Organização: cliente_{id}/documentos
-    relative_dir = f"cliente_{cliente_id}/documentos"
+    # Organização: escritorio_{id}/clientes/cliente_{id}/documentos
+    relative_dir = f"escritorio_{current_user.escritorio_id}/clientes/cliente_{cliente_id}/documentos"
     db_path = await storage.save_file(content, relative_dir, unique_filename)
     
     doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=cliente_id, pasta_id=kwargs.get('pasta_id'))
@@ -213,8 +215,8 @@ async def upload_documento_escritorio_service(db: AsyncSession, current_user: mo
     content = await file.read()
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     
-    # Organização: escritorio/documentos
-    relative_dir = "escritorio/documentos"
+    # Organização: escritorio_{id}/internos/documentos
+    relative_dir = f"escritorio_{current_user.escritorio_id}/internos/documentos"
     db_path = await storage.save_file(content, relative_dir, unique_filename)
     
     doc_create = schemas.DocumentoClienteCreate(nome=nome, cliente_id=None, pasta_id=pasta_id if pasta_id != -1 else None)
@@ -237,9 +239,9 @@ async def update_documento_file_service(db: AsyncSession, current_user: models.U
     content = await file.read()
     # Atualiza mantendo a organização
     if doc.cliente_id:
-        relative_dir = f"cliente_{doc.cliente_id}/documentos"
+        relative_dir = f"escritorio_{current_user.escritorio_id}/clientes/cliente_{doc.cliente_id}/documentos"
     else:
-        relative_dir = "escritorio/documentos"
+        relative_dir = f"escritorio_{current_user.escritorio_id}/internos/documentos"
         
     filename = os.path.basename(doc.arquivo_path) if doc.arquivo_path else f"{uuid.uuid4().hex}_{file.filename}"
     
@@ -531,11 +533,11 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
         safe_title = slugify(request.titulo_documento)
         unique_filename = f"{safe_title}_{uuid.uuid4().hex[:6]}.docx"
         
-        # Organização: cliente_{id}/documentos ou escritorio/documentos
+        # Organização: escritorio_{id}/clientes/cliente_{id}/documentos ou escritorio_{id}/internos/documentos
         if request.cliente_id:
-            relative_dir = f"cliente_{request.cliente_id}/documentos"
+            relative_dir = f"escritorio_{current_user.escritorio_id}/clientes/cliente_{request.cliente_id}/documentos"
         else:
-            relative_dir = "escritorio/documentos"
+            relative_dir = f"escritorio_{current_user.escritorio_id}/internos/documentos"
             
         db_path = await storage.save_file(file_content, relative_dir, unique_filename)
         

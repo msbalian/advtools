@@ -21,12 +21,15 @@ logging.basicConfig(filename='api_errors.log', level=logging.ERROR)
 # Este app é sua API core em FastAPI
 from config import Config
 from init_db import init_default_data
+from services.storage_audit_service import run_storage_audit
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Inicialização (on startup)
     try:
         await init_default_data()
+        # Auditoria de armazenamento para garantir integridade no startup
+        await run_storage_audit(fix=True)
     except Exception as e:
         print(f"Erro na inicialização de dados: {e}")
     yield

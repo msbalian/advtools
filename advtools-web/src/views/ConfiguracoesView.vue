@@ -547,21 +547,21 @@ const sidebarOpen = ref(false)
                         <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5">
                             <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">Nome do Escritório</label>
                             <div class="mt-2 sm:col-span-2 sm:mt-0">
-                                <input v-model="escritorio.nome" type="text" required :disabled="!isAdmin()" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-slate-50 disabled:text-slate-500" />
+                                <input v-model="escritorio.nome" type="text" required :disabled="!isAdmin()" class="input-field" />
                             </div>
                         </div>
 
                         <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5">
                             <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">CNPJ / CPF do Titular</label>
                             <div class="mt-2 sm:col-span-2 sm:mt-0">
-                                <input v-model="escritorio.documento" type="text" :disabled="!isAdmin()" class="block w-full max-w-md rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-slate-50 disabled:text-slate-500" />
+                                <input v-model="escritorio.documento" type="text" :disabled="!isAdmin()" class="input-field max-w-md" />
                             </div>
                         </div>
 
                         <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5 sm:border-t sm:border-slate-100">
                             <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">Gemini API Key (IA)</label>
                             <div class="mt-2 sm:col-span-2 sm:mt-0">
-                                <input v-model="escritorio.gemini_api_key" type="text" :disabled="!isAdmin()" placeholder="AIza..." class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-slate-50 disabled:text-slate-500" />
+                                <input v-model="escritorio.gemini_api_key" type="text" :disabled="!isAdmin()" placeholder="AIza..." class="input-field" />
                                 <p class="mt-2 text-xs text-slate-500">
                                     Necessária para usar o Redator com IA. 
                                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary-600 hover:text-primary-500 font-medium">Obtenha sua chave aqui.</a>
@@ -650,7 +650,7 @@ const sidebarOpen = ref(false)
                 </div>
 
                 <div class="flex gap-4 mb-8">
-                    <input v-model="newPastaNome" type="text" placeholder="Ex: Direito Médico, Direito Civil..." class="block w-full max-w-sm rounded-lg border-slate-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" />
+                    <input v-model="newPastaNome" type="text" placeholder="Ex: Direito Médico, Direito Civil..." class="input-field max-w-sm" />
                     <button @click="addPastaTrabalho" class="btn-primary flex items-center gap-2">
                         <Plus class="w-4 h-4" /> Adicionar
                     </button>
@@ -674,7 +674,7 @@ const sidebarOpen = ref(false)
                 </div>
 
                 <div class="flex gap-4 mb-8">
-                    <input v-model="newTipoNome" type="text" placeholder="Ex: Ação Cível, Revisão de Contrato..." class="block w-full max-w-sm rounded-lg border-slate-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" />
+                    <input v-model="newTipoNome" type="text" placeholder="Ex: Ação Cível, Revisão de Contrato..." class="input-field max-w-sm" />
                     <button @click="addTipoServico" class="btn-primary flex items-center gap-2">
                         <Plus class="w-4 h-4" /> Adicionar
                     </button>
@@ -700,11 +700,11 @@ const sidebarOpen = ref(false)
                 <div class="flex flex-wrap gap-4 mb-8 items-end">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-semibold text-slate-500 mb-1">NOME DA CATEGORIA</label>
-                        <input v-model="newCategoriaNome" type="text" placeholder="Ex: Honorários, Aluguel..." class="input w-full" />
+                        <input v-model="newCategoriaNome" type="text" placeholder="Ex: Honorários, Aluguel..." class="input-field" />
                     </div>
                     <div class="w-32">
                         <label class="block text-xs font-semibold text-slate-500 mb-1">TIPO</label>
-                        <select v-model="newCategoriaTipo" class="input w-full">
+                        <select v-model="newCategoriaTipo" class="input-field">
                             <option value="Receita">Receita</option>
                             <option value="Despesa">Despesa</option>
                         </select>
@@ -822,17 +822,17 @@ const sidebarOpen = ref(false)
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
-                                    <input v-model="formUsuario.nome" type="text" required class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    <input v-model="formUsuario.nome" type="text" required class="input-field">
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1">E-mail (Login)</label>
-                                    <input v-model="formUsuario.email" type="email" required class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    <input v-model="formUsuario.email" type="email" required class="input-field">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1">CPF</label>
-                                    <input v-model="formUsuario.cpf" type="text" v-maska data-maska="###.###.###-##" placeholder="000.000.000-00" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    <input v-model="formUsuario.cpf" type="text" v-maska data-maska="###.###.###-##" placeholder="000.000.000-00" class="input-field">
                                 </div>
                                 
                                 <div>
@@ -840,13 +840,13 @@ const sidebarOpen = ref(false)
                                         Senha de Acesso 
                                         <span v-if="isEditingUsuario" class="text-slate-400 font-normal ml-1">(Deixe em branco para manter a atual)</span>
                                     </label>
-                                    <input v-model="formUsuario.senha" type="password" :required="!isEditingUsuario" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    <input v-model="formUsuario.senha" type="password" :required="!isEditingUsuario" class="input-field">
                                 </div>
 
                                 <div v-if="isAdmin() && currentUser.id !== formUsuario.id" class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">Perfil (Área)</label>
-                                        <select v-model="formUsuario.perfil" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                        <select v-model="formUsuario.perfil" class="input-field">
                                             <option value="Advogado">Advogado</option>
                                             <option value="Comercial">Comercial</option>
                                             <option value="Administrativo">Administrativo</option>
@@ -855,7 +855,7 @@ const sidebarOpen = ref(false)
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">Permissão Admin?</label>
-                                        <select v-model="formUsuario.is_admin" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                        <select v-model="formUsuario.is_admin" class="input-field">
                                             <option :value="false">Acesso Padrão</option>
                                             <option :value="true">Administrador</option>
                                         </select>
@@ -865,14 +865,14 @@ const sidebarOpen = ref(false)
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                                        <select v-model="formUsuario.ativo" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                        <select v-model="formUsuario.ativo" class="input-field">
                                             <option :value="true">Ativo</option>
                                             <option :value="false">Bloqueado</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Membro</label>
-                                        <select v-model="formUsuario.tipo" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                        <select v-model="formUsuario.tipo" class="input-field">
                                             <option value="Humano">Humano</option>
                                             <option value="IA">Inteligência Artificial (IA)</option>
                                         </select>

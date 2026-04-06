@@ -236,42 +236,61 @@ def estampar_assinaturas(pdf_puxar, signatarios: list, caminho_final: str = None
                     try:
                         nome = sig.get('nome', 'Assinado Digitalmente')
                         cpf = sig.get('cpf', 'CPF não informado')
-                        font_size_nome = 6.5
-                        font_size_detalhe = 5.0
+                        tipo = sig.get('tipo_autenticacao', 'assinatura')
                         
-                        w_assinado = c_page.stringWidth("Assinado Eletronicamente", "Helvetica-Oblique", font_size_detalhe)
-                        w_nome = c_page.stringWidth(nome[:45], "Helvetica-Bold", font_size_nome)
-                        w_cpf = c_page.stringWidth(f"Doc: {cpf}", "Helvetica", font_size_detalhe)
+                        # Cores e Estilos
+                        c_page.setFillColorRGB(0.98, 0.98, 0.98) # Fundo quase branco
+                        c_page.setStrokeColorRGB(0.85, 0.85, 0.85) # Borda suave
+                        c_page.setLineWidth(0.5)
                         
-                        margin = 4
-                        drawn_w = max(w_assinado, w_nome, w_cpf) + (margin * 2)
-                        drawn_h = 24
+                        # Desenha o Box (Carimbo) com a área total selecionada
+                        c_page.roundRect(x_pdf, y_pdf, w_pdf, h_pdf, radius=4, fill=1, stroke=1)
                         
-                        top_y = y_pdf + h_pdf
-                        new_y_pdf = top_y - drawn_h
+                        # Margens internas
+                        padding = 4
                         
-                        c_page.setFillColorRGB(0.97, 0.97, 0.97)
-                        c_page.setStrokeColorRGB(0.8, 0.8, 0.8)
-                        c_page.setLineWidth(0.2)
-                        c_page.roundRect(x_pdf, new_y_pdf, drawn_w, drawn_h, radius=3, fill=1, stroke=1)
+                        # Espaço para imagem (se for assinatura/desenho)
+                        # Se for selfie, geralmente não estampamos no doc por privacidade (fica no certificado)
+                        mostrar_img = (tipo == 'assinatura') and img_data
+                        
+                        img_w = 0
+                        if mostrar_img:
+                            # Divide o box: 40% imagem, 60% texto (ou proporcional)
+                            img_w_max = w_pdf * 0.35 
+                            img_h_max = h_pdf - (padding * 2)
+                            
+                            # Mantém proporção da imagem se possível
+                            # drawImage com preserveAspectRatio
+                            c_page.drawImage(img_reader, x_pdf + padding, y_pdf + padding, width=img_w_max, height=img_h_max, mask='auto', preserveAspectRatio=True, anchor='c')
+                            img_w = img_w_max + padding
+                        
+                        # Texto ao lado ou ocupando tudo
+                        text_x = x_pdf + padding + img_w
+                        text_w_max = w_pdf - (padding * 2) - img_w
+                        
+                        # Fontes baseadas na altura disponível
+                        # Se h_pdf for pequeno, diminuímos a fonte
+                        base_font_size = min(7.0, h_pdf / 4.5)
                         
                         c_page.setFillColorRGB(0.3, 0.35, 0.4) 
-                        c_page.setFont("Helvetica-Oblique", font_size_detalhe)
-                        y_cursor = top_y - margin - font_size_detalhe + 1
-                        c_page.drawString(x_pdf + margin, y_cursor, "Assinado Eletronicamente")
+                        c_page.setFont("Helvetica-Oblique", base_font_size * 0.8)
+                        y_cursor = y_pdf + h_pdf - padding - (base_font_size * 0.8)
+                        c_page.drawString(text_x, y_cursor, "Assinado Eletronicamente")
                         
-                        y_cursor -= (font_size_nome + 1.5)
-                        c_page.setFillColorRGB(0.15, 0.2, 0.25)
-                        c_page.setFont("Helvetica-Bold", font_size_nome)
-                        c_page.drawString(x_pdf + margin, y_cursor, nome[:45])
+                        y_cursor -= (base_font_size + 1.5)
+                        c_page.setFillColorRGB(0.1, 0.15, 0.2)
+                        c_page.setFont("Helvetica-Bold", base_font_size)
+                        # Trunca nome se for muito longo para a largura
+                        nome_display = nome[:40]
+                        c_page.drawString(text_x, y_cursor, nome_display)
                         
-                        y_cursor -= (font_size_detalhe + 2)
+                        y_cursor -= (base_font_size * 0.9 + 1.5)
                         c_page.setFillColorRGB(0.3, 0.35, 0.4) 
-                        c_page.setFont("Helvetica", font_size_detalhe)
-                        c_page.drawString(x_pdf + margin, y_cursor, f"Doc: {cpf}")
+                        c_page.setFont("Helvetica", base_font_size * 0.8)
+                        c_page.drawString(text_x, y_cursor, f"Doc: {cpf}")
 
                     except Exception as e:
-                        print(f"Erro ao estampar texto no PDF: {e}")
+                        print(f"Erro ao estampar assinatura no PDF: {e}")
 
                 c_page.save()
                 packet_page.seek(0)

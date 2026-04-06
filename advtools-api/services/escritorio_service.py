@@ -50,8 +50,9 @@ async def update_meu_escritorio_service(
         filename = f"logo_{current_user.escritorio_id}.{ext}"
         
         content = await logo.read()
-        # Salva usando o provedor de storage na subpasta 'logos'
-        db_path = await storage.save_file(content, "logos", filename)
+        # Salva usando o provedor de storage na subpasta isolada do escritório
+        relative_dir = f"escritorio_{current_user.escritorio_id}/logos"
+        db_path = await storage.save_file(content, relative_dir, filename)
         update_data["logo_path"] = db_path
         
     escritorio_update = schemas.EscritorioUpdate(**update_data)

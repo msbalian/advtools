@@ -86,12 +86,14 @@ const getEndpoints = () => {
   if (props.contextType === 'escritorio') {
     return {
       docs: props.title === 'Modelos de Automação' 
-        ? `/api/documentos/escritorio?tags=modelo` 
+        ? `/api/modelos` 
         : `/api/documentos/escritorio?pasta_id=${currentFolderId.value}`,
       pastas: props.title === 'Modelos de Automação'
         ? `/api/pastas?cliente_id=0&parent_id=-999` // Força lista vazia de pastas se for modelos
         : `/api/pastas?cliente_id=0&parent_id=${currentFolderId.value}`,
-      upload: `/api/documentos/escritorio`,
+      upload: props.title === 'Modelos de Automação'
+        ? `/api/modelos`
+        : `/api/documentos/escritorio`,
       createFolder: `/api/pastas`
     }
   }
@@ -205,7 +207,10 @@ const handleReplaceUpload = async (event) => {
     try {
         const formData = new FormData()
         formData.append('file', file)
-        const res = await apiFetch(`/api/documentos/${replacingId.value}`, {
+        const endpoint = props.title === 'Modelos de Automação'
+            ? `/api/modelos/${replacingId.value}`
+            : `/api/documentos/${replacingId.value}`
+        const res = await apiFetch(endpoint, {
             method: 'PUT',
             body: formData
         })
@@ -257,7 +262,10 @@ const handleCreateFolder = async () => {
 const deleteDocumento = async (id) => {
     confirmAction('Deseja excluir este documento permanentemente?', async () => {
         try {
-            const res = await apiFetch(`/api/documentos/${id}`, { method: 'DELETE' })
+            const endpoint = props.title === 'Modelos de Automação'
+                ? `/api/modelos/${id}`
+                : `/api/documentos/${id}`
+            const res = await apiFetch(endpoint, { method: 'DELETE' })
             if (res.ok) {
                 showLocalMessage('Documento excluído')
                 loadData()
@@ -432,7 +440,7 @@ watch(() => props.contextType, loadData)
           </button>
           
           <div v-if="showDocMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-20">
-            <button @click="showNewFolderModal = true; showDocMenu = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-2">
+            <button v-if="props.title !== 'Modelos de Automação'" @click="showNewFolderModal = true; showDocMenu = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-2">
               <FolderPlus class="w-4 h-4" /> Nova Pasta
             </button>
             <button @click="triggerUpload" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-2">

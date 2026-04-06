@@ -4,7 +4,13 @@ from dotenv import load_dotenv
 import urllib.parse
 
 # Carrega o .env da raiz do projeto (um nível acima de advtools-api)
-_env_path = Path(__file__).resolve().parent.parent / ".env"
+current_dir = Path(__file__).resolve().parent
+_env_path = current_dir.parent / ".env"
+
+if not _env_path.exists():
+    # Tenta no diretório atual caso o .env tenha sido movido para advtools-api/
+    _env_path = current_dir / ".env"
+
 load_dotenv(_env_path)
 
 class Config:

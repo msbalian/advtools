@@ -230,7 +230,8 @@ async def public_confirm_assinatura_service(db: AsyncSession, token: str, data: 
             decoded_data = base64.b64decode(encoded_data)
             
             # Salva no storage (local ou drive)
-            db_img_path = await storage.save_file(decoded_data, "assinaturas", img_filename)
+            relative_dir = f"escritorio_{doc.escritorio_id}/assinaturas"
+            db_img_path = await storage.save_file(decoded_data, relative_dir, img_filename)
         except Exception as e:
             print(f"Erro ao salvar imagem da assinatura: {e}")
             raise HTTPException(status_code=400, detail="Erro ao processar imagem da assinatura")
@@ -420,9 +421,9 @@ async def _internal_finalizar_documento(db: AsyncSession, doc: models.DocumentoC
     cliente_id = doc.cliente_id
     
     if cliente_id:
-        relative_dir = f"cliente_{cliente_id}/assinados"
+        relative_dir = f"escritorio_{escritorio_id}/clientes/cliente_{cliente_id}/assinados"
     else:
-        relative_dir = "escritorio/documentos/assinados"
+        relative_dir = f"escritorio_{escritorio_id}/internos/assinados"
     
     db_final_path = await storage.save_file(final_pdf_bytes, relative_dir, nome_final)
     hash_final = assinador_service.calcular_hash_bytes(final_pdf_bytes)

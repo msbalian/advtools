@@ -213,11 +213,16 @@
                   @mousedown.prevent="startDragStamp($event, stamp)"
                 >
                   <button @click.stop="removeStamp(sIdx)" class="btn-remove-stamp" title="Remover Assinatura"><i class="fas fa-times"></i></button>
-                  <div class="stamp-content">
-                    <div class="s-by">Assinado por:</div>
-                    <div class="s-name">{{ stamp.nome }}</div>
-                    <div class="s-doc">CPF: {{ stamp.cpf || 'Não inf.' }}</div>
-                  </div>
+                        <div class="stamp-content">
+                          <div class="stamp-placeholder-img">
+                            <i class="fas fa-signature"></i>
+                          </div>
+                          <div class="stamp-info">
+                            <span class="s-by">Assinado Eletronicamente</span>
+                            <span class="s-name">{{ stamp.nome }}</span>
+                            <span class="s-doc">Doc: {{ stamp.cpf || 'Não inf.' }}</span>
+                          </div>
+                        </div>
                 </div>
               </div>
             </div>
@@ -324,6 +329,10 @@ async function loadData() {
     const docRes = await fetch(`${API_BASE}/api/documentos/${documentoId}`, { headers })
     if (docRes.ok) {
       documento.value = await docRes.json()
+      // Se o doc tem cliente, carrega os contatos dele para o Quick Add
+      if (documento.value.cliente_id) {
+        loadQuickContacts(documento.value.cliente_id)
+      }
     } else {
       documento.value = { id: documentoId, nome: `Documento #${documentoId}`, status_assinatura: 'Aguardando' }
     }
@@ -400,8 +409,11 @@ function getWhatsAppLink(sig: any) {
 // === QUICK ADD CONTACTS ===
 const quickContacts = ref<any[]>([])
 
-async function loadQuickContacts() {
+async function loadQuickContacts(idDoCliente = null) {
   try {
+    // Evita duplicados e limpa lista ao recarregar
+    quickContacts.value = []
+
     // Carrega Equipe (Sempre disponível)
     const reqEquipe = await fetch(`${API_BASE}/api/usuarios`, { headers })
     if (reqEquipe.ok) {
@@ -413,25 +425,28 @@ async function loadQuickContacts() {
       })
     }
     
-    // Carrega Cliente e Partes apenas se houver clienteId
-    if (clienteId && clienteId !== 'undefined' && clienteId !== 'null') {
+    // Resolve qual ID de cliente usar (argumento ou query param)
+    const finalClientId = idDoCliente || (clienteId && clienteId !== 'undefined' && clienteId !== 'null' ? clienteId : null)
+
+    // Carrega Cliente e Partes apenas se houver um ID válido
+    if (finalClientId) {
         // Carrega Cliente
-        const reqCliente = await fetch(`${API_BASE}/api/clientes/${clienteId}`, { headers })
+        const reqCliente = await fetch(`${API_BASE}/api/clientes/${finalClientId}`, { headers })
         if (reqCliente.ok) {
-        const c = await reqCliente.json()
-        quickContacts.value.push({
-            nome: c.nome, email: c.email || '', cpf: c.documento || '', funcao: 'Parte', tipo: 'Cliente'
-        })
+          const c = await reqCliente.json()
+          quickContacts.value.push({
+              nome: c.nome, email: c.email || '', cpf: c.documento || '', funcao: 'Parte', tipo: 'Cliente'
+          })
         }
         // Carrega Partes
-        const reqPartes = await fetch(`${API_BASE}/api/clientes/${clienteId}/partes`, { headers })
+        const reqPartes = await fetch(`${API_BASE}/api/clientes/${finalClientId}/partes`, { headers })
         if (reqPartes.ok) {
-        const partes = await reqPartes.json()
-        partes.forEach((p: any) => {
-            quickContacts.value.push({
-            nome: p.nome, email: p.email || '', cpf: p.documento || '', funcao: p.papel || 'Parte', tipo: 'Parte Envolvida'
-            })
-        })
+          const partes = await reqPartes.json()
+          partes.forEach((p: any) => {
+              quickContacts.value.push({
+              nome: p.nome, email: p.email || '', cpf: p.documento || '', funcao: p.papel || 'Parte', tipo: 'Parte Envolvida'
+              })
+          })
         }
     }
   } catch(e) { 
@@ -544,10 +559,10 @@ function addStampToCurrentPage() {
     nome: sig.nome,
     cpf: sig.cpf,
     page: posPage.value,
-    x: 100, // Centralizado um pouco mais pro meio da tela (assume 600px default pdf view width)
+    x: 100, 
     y: 100,
-    w: 120, // Largura fina 
-    h: 30   // Altura mínima representativa
+    w: 110, // Um pouco menor e mais proporcional
+    h: 35   // Altura suficiente para imagem + texto
   })
 }
 
@@ -659,7 +674,6 @@ async function savePositions() {
 
 onMounted(async () => {
   await loadData()
-  loadQuickContacts()
 })
 </script>
 
@@ -1248,15 +1262,13 @@ onMounted(async () => {
 .pos-actions .btn-primary { width: auto; }
 .draggable-stamp {
   position: absolute;
-  /* Fundo sutil para parecer com o gerador final */
-  background: rgba(248, 250, 252, 0.95);
-  border: 1px solid #94a3b8;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
   cursor: grab;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(2px);
   z-index: 10;
   transition: box-shadow 0.2s, border-color 0.2s;
@@ -1265,21 +1277,40 @@ onMounted(async () => {
 }
 .draggable-stamp:active, .draggable-stamp.dragging { 
   cursor: grabbing; 
-  box-shadow: 0 8px 16px rgba(37,99,235,0.25); 
+  box-shadow: 0 10px 15px -3px rgba(37,99,235,0.3); 
   border-color: #2563eb;
 }
 .stamp-content { 
   display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+.stamp-placeholder-img {
+  width: 30px;
+  height: 100%;
+  background: #f1f5f9;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px dashed #cbd5e1;
+}
+.stamp-placeholder-img i { font-size: 0.7rem; color: #94a3b8; }
+.stamp-info {
+  display: flex;
   flex-direction: column;
   justify-content: center;
-  pointer-events: none; 
-  width: 100%; 
-  padding: 4px 6px; 
-  box-sizing: border-box; 
+  overflow: hidden;
+  pointer-events: none;
 }
-.stamp-content .s-by { font-size: 0.45rem; color: #64748b; font-style: italic; margin-bottom: 2px; }
-.stamp-content .s-name { font-size: 0.75rem; color: #1e293b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
-.stamp-content .s-doc { font-size: 0.55rem; color: #475569; white-space: nowrap; margin-top: 1px; }
+.stamp-info .s-by { font-size: 0.4rem; color: #64748b; font-style: italic; white-space: nowrap; }
+.stamp-info .s-name { font-size: 0.7rem; color: #1e293b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+.stamp-info .s-doc { font-size: 0.5rem; color: #475569; white-space: nowrap; }
 .color-red { color: #ef4444; }
 .color-blue { color: #2563eb; }
 .color-slate { color: #64748b; }

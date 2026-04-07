@@ -26,6 +26,12 @@ jobs:
           npm ci
           npm run build
 
+      - name: Build da Landing Page
+        working-directory: advtools-landing
+        run: |
+          npm ci
+          npm run build
+
       - name: Deploy da API e BD na VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -39,6 +45,13 @@ jobs:
             echo "Garantindo sincronia total com o repositório (Git Reset)..."
             git fetch origin main
             git reset --hard origin/main
+            
+            echo "Atualizando link do NGINX..."
+            sudo ln -sf /var/www/advtools/infra/nginx/advtools.conf /etc/nginx/sites-available/advtools
+            sudo ln -sf /etc/nginx/sites-available/advtools /etc/nginx/sites-enabled/advtools
+            
+            echo "Testando configuração e Recarregando NGINX..."
+            sudo nginx -t && sudo systemctl reload nginx
             
             echo "Recriando containers e compilando novidades da API..."
             docker compose -f docker-compose.prod.yml up -d --build
@@ -59,4 +72,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "advtools-web/dist/*"
           target: "/var/www/advtools/advtools-web/dist"
+          strip_components: 2
+
+      - name: Copia dist da Landing Page para a VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "advtools-landing/dist/*"
+          target: "/var/www/advtools/advtools-landing/dist"
           strip_components: 2

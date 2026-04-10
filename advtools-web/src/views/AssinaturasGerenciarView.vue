@@ -2,17 +2,29 @@
   <div class="gerenciar-assinaturas">
     <div class="page-header">
       <div class="header-left">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-          <router-link v-if="clienteId" :to="`/clientes/${clienteId}`" class="breadcrumb-link">
-            <i class="fas fa-arrow-left"></i> {{ clienteNome || 'Cliente' }}
-          </router-link>
-          <router-link v-else :to="`/modelos`" class="breadcrumb-link">
-            <i class="fas fa-arrow-left"></i> Docs do Escritório
-          </router-link>
-          <span class="breadcrumb-sep">/</span>
-          <span class="breadcrumb-current">Assinaturas</span>
-        </div>
+        <!-- Breadcrumb Hierárquico -->
+        <nav class="breadcrumb-nav">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link to="/dashboard" class="breadcrumb-link">
+                <i class="fas fa-home"></i> Home
+              </router-link>
+            </li>
+            <span class="breadcrumb-sep">/</span>
+            <li class="breadcrumb-item">
+               <router-link v-if="clienteId" :to="`/clientes/${clienteId}`" class="breadcrumb-link">
+                 <i class="fas fa-users"></i> {{ clienteNome || 'Cliente' }}
+               </router-link>
+               <router-link v-else :to="`/modelos`" class="breadcrumb-link">
+                 <i class="fas fa-folder"></i> Docs do Escritório
+               </router-link>
+            </li>
+            <span class="breadcrumb-sep">/</span>
+            <li class="breadcrumb-item active">
+              <span class="breadcrumb-current">Assinaturas</span>
+            </li>
+          </ol>
+        </nav>
         <div>
           <h2>Gerenciar Assinaturas</h2>
           <p class="subtitle" v-if="documento" style="display: flex; align-items: center; gap: 6px;">
@@ -698,24 +710,54 @@ onMounted(async () => {
   flex-direction: column;
 }
 
+.breadcrumb-nav {
+  margin-bottom: 8px;
+}
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
+  gap: 10px;
+  font-size: 0.8rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
 }
 .breadcrumb-link {
-  color: #2563eb;
+  color: #64748b;
   text-decoration: none;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: color 0.2s;
+  gap: 6px;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
-.breadcrumb-link:hover { color: #1d4ed8; }
-.breadcrumb-sep { color: #cbd5e1; }
-.breadcrumb-current { color: #64748b; font-weight: 500; }
+.breadcrumb-link:hover { 
+  color: #2563eb; 
+  background: #eff6ff;
+}
+.breadcrumb-link i {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+.breadcrumb-sep { 
+  color: #cbd5e1; 
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+.breadcrumb-current { 
+  color: #94a3b8; 
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
 
 .header-left h2 {
   margin: 0;

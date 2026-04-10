@@ -94,7 +94,8 @@ const stats = computed(() => [
     changeType: 'increase', 
     icon: Scale, 
     color: 'text-primary-600', 
-    bg: 'bg-primary-50' 
+    bg: 'bg-primary-50',
+    path: '/processos'
   },
   { 
     name: 'Assinaturas Pend.', 
@@ -103,7 +104,8 @@ const stats = computed(() => [
     changeType: 'neutral', 
     icon: PenTool, 
     color: 'text-amber-600', 
-    bg: 'bg-amber-50' 
+    bg: 'bg-amber-50',
+    path: '/arquivos'
   },
   { 
     name: 'Clientes Ativos', 
@@ -112,7 +114,8 @@ const stats = computed(() => [
     changeType: 'increase', 
     icon: Users, 
     color: 'text-emerald-600', 
-    bg: 'bg-emerald-50' 
+    bg: 'bg-emerald-50',
+    path: '/clientes'
   },
   { 
     name: 'Receita deste mês', 
@@ -121,7 +124,8 @@ const stats = computed(() => [
     changeType: 'increase', 
     icon: BadgeDollarSign, 
     color: 'text-indigo-600', 
-    bg: 'bg-indigo-50' 
+    bg: 'bg-indigo-50',
+    path: '/financeiro'
   },
 ])
 
@@ -212,13 +216,9 @@ onUnmounted(() => {
                 <p class="text-xs font-medium text-slate-500 truncate">{{ currentUser ? currentUser.email : '' }}</p>
               </div>
               <div class="py-1" role="none">
-                <a href="#" class="group flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors" role="menuitem">
-                  <User class="mr-3 h-4 w-4 text-slate-400 group-hover:text-primary-500" aria-hidden="true" />
-                  Meu Perfil
-                </a>
                 <router-link to="/configuracoes" class="group flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors" role="menuitem">
                   <Settings class="mr-3 h-4 w-4 text-slate-400 group-hover:text-primary-500" aria-hidden="true" />
-                  Configurações
+                  Configs. e perfil
                 </router-link>
               </div>
               <div class="py-1" role="none">
@@ -273,7 +273,7 @@ onUnmounted(() => {
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <div v-for="(item, index) in stats" :key="item.name" class="card p-6 animate-fade-in-up relative overflow-hidden group hover:border-primary-200 transition-colors" :style="`animation-delay: ${index * 0.1}s`">
+          <router-link v-for="(item, index) in stats" :key="item.name" :to="item.path" class="card p-6 animate-fade-in-up relative overflow-hidden group hover:border-primary-200 transition-colors cursor-pointer block" :style="`animation-delay: ${index * 0.1}s`">
             <!-- Decorative background block -->
             <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-slate-50 group-hover:bg-primary-50/50 transition-colors z-0"></div>
             
@@ -294,7 +294,7 @@ onUnmounted(() => {
               </span>
               <span class="ml-2 text-slate-400">em relação ao último mês</span>
             </div>
-          </div>
+          </router-link>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

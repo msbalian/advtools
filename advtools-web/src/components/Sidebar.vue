@@ -47,7 +47,7 @@ const navigation = [
 const navigationAdmin = computed(() => {
   if (props.usuario?.is_admin) {
     return [
-      { name: 'Gestão Global', icon: ShieldCheck, path: '/configuracoes?tab=global' }
+      { name: 'Configs. e perfil', icon: ShieldCheck, path: '/configuracoes?tab=global' }
     ]
   }
   return []
@@ -57,7 +57,10 @@ const navigationAdmin = computed(() => {
 const isRectangular = ref(false)
 const logoUrl = computed(() => {
   if (props.escritorio?.logo_path) {
-    return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${props.escritorio.logo_path}`
+    const baseUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${props.escritorio.logo_path}`
+    // Cache buster usando a data de atualização do escritorio
+    const timestamp = props.escritorio.data_atualizacao ? new Date(props.escritorio.data_atualizacao).getTime() : Date.now()
+    return `${baseUrl}?t=${timestamp}`
   }
   return null
 })
@@ -98,7 +101,9 @@ const isActive = (path) => {
 
         <!-- Branding Area -->
         <div class="p-6 border-b border-slate-100 flex flex-col items-center">
-          <img src="../assets/logo-horizontal.png" alt="ADVtools" class="h-8 object-contain" />
+          <router-link to="/dashboard" class="block">
+            <img src="../assets/logo-horizontal.png" alt="ADVtools" class="h-8 object-contain" />
+          </router-link>
         </div>
 
         <nav class="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
@@ -127,7 +132,7 @@ const isActive = (path) => {
 
         <!-- Mobile Footer Branding -->
         <div class="p-6 border-t border-slate-100">
-           <div class="flex items-center gap-3">
+           <router-link to="/dashboard" @click="emit('close')" class="flex items-center gap-3 group">
               <template v-if="escritorio?.logo_path">
                 <img :src="logoUrl" 
                      alt="Logo do Escritório" 
@@ -140,7 +145,7 @@ const isActive = (path) => {
                  </div>
                  <span class="text-slate-900 font-bold text-xs uppercase tracking-wider line-clamp-1">{{ escritorio.nome }}</span>
               </div>
-           </div>
+           </router-link>
         </div>
       </aside>
     </div>
@@ -149,7 +154,9 @@ const isActive = (path) => {
     <aside class="hidden md:flex flex-col w-72 bg-white border-r border-slate-200 shadow-[20px_0_40px_-15px_rgba(0,0,0,0,0.03)] min-h-screen z-20">
       <!-- Top Branding Area (Minimalist) -->
       <div class="px-8 pt-10 pb-6 flex flex-col items-start">
-        <img src="../assets/logo-horizontal.png" alt="ADVtools" class="h-10 object-contain hover:opacity-80 transition-opacity cursor-pointer" />
+        <router-link to="/dashboard">
+          <img src="../assets/logo-horizontal.png" alt="ADVtools" class="h-10 object-contain hover:opacity-80 transition-opacity cursor-pointer" />
+        </router-link>
       </div>
 
       <!-- Navigation Menu (Expanded) -->
@@ -184,46 +191,47 @@ const isActive = (path) => {
       <!-- Premium Office Footer (Relocated Branding) -->
       <div class="p-6 border-t border-slate-50">
         <!-- Adaptive Box Container -->
-        <div :class="[
-          'bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-100/50 shadow-sm transition-all duration-300',
-          isRectangular && escritorio?.logo_path ? 'p-2' : 'p-4 flex items-center gap-4'
-        ]">
-          
-          <!-- Case: Rectangular Logo (Full Container) -->
-          <template v-if="isRectangular && escritorio?.logo_path">
-            <div class="w-full h-20 flex items-center justify-center overflow-hidden rounded-xl bg-white p-1 border border-white hover:border-primary-100 transition-colors">
-              <img :src="logoUrl" 
-                   alt="Logo do Escritório" 
-                   class="max-h-full max-w-full object-contain" />
-            </div>
-          </template>
-
-          <!-- Case: Square Logo or Fallback (Small Icon + Text) -->
-          <template v-else>
-            <!-- Office Logo/Initial -->
-            <div v-if="escritorio?.logo_path" class="h-12 w-12 flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
-               <img :src="logoUrl" 
-                    alt="Logo do Escritório" 
-                    class="h-full w-full object-contain" />
-            </div>
-            <div v-else-if="escritorio?.nome" class="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white font-black text-xl shadow-lg ring-2 ring-white">
-              {{ escritorio.nome.charAt(0).toUpperCase() }}
-            </div>
+        <router-link to="/dashboard" class="block group">
+          <div :class="[
+            'bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-100/50 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-primary-100 group-hover:bg-white',
+            isRectangular && escritorio?.logo_path ? 'p-2' : 'p-4 flex items-center gap-4'
+          ]">
             
-            <!-- Office Name (Only for non-rectangular) -->
-            <div class="flex flex-col min-w-0">
-              <span class="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none mb-1">Escritório</span>
-              <div class="flex flex-col">
-                <span class="text-[12px] text-slate-900 font-black truncate max-w-[140px]" :title="escritorio?.nome">{{ escritorio?.nome || 'Carregando...' }}</span>
-                <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                   <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                   Painel Ativo
-                </span>
+            <!-- Case: Rectangular Logo (Full Container) -->
+            <template v-if="isRectangular && escritorio?.logo_path">
+              <div class="w-full h-20 flex items-center justify-center overflow-hidden rounded-xl bg-white p-1 border border-white group-hover:border-primary-50 transition-colors">
+                <img :src="logoUrl" 
+                     alt="Logo do Escritório" 
+                     class="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-105" />
               </div>
-            </div>
-          </template>
-
-        </div>
+            </template>
+  
+            <!-- Case: Square Logo or Fallback (Small Icon + Text) -->
+            <template v-else>
+              <!-- Office Logo/Initial -->
+              <div v-if="escritorio?.logo_path" class="h-12 w-12 flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 group-hover:shadow-md">
+                 <img :src="logoUrl" 
+                      alt="Logo do Escritório" 
+                      class="h-full w-full object-contain" />
+              </div>
+              <div v-else-if="escritorio?.nome" class="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white font-black text-xl shadow-lg ring-2 ring-white transition-transform group-hover:scale-105">
+                {{ escritorio.nome.charAt(0).toUpperCase() }}
+              </div>
+              
+              <!-- Office Name (Only for non-rectangular) -->
+              <div class="flex flex-col min-w-0">
+                <span class="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none mb-1 group-hover:text-primary-500 transition-colors">Escritório</span>
+                <div class="flex flex-col">
+                  <span class="text-[12px] text-slate-900 font-black truncate max-w-[140px] group-hover:text-primary-600 transition-colors" :title="escritorio?.nome">{{ escritorio?.nome || 'Carregando...' }}</span>
+                  <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                     <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                     Painel Ativo
+                  </span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </router-link>
       </div>
     </aside>
   </div>

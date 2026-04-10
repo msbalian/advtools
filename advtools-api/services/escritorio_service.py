@@ -45,14 +45,28 @@ async def update_meu_escritorio_service(
         escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
         storage = get_storage_provider(escritorio)
         
+        # 1. Limpeza agressiva: Deletar logos antigos para evitar lixo e conflitos (PNG vs png)
+        # No LocalStorageProvider, o base_dir é 'static/'
+        try:
+            # Re-usamos a lógica de diretório do storage para garantir consistência
+            rel_dir = f"armazenamento/escritorio_{current_user.escritorio_id}/logos"
+            abs_dir = os.path.join(getattr(storage, 'base_dir', 'static'), rel_dir)
+            
+            if os.path.exists(abs_dir):
+                import glob
+                # Busca por qualquer arquivo que comece com logo_ID. (ex: logo_1.png, logo_1.PNG, logo_1.jpg)
+                pattern = os.path.join(abs_dir, f"logo_{current_user.escritorio_id}.*")
+                for old_file in glob.glob(pattern):
+                    os.remove(old_file)
+        except Exception as e:
+            print(f"Aviso: Erro ao limpar logos antigos: {e}")
+            
         # Extrair extensão e montar o nome do arquivo baseado no ID do escritório
         ext = logo.filename.split('.')[-1].lower() if '.' in logo.filename else 'png'
         filename = f"logo_{current_user.escritorio_id}.{ext}"
         
         content = await logo.read()
-        # Salva usando o provedor de storage na subpasta isolada do escritório
-        relative_dir = f"escritorio_{current_user.escritorio_id}/logos"
-        db_path = await storage.save_file(content, relative_dir, filename)
+        db_path = await storage.save_file(content, f"escritorio_{current_user.escritorio_id}/logos", filename)
         update_data["logo_path"] = db_path
         
     escritorio_update = schemas.EscritorioUpdate(**update_data)

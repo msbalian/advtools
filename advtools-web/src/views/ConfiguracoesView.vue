@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../utils/api'
+import { vMaska } from 'maska/vue'
 import Sidebar from '../components/Sidebar.vue'
 import { Menu as MenuIcon } from 'lucide-vue-next'
 import {
@@ -242,7 +243,9 @@ const loadDadosEscritorio = async () => {
         if (!res.ok) throw new Error("Falha ao carregar escritório")
         escritorio.value = await res.json()
         if (escritorio.value.logo_path) {
-            logoPreview.value = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${escritorio.value.logo_path}`
+            const baseUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/${escritorio.value.logo_path}`
+            const timestamp = escritorio.value.data_atualizacao ? new Date(escritorio.value.data_atualizacao).getTime() : Date.now()
+            logoPreview.value = `${baseUrl}?t=${timestamp}`
         }
     } catch (e) {
         console.error(e)
@@ -554,7 +557,7 @@ const sidebarOpen = ref(false)
                         <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5">
                             <label class="block text-sm font-medium leading-6 text-slate-900 sm:pt-1.5">CNPJ / CPF do Titular</label>
                             <div class="mt-2 sm:col-span-2 sm:mt-0">
-                                <input v-model="escritorio.documento" type="text" :disabled="!isAdmin()" class="input-field max-w-md" />
+                                <input v-model="escritorio.documento" type="text" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" :disabled="!isAdmin()" class="input-field max-w-md" />
                             </div>
                         </div>
 

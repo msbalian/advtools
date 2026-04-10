@@ -23,6 +23,7 @@ class Escritorio(EscritorioBase):
     logo_path: Optional[str] = None
     gemini_api_key: Optional[str] = None
     data_criacao: datetime
+    data_atualizacao: Optional[datetime] = None
 
     class Config:
         from_attributes = True

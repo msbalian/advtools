@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
@@ -77,3 +77,31 @@ async def register_new_user(db: AsyncSession, user_in: schemas.UsuarioCreate):
         
     user = await crud.create_user(db, user_in)
     return user
+
+async def process_forgot_password(db: AsyncSession, background_tasks: BackgroundTasks, email: str):
+    import secrets
+    from datetime import datetime, timedelta, timezone
+    from services.email_service import send_password_reset_email
+    from utils.time_utils import get_now
+    
+    user = await crud.get_user_by_email(db, email=email)
+    if not user or not user.ativo:
+        # Por segurança, retornamos True mesmo se nao existir
+        return True
+        
+    token = secrets.token_urlsafe(32)
+    # Usa o timezone configurado no .env (centralizado no utilitário)
+    expires = get_now() + timedelta(minutes=15)
+    
+    await crud.set_password_reset_token(db, user.id, token, expires)
+    await send_password_reset_email(background_tasks, email, token)
+    return True
+
+async def process_reset_password(db: AsyncSession, token: str, new_password: str):
+    user = await crud.get_user_by_reset_token(db, token)
+    if not user:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado")
+        
+    nova_senha_hash = auth_utils.get_password_hash(new_password)
+    await crud.update_password_and_clear_token(db, user.id, nova_senha_hash)
+    return True

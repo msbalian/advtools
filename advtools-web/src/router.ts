@@ -117,6 +117,18 @@ const router = createRouter({
             name: 'validacao_assinatura',
             component: () => import('./views/ValidacaoView.vue'),
             meta: { requiresAuth: false, publicRoute: true }
+        },
+        {
+            path: '/forgot-password',
+            name: 'forgot_password',
+            component: () => import('./views/ForgotPasswordView.vue'),
+            meta: { requiresAuth: false, publicRoute: true }
+        },
+        {
+            path: '/reset-password',
+            name: 'reset_password',
+            component: () => import('./views/ResetPasswordView.vue'),
+            meta: { requiresAuth: false, publicRoute: true }
         }
     ]
 })

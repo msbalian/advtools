@@ -35,13 +35,16 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     DATAJUD_KEY = os.getenv("DATAJUD_KEY")
 
-    # CORS
+    # CORS e Frontend
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
     # Segurança e JWT
     SECRET_KEY = os.getenv("SECRET_KEY", "sua_chave_secreta_padrao_mude_em_producao")
     ALGORITHM = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))
+    # Prioriza APP_TIMEZONE, mas aceita o padrão TZ da VPS se existir
+    APP_TIMEZONE = os.getenv("APP_TIMEZONE", os.getenv("TZ", "America/Sao_Paulo"))
 
     # Seed Admin
     FIRST_ADMIN_NAME = os.getenv("FIRST_ADMIN_NAME", "Super Admin")
@@ -51,3 +54,13 @@ class Config:
     # Seed Escritório
     FIRST_OFFICE_NAME = os.getenv("FIRST_OFFICE_NAME", "ADVtools Advocacia")
     FIRST_OFFICE_DOC = os.getenv("FIRST_OFFICE_DOC", "00.000.000/0001-00")
+
+    # Mailing
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "contato@advtools.com.br")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+    MAIL_FROM = os.getenv("MAIL_FROM", "contato@advtools.com.br")
+    MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "ADVtools")
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "mail.advtools.com.br")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", 465))
+    MAIL_STARTTLS = os.getenv("MAIL_STARTTLS", "False").lower() in ('true', '1', 't')
+    MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS", "True").lower() in ('true', '1', 't')

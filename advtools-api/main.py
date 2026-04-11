@@ -37,8 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ADVtools API", lifespan=lifespan)
 
 # Setup CORS
-cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")
-origins = [o.strip() for o in cors_origins_str.split(",")]
+origins = [o.strip() for o in Config.CORS_ORIGINS.split(",")]
 
 # Servir arquivos da pasta static (como as logomarcas) de forma absoluta
 static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")

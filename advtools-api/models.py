@@ -32,6 +32,8 @@ class Usuario(Base):
     ativo = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     cpf = Column(String(20))
+    reset_password_token = Column(String(64), index=True, nullable=True)
+    reset_password_expires_at = Column(DateTime, nullable=True)
     data_criacao = Column(DateTime, default=func.now())
 
     escritorio = relationship("Escritorio", back_populates="usuarios")

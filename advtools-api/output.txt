@@ -1,9 +1,0 @@
-ID: 4, Email: admin@advtools.com.br
-Hash: $2b$12$AK5uLDwGF8AkXDPekBm4Tubr/e8YGVdW9YWrj4xpmhjVr9hDYH2NG
-Senha '123' eh INVALIDA para admin@advtools.com.br
-ID: 5, Email: contato@nubiacozacbalian.adv.br
-Hash: $2b$12$yUEPBFUyN1Pw2aVtbP7oau6af8lB/k8qSclUvlN3bWnpbsC3eA.oa
-Senha '123' eh INVALIDA para contato@nubiacozacbalian.adv.br
-ID: 6, Email: marciobalian@gmail.com
-Hash: $2b$12$etV9NKOgC6f5bqLUKEYr5uZRGukIubZ04/FtFv9SzgbM6dxL9PtSi
-Senha '123' eh INVALIDA para marciobalian@gmail.com

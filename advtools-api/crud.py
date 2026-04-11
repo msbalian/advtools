@@ -1047,3 +1047,43 @@ async def get_fluxo_caixa(db: AsyncSession, escritorio_id: int, mes: int, ano: i
         "saldo": total_receitas - total_despesas,
         "transacoes": transacoes
     }
+
+# ==========================
+# GESTÃO DE SENHAS (RECUPERAÇÃO)
+# ==========================
+from datetime import datetime, timezone
+from utils.time_utils import get_now
+
+async def set_password_reset_token(db: AsyncSession, usuario_id: int, token_hash: str, expires_at: datetime):
+    result = await db.execute(select(models.Usuario).filter(models.Usuario.id == usuario_id))
+    user = result.scalars().first()
+    if user:
+        user.reset_password_token = token_hash
+        user.reset_password_expires_at = expires_at
+        db.add(user)
+        await db.commit()
+    return user
+
+async def get_user_by_reset_token(db: AsyncSession, token_hash: str):
+    from sqlalchemy import and_
+    result = await db.execute(
+        select(models.Usuario).filter(
+            and_(
+                models.Usuario.reset_password_token == token_hash,
+                models.Usuario.reset_password_expires_at > get_now(),
+                models.Usuario.ativo == True
+            )
+        )
+    )
+    return result.scalars().first()
+
+async def update_password_and_clear_token(db: AsyncSession, usuario_id: int, nova_senha_hash: str):
+    result = await db.execute(select(models.Usuario).filter(models.Usuario.id == usuario_id))
+    user = result.scalars().first()
+    if user:
+        user.senha_hash = nova_senha_hash
+        user.reset_password_token = None
+        user.reset_password_expires_at = None
+        db.add(user)
+        await db.commit()
+    return user

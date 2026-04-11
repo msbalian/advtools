@@ -6,32 +6,31 @@ const router = useRouter()
 const currentYear = computed(() => new Date().getFullYear())
 
 const email = ref('')
-const password = ref('')
+const message = ref('')
 const errorMsg = ref('')
 const isLoading = ref(false)
+const isSuccess = ref(false)
 
-const handleLogin = async () => {
+const handleForgotPassword = async () => {
   isLoading.value = true
   errorMsg.value = ''
+  message.value = ''
   
   try {
-    const formData = new URLSearchParams()
-    formData.append('username', email.value)
-    formData.append('password', password.value)
-
-    const response = await fetch('/api/login', {
+    const response = await fetch('/api/forgot-password', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value })
     })
 
+    const data = await response.json()
+    
     if (!response.ok) {
-       throw new Error('E-mail ou senha incorretos.')
+       throw new Error(data.detail || 'Erro ao solicitar recuperação de senha.')
     }
 
-    const data = await response.json()
-    localStorage.setItem('advtools_token', data.access_token)
-    router.push('/dashboard')
+    isSuccess.value = true
+    message.value = data.message || 'Se o e-mail estiver cadastrado, as instruções foram enviadas.'
     
   } catch (err) {
     errorMsg.value = err.message || 'Erro de conexão com o servidor.'
@@ -44,16 +43,26 @@ const handleLogin = async () => {
 <template>
   <div class="min-h-screen flex flex-col bg-slate-50">
     <main class="flex-grow flex items-center justify-center p-4">
-      <!-- Login Card Start -->
       <div class="card w-full max-w-md p-8 sm:p-10 space-y-8 animate-fade-in-up">
         
         <!-- Logo / Branding -->
         <div class="text-center space-y-4 flex flex-col items-center">
           <img src="../assets/logo-horizontal.png" alt="ADVtools Logo" class="h-20 object-contain transform transition hover:scale-105" />
+          <h2 class="text-2xl font-bold text-slate-900">Recuperar Senha</h2>
+          <p class="text-slate-500 text-sm">Insira seu e-mail para receber um link de redefinição.</p>
+        </div>
+
+        <div v-if="isSuccess" class="space-y-6">
+          <div class="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-sm font-medium animate-fade-in-up">
+            {{ message }}
+          </div>
+          <button @click="router.push('/')" class="btn-primary w-full flex justify-center py-2.5">
+            Voltar para o Login
+          </button>
         </div>
 
         <!-- Form -->
-        <form class="space-y-6" @submit.prevent="handleLogin">
+        <form v-else class="space-y-6" @submit.prevent="handleForgotPassword">
           
           <div v-if="errorMsg" class="p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm font-medium animate-fade-in-up">
             {{ errorMsg }}
@@ -66,36 +75,18 @@ const handleLogin = async () => {
             </div>
           </div>
 
-          <div>
-            <div class="flex items-center justify-between">
-               <label for="password" class="block text-sm font-semibold leading-6 text-slate-900">Senha</label>
-               <div class="text-sm">
-                 <router-link to="/forgot-password" class="font-semibold text-primary-600 hover:text-primary-500 transition-colors">Esqueceu a senha?</router-link>
-               </div>
-            </div>
-            <div class="mt-2">
-               <input id="password" v-model="password" name="password" type="password" autocomplete="current-password" required class="input-field" placeholder="••••••••" />
-            </div>
-          </div>
-
-          <div>
+          <div class="space-y-4">
             <button type="submit" :disabled="isLoading" class="btn-primary w-full flex justify-center py-2.5 disabled:opacity-75">
-              {{ isLoading ? 'Autenticando...' : 'Entrar no Sistema' }}
+              {{ isLoading ? 'Enviando...' : 'Enviar Link de Recuperação' }}
+            </button>
+            <button type="button" @click="router.push('/')" class="text-sm font-semibold text-slate-500 hover:text-slate-700 w-full text-center transition-colors">
+              Voltar para o login
             </button>
           </div>
         </form>
-
-        <!-- Footer link -->
-        <p class="mt-10 text-center text-sm text-slate-500">
-          Ainda não tem acesso?
-          {{ ' ' }}
-          <router-link to="/register" class="font-semibold leading-6 text-primary-600 hover:text-primary-500 transition-colors">Crie uma conta para seu escritório</router-link>
-        </p>
       </div>
-      <!-- Login Card End -->
     </main>
 
-    <!-- Footer Corporate -->
     <footer class="py-6 text-center">
       <p class="text-sm text-slate-400">
         &copy; {{ currentYear }} ADVtools. Todos os direitos reservados.

@@ -1,0 +1,333 @@
+estude a api do datajud:
+https://datajud-wiki.cnj.jus.br/api-publica/endpoints
+Estou criando um sistema advtools e quero que, ao puxar os andamentos de um processo, preciso ter acesso ao conteúdo gerado em cada andamento, como por exemplo um despacho de um juiz dando prazo para um recurso. Isso é possível?
+
+Vou conferir a documentação oficial do DataJud e focar exatamente no ponto dos andamentos e do eventual texto do despacho/decisão para te responder com segurança.
+
+Achei o ponto central da documentação: a API pública expõe metadados processuais e a estrutura de movimentos, então agora vou checar se existe algum campo de texto integral de despacho/decisão ou só descrição/tipificação do andamento.
+
+Thought for 1m 53s
+
+Em regra, não pela API pública do DataJud. A documentação oficial deixa claro que a API pública expõe metadados processuais, e não o inteiro teor dos documentos processuais. A própria página da API fala em acesso a “metadados” e a informações de capas e movimentações; a Resolução CNJ nº 331/2020 e a Portaria CNJ nº 160/2020 também tratam a API pública como canal de consulta a metadados do DataJud.
+
+No recorte dos andamentos, o glossário oficial da API documenta apenas estes campos em movimentos: codigo, nome, dataHora, complementosTabelados e orgaoJulgador do movimento. O exemplo oficial de resposta repete essa estrutura: ele mostra a lista de movimentos com código, nome, data/hora e eventuais complementos tabelados, sem um campo de texto livre com o conteúdo do despacho, decisão ou certidão.
+
+Então, no seu exemplo, o DataJud público pode te dizer algo como: houve um movimento “Despacho”, “Decisão”, “Juntada”, “Intimação” etc., em determinada data, com certos complementos tabelados. Mas não há, na documentação pública atual, um campo documentado para recuperar o texto do despacho, como “intime-se a parte para apresentar recurso em 15 dias”. Essa conclusão decorre do fato de que os dados públicos permitidos pela Portaria nº 160/2020 são listados taxativamente e incluem movimentos e complementos, mas não o inteiro teor do ato.
+
+Na prática, para o Advtools, a arquitetura mais segura é esta: usar o DataJud como camada de descoberta e padronização nacional dos processos e movimentos; e, quando você precisar do conteúdo do ato, fazer uma segunda integração com a fonte originária do tribunal ou do sistema processual correspondente, quando houver acesso disponível. Em outras palavras: o DataJud serve muito bem para localizar e normalizar o andamento; para o texto do despacho, você provavelmente vai precisar buscar no PJe/Projudi/eproc/ESAJ/consulta pública/publicações do tribunal, conforme o tribunal do processo. Essa necessidade decorre justamente do escopo público atual da API, limitado a metadados.
+
+Há ainda dois cuidados importantes. Primeiro: a própria Resolução nº 331/2020 prevê que dados além do que foi definido para a API pública dependem de requerimento específico do ente público ou instituição de pesquisa interessada e de termo próprio com cláusulas de sigilo e confidencialidade; isso não equivale a uma autorização geral para um produto privado consumir inteiro teor via API pública. Segundo: o termo de uso da API pública afirma que o usuário se responsabiliza pelo uso, que a API é fornecida para fins legais, não comerciais e autorizados, e que o usuário concorda em não explorar comercialmente a API ou informações derivadas dela.
+
+Resumo objetivo: para puxar andamentos, sim; para puxar o conteúdo textual gerado em cada andamento, pela API pública do DataJud, a documentação atual não indica que isso seja possível.
+
+Posso te devolver isso já convertido em um desenho técnico do Advtools, com fluxo DataJud -> detectar movimento relevante -> resolver fonte originária -> extrair texto/publicação, inclusive sugerindo estrutura de banco e estratégia por tribunal.
+
+faça, por favor
+
+Vou montar o desenho técnico do fluxo do Advtools e confirmar na documentação oficial quais endpoints e campos você consegue usar para identificar o processo e os movimentos com segurança.
+
+Já fechei o ponto técnico principal: dá para usar o DataJud como camada nacional de descoberta e sincronização dos andamentos, mas o texto do ato terá de vir de uma segunda fonte. Vou te entregar um desenho de arquitetura que já considera isso e evita erro de prazo por falta de inteiro teor.
+
+Thought for 1m 10s
+
+Perfeito. Para o Advtools, eu desenharia assim:
+
+Premissa técnica confirmada
+
+A API pública do DataJud é uma API de metadados processuais. Ela expõe capas processuais e a lista de movimentos, com campos como numeroProcesso, classe, sistema, órgão julgador e, nos movimentos, codigo, nome, dataHora, complementosTabelados e movimentos.orgaoJulgador. A própria Portaria CNJ nº 160/2020 lista os dados públicos da API nesses termos, e não inclui inteiro teor de despacho, decisão ou sentença. Além disso, a API pública não retorna processos em segredo de justiça.
+
+Ou seja: o DataJud serve muito bem para localizar, sincronizar e classificar andamentos, mas não para recuperar, pela API pública, o texto integral do ato judicial. Para exibir algo como “o juiz concedeu prazo de 15 dias para apelação”, o seu sistema precisa de uma segunda camada de resolução de conteúdo, ligada à fonte originária do tribunal ou ao documento efetivamente juntado/publicado.
+
+Arquitetura recomendada
+1. Camada DataJud: descoberta nacional
+
+Essa camada faz o papel de “busca unificada nacional”.
+
+Entrada:
+
+número CNJ do processo
+tribunal, quando conhecido
+opcionalmente classe, órgão julgador e grau
+
+Operação:
+
+usa o endpoint do alias do tribunal, por exemplo api_publica_tjgo/_search, api_publica_tjsp/_search, api_publica_trf1/_search
+autentica com Authorization: APIKey ...
+consulta via POST .../_search, no formato de Query DSL mostrado nos exemplos oficiais do CNJ
+
+Saída normalizada:
+
+processo
+última atualização
+lista de movimentos
+sistema de origem (PJe, etc.)
+órgão julgador atual
+nível de sigilo
+2. Camada de normalização
+
+Crie um modelo interno próprio, sem depender do formato bruto do CNJ:
+
+Processo
+  id
+  numero_cnj
+  tribunal
+  grau
+  classe_codigo
+  classe_nome
+  sistema_origem
+  orgao_julgador_atual
+  nivel_sigilo
+  data_ajuizamento
+  data_ultima_atualizacao_datajud
+
+Movimento
+  id
+  processo_id
+  codigo_tpu
+  nome
+  data_hora
+  orgao_julgador_movimento
+  complementos_json
+  hash_integridade
+  origem = "datajud"
+
+ConteudoMovimento
+  id
+  movimento_id
+  status = "nao_encontrado|pendente|extraido|erro"
+  fonte = "tribunal|diario|upload|manual"
+  url_origem
+  texto_bruto
+  texto_limpo
+  confianca_vinculacao
+
+A chave aqui é separar:
+
+movimento = o evento que o DataJud informa
+conteúdo do movimento = o texto do documento/ato, buscado em outra fonte
+3. Camada “resolver de conteúdo”
+
+Essa é a peça principal do Advtools.
+
+Ela entra em ação quando o movimento for juridicamente relevante, por exemplo:
+
+despacho
+decisão
+sentença
+acórdão
+intimação
+publicação
+juntada de documento relevante
+trânsito em julgado
+expedição de prazo, vista, conclusão
+
+Fluxo:
+
+o DataJud entrega um movimento
+o classificador marca esse movimento como “precisa de conteúdo”
+o resolver olha o tribunal + sistema_origem
+escolhe um adaptador de origem
+tenta localizar o documento/texto correspondente
+extrai, limpa, indexa e vincula ao movimento
+
+Essa segunda busca é necessária justamente porque o DataJud público só entrega os metadados do movimento, não o teor do ato.
+
+Adaptadores por tribunal
+
+Eu estruturaria assim:
+
+SourceAdapter
+  supports(tribunal, sistema)
+  fetch_documents(processo)
+  fetch_publications(processo)
+  fetch_movement_content(processo, movimento)
+
+Implementações possíveis:
+
+PJePublicAdapter
+ProjudiAdapter
+eprocAdapter
+ESAJAdapter
+DiarioJusticaAdapter
+ManualUploadAdapter
+
+Importante: nem todo tribunal vai oferecer a mesma profundidade de consulta pública. Então o sistema deve aceitar níveis diferentes de qualidade:
+
+Nível 1: só DataJud, sem teor
+Nível 2: DataJud + publicação/andamento textual do portal do tribunal
+Nível 3: DataJud + documento PDF/HTML do ato
+Nível 4: DataJud + documento + parser de prazo + resumo jurídico
+Fluxo ideal do produto
+Fluxo 1: sincronização do processo
+usuário cadastra o processo
+Advtools identifica o tribunal
+consulta o alias correto no DataJud
+salva snapshot do processo
+salva todos os movimentos
+detecta movimentos novos comparando com snapshot anterior
+
+Os endpoints da API pública são por tribunal/alias, e os exemplos oficiais mostram o uso do POST .../_search com Query DSL.
+
+Fluxo 2: enriquecimento do andamento
+
+Quando entra um novo movimento:
+
+classifica o tipo
+define prioridade
+se movimento for irrelevante, apenas registra
+se for relevante, manda para a fila resolve_content
+o adaptador tenta achar o texto/documento correspondente
+o parser extrai o conteúdo
+o sistema gera:
+resumo
+comando detectado
+prazo possível
+risco
+pendência para conferência humana
+Fluxo 3: cálculo de prazo
+
+Nunca calcule prazo apenas com movimentos.nome = "Despacho".
+
+Correto:
+
+primeiro obter o texto ou publicação vinculada
+depois extrair expressões como:
+“intime-se para manifestação em 15 dias”
+“prazo de 5 dias”
+“apresente contrarrazões”
+“emende a inicial”
+só então criar PrazoProcessual
+
+Sem o inteiro teor, você até detecta que houve um despacho, mas não sabe com segurança qual providência foi determinada. Isso é exatamente o risco do uso isolado do DataJud.
+
+Estratégia prática de vinculação do conteúdo ao movimento
+
+Como o DataJud não entrega um document_id público do ato, a vinculação deve ser probabilística e auditável.
+
+Use estes critérios:
+
+proximidade temporal entre movimentos.dataHora e data da publicação/documento
+compatibilidade semântica do tipo do ato:
+movimento “Despacho” ↔ documento contendo despacho
+movimento “Decisão” ↔ decisão interlocutória
+órgão julgador compatível
+texto do portal menciona o mesmo número CNJ
+janela temporal de tolerância, por exemplo 48h
+
+Guarde um campo confianca_vinculacao:
+
+alta
+média
+baixa
+
+Se a confiança for baixa, o sistema exibe:
+“conteúdo sugerido para conferência”
+
+Banco de dados sugerido
+
+Eu criaria pelo menos estas tabelas:
+
+processes
+process_snapshots
+movements
+movement_contents
+publications
+documents
+deadlines
+source_adapters
+sync_jobs
+audit_logs
+
+E dois índices essenciais:
+
+movements(processo_id, data_hora desc)
+movement_contents(movimento_id, status)
+Exemplo de serviço interno
+Serviço 1: consulta ao DataJud
+
+A documentação oficial mostra que a autenticação é por API key pública no header Authorization e que a busca é feita via POST em endpoint _search. A wiki também informa que a chave pública pode ser alterada pelo CNJ a qualquer momento, então você deve tratá-la como configuração versionável.
+
+Exemplo de payload inicial:
+
+{
+  "query": {
+    "match": {
+      "numeroProcesso": "12345678901234567890"
+    }
+  }
+}
+Serviço 2: paginação
+
+Se você buscar em lote, use size e search_after, como a própria wiki recomenda para grandes volumes. O padrão do Elasticsearch é retornar até 10 registros por solicitação, e a documentação do DataJud mostra o uso de search_after com ordenação por @timestamp para paginação eficiente.
+
+Regra de negócio que eu colocaria no Advtools
+
+Cada andamento teria um dos seguintes estados:
+
+somente_metadado
+conteudo_localizado
+conteudo_extraido
+prazo_identificado
+aguardando_conferencia
+nao_localizado
+
+E a UI mostraria algo assim:
+
+Despacho — 02/04/2026 14:32
+Fonte do andamento: DataJud
+Conteúdo do ato: não localizado ainda
+Status: andamento identificado, sem inteiro teor
+Ação recomendada: consultar fonte originária
+
+ou
+
+Despacho — 02/04/2026 14:32
+Fonte do andamento: DataJud + portal do tribunal
+Conteúdo localizado: sim
+Resumo: juiz intimou a parte autora para emendar a inicial em 15 dias
+Prazo sugerido: 15 dias úteis
+Conferência humana: recomendada
+
+O melhor desenho para o seu caso
+
+Para um produto jurídico, eu faria o Advtools em duas trilhas, não em uma só:
+
+Trilha A — cobertura nacional
+
+Usa DataJud para:
+
+localizar processo
+sincronizar andamentos
+padronizar estrutura entre tribunais
+detectar novidades
+Trilha B — profundidade jurídica
+
+Usa adaptadores do tribunal para:
+
+obter texto do ato
+obter publicação
+obter documento
+extrair comando judicial
+calcular prazo
+
+Esse desenho resolve o problema real:
+
+o DataJud te dá abrangência
+a fonte originária te dá conteúdo
+o parser jurídico te dá ação prática
+Minha recomendação objetiva
+
+Se o seu objetivo é mostrar ao advogado algo como:
+
+“houve despacho e o juiz abriu prazo para recurso/manifestações”
+
+então o caminho correto é:
+
+DataJud para descobrir o movimento
+→ adaptador do tribunal para buscar o teor/publicação
+→ parser jurídico para extrair a ordem e o prazo
+→ fila de conferência humana para segurança
+
+Sem essa segunda camada, o sistema até identifica que houve um despacho, mas não consegue afirmar com segurança o conteúdo da ordem judicial. Isso decorre diretamente do escopo público atual da API, que expõe metadados e movimentos, não o inteiro teor do ato.
+
+No próximo passo, te entrego isso já em formato de arquitetura FastAPI + PostgreSQL, com modelos, filas, serviços e endpoints do Advtools prontos para implementar.

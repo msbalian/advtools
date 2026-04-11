@@ -19,7 +19,7 @@ conf = ConnectionConfig(
     MAIL_SSL_TLS=Config.MAIL_SSL_TLS,
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True,
-    TEMPLATE_FOLDER=Path(BASE_DIR, 'static', 'templates')
+    TEMPLATE_FOLDER=Path(BASE_DIR, 'templates')
 )
 
 fm = FastMail(conf)

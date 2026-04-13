@@ -103,7 +103,9 @@ async def organizar_pasta_task(job_id: str, db_factory, current_user_id: int, es
 
             escritorio = await crud.get_escritorio(db, escritorio_id)
             # Prioriza a chave do banco. Se não houver, avisa o usuário.
-            api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
+            # Prioriza a chave do banco. Se não houver, usa Config para fallback sanitizado.
+            api_key = Config.get_gemini_api_key(escritorio.gemini_api_key if escritorio else None)
+
             
             if not api_key:
                 job_manager.update_job(job_id, status="failed", 

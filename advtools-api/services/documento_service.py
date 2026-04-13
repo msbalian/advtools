@@ -348,8 +348,9 @@ async def gerar_documento_service(db: AsyncSession, current_user: models.Usuario
     # --- LÓGICA DE IA (REDAÇÃO INTEGRAL) ---
     if request.usar_ia:
         escritorio = await crud.get_escritorio(db, current_user.escritorio_id)
-        # Usa a chave do escritório ou a global do .env como fallback
-        api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
+        # Prioriza a chave do banco. Se não houver, usa Config para fallback sanitizado.
+        api_key = Config.get_gemini_api_key(escritorio.gemini_api_key if escritorio else None)
+
         
         if api_key:
             # Extrair o TEXTO REAL do modelo para a IA entender o contexto

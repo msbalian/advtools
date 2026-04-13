@@ -68,3 +68,27 @@ class Config:
     MAIL_PORT = int(os.getenv("MAIL_PORT", 465))
     MAIL_STARTTLS = os.getenv("MAIL_STARTTLS", "False").lower() in ('true', '1', 't')
     MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS", "True").lower() in ('true', '1', 't')
+
+    @staticmethod
+    def get_gemini_api_key(db_key: str = None) -> str:
+        """
+        Retorna a chave do Gemini priorizando a do banco de dados (Escritório).
+        Faz o fallback para o .env apenas se a chave do banco for nula/vazia
+        e se a chave do .env for 'válida' (não for um placeholder).
+        """
+        # 1. Prioridade absoluta: Banco de Dados
+        if db_key and db_key.strip():
+            return db_key.strip()
+            
+        # 2. Fallback: Arquivo de ambiente (.env)
+        env_key = (os.getenv("GEMINI_API_KEY") or "").strip()
+        
+        # 3. Sanitização contra placeholders e chaves inválidas
+        placeholders = ["sua_chave", "your_key", "aqui", "insert_key", "api_key_gemini"]
+        is_placeholder = any(p in env_key.lower() for p in placeholders)
+        
+        if env_key and not is_placeholder and len(env_key) > 20: 
+            return env_key
+            
+        return None
+

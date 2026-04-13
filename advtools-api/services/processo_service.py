@@ -253,7 +253,9 @@ async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escri
 
     # Buscar chave Gemini (banco > .env)
     escritorio = await crud.get_escritorio(db, escritorio_id)
-    api_key = (escritorio.gemini_api_key if escritorio else None) or Config.GEMINI_API_KEY
+    # Prioriza a chave do banco. Se não houver, usa Config para fallback sanitizado.
+    api_key = Config.get_gemini_api_key(escritorio.gemini_api_key if escritorio else None)
+
     if not api_key:
         raise HTTPException(status_code=400, detail="Chave do Gemini não configurada. Configure nas Configurações do Escritório.")
 

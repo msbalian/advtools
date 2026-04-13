@@ -166,8 +166,14 @@ const handleAnaliseIa = async () => {
             method: 'POST'
         })
         if (res.ok) {
-            analiseIaResult.value = await res.json()
-            showMessage("Análise IA concluída com sucesso!", "success")
+            const data = await res.json()
+            if (data.erro) {
+                analiseIaResult.value = data
+                showMessage(data.erro, "error")
+            } else {
+                analiseIaResult.value = data
+                showMessage("Análise IA concluída com sucesso!", "success")
+            }
         } else {
             const err = await res.json()
             showMessage(err.detail || "Erro na análise.", "error")
@@ -649,13 +655,23 @@ const tabs = [
 
                  <!-- Resultados -->
                  <div v-if="analiseIaResult && !isAnalyzingIa" class="space-y-6">
-                     <!-- Card Resumo -->
-                      <div class="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm">
-                          <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo Processual</h4>
-                          <p v-if="analiseIaResult.resumoHistoria" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.resumoHistoria }}</p>
-                          <p v-else-if="analiseIaResult.textoRaw" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.textoRaw }}</p>
-                          <p v-else class="text-slate-400 text-sm italic">O resumo não pôde ser estruturado para este processo.</p>
-                      </div>
+                     <!-- Mensagem de Erro da IA -->
+                     <div v-if="analiseIaResult.erro" class="p-6 bg-red-50 border border-red-200 rounded-[30px] flex items-center gap-4 text-red-700">
+                         <ShieldAlert class="w-8 h-8 flex-shrink-0" />
+                         <div>
+                             <h4 class="font-black uppercase text-xs tracking-widest mb-1">Falha na Inteligência Artificial</h4>
+                             <p class="text-sm font-medium">{{ analiseIaResult.erro }}</p>
+                             <p class="text-[10px] mt-2 opacity-70">Verifique sua Chave do Gemini nas configurações do escritório ou no arquivo de ambiente.</p>
+                         </div>
+                     </div>
+
+                     <!-- Card Resumo (Somente se não houver erro crítico) -->
+                     <div v-if="!analiseIaResult.erro || analiseIaResult.resumoHistoria" class="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm">
+                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo Processual</h4>
+                         <p v-if="analiseIaResult.resumoHistoria" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.resumoHistoria }}</p>
+                         <p v-else-if="analiseIaResult.textoRaw" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.textoRaw }}</p>
+                         <p v-else class="text-slate-400 text-sm italic">O resumo não pôde ser estruturado para este processo.</p>
+                     </div>
 
                      <!-- Alertas Grid -->
                      <div v-if="analiseIaResult.alertas?.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">

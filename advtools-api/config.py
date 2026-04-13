@@ -71,24 +71,21 @@ class Config:
 
     @staticmethod
     def get_gemini_api_key(db_key: str = None) -> str:
-        """
-        Retorna a chave do Gemini priorizando a do banco de dados (Escritório).
-        Faz o fallback para o .env apenas se a chave do banco for nula/vazia
-        e se a chave do .env for 'válida' (não for um placeholder).
-        """
-        # 1. Prioridade absoluta: Banco de Dados
-        if db_key and db_key.strip():
-            return db_key.strip()
+        # Prioridade 1: Banco de Dados
+        if db_key and db_key.strip() and len(db_key.strip()) > 10:
+            key = db_key.strip()
+            print(f" >>> [IA] Usando chave do BANCO (Escritório). Final: ...{key[-4:]}")
+            return key
             
-        # 2. Fallback: Arquivo de ambiente (.env)
+        # Prioridade 2: Fallback .env
         env_key = (os.getenv("GEMINI_API_KEY") or "").strip()
-        
-        # 3. Sanitização contra placeholders e chaves inválidas
-        placeholders = ["sua_chave", "your_key", "aqui", "insert_key", "api_key_gemini"]
-        is_placeholder = any(p in env_key.lower() for p in placeholders)
-        
-        if env_key and not is_placeholder and len(env_key) > 20: 
-            return env_key
+        if env_key and len(env_key) > 10:
+            # Filtro básico de placeholder
+            if "sua_chave" not in env_key.lower():
+                print(f" >>> [IA] Usando chave do .ENV. Final: ...{env_key[-4:]}")
+                return env_key
             
+        print(" >>> [IA] Nenhuma chave de API válida encontrada.")
         return None
+
 

@@ -387,7 +387,8 @@ def analisar_processo_com_ia(
         cab = mni_data.get("cabecalho", {})
         # Ordenar por data decrescente (mais recentes primeiro)
         movs = sorted(mni_data["movimentacoes"], key=lambda m: m.get("dataISO") or "", reverse=True)
-        for mov in movs[:100]:
+        # Reduzido para 30 para economizar tokens e focar no presente
+        for mov in movs[:30]:
             entry = f"[{mov['data']}] {mov.get('descricao', '')}"
             if mov.get("complemento"):
                 entry += f" - {mov['complemento']}"
@@ -410,7 +411,8 @@ def analisar_processo_com_ia(
         # Fallback: usa movimentações do banco
         # Ordenar por data decrescente
         movs = sorted(movimentacoes_db, key=lambda m: m.data_hora.replace(tzinfo=None) if m.data_hora else datetime.min, reverse=True)
-        for mov in movs[:100]:
+        # Reduzido para 30 para economizar tokens e focar no presente
+        for mov in movs[:30]:
             dt = mov.data_hora.strftime("%d/%m/%Y %H:%M") if mov.data_hora else ""
             entry = f"[{dt}] {mov.nome_movimento}"
             if mov.complementos_json:
@@ -433,97 +435,93 @@ def analisar_processo_com_ia(
     movs_text = "\n".join(movs_text_lines)
 
     prompt = f"""Voce e um assistente juridico especializado em Direito Processual Civil brasileiro.
+Analise as MOVIMENTACOES RECENTES de um processo judicial e identifique EXCLUSIVAMENTE:
 
-Analise os dados abaixo de um processo judicial real e extraia:
-1. Status atual do processo (em que fase esta, qual a ultima decisao relevante)
-2. Acoes pendentes do advogado - O que precisa ser feito? Quais prazos estao correndo?
-3. Prazos calculados com base no CPC e nas datas das intimacoes (dias uteis)
-4. Alertas de urgencia - Prazos proximos de vencer ou ja vencidos
-5. Resumo da historia processual - Narrativa breve
+1.acoes pendentes do advogado (prazo correndo, intimacao recebida, despacho a cumprir).
+2.Prazos calculados - Se houver uma intimacao recente, calcule o prazo final em dias uteis.
+3.Status atual resumido.
 
 ## DADOS DO PROCESSO
-
 **Numero:** {numero}
-**Orgao Julgador:** {orgao}
-**Status:** {status}
-**Fase:** {fase}
-**Area:** {area}
-**Valor da Causa:** R$ {valor:,.2f}
-
-**Partes:**
+**Orgao:** {orgao}
+**Valor:** R$ {valor:,.2f}
 {partes_text}
 
-## MOVIMENTACOES (da mais recente para a mais antiga)
-
+## MOVIMENTACOES RECENTES
 {movs_text}
 
-## INSTRUCOES DE FORMATO
+## REGRAS DE ANALISE
+- FOCO TOTAL no que o advogado precisa fazer AGORA ou nos proximos dias.
+- Ignore movimentacoes antigas que ja tiveram seus prazos resolvidos.
+- Se nao houver acao pendente, informe no statusAtual que o processo aguarda proximo andamento.
+- Considere HOJE como {datetime.now().strftime('%d/%m/%Y')}.
 
-Responda em formato JSON com a seguinte estrutura:
-```json
+Responda em JSON:
 {{
-  "statusAtual": "descricao do status atual do processo",
-  "resumoHistoria": "narrativa breve da historia processual",
-  "tarefasPendentes": [
-    {{
-      "acao": "O que deve ser feito",
-      "responsavel": "Quem deve fazer",
-      "prazoDataFim": "Data estimada de fim do prazo (DD/MM/YYYY) ou null",
-      "prazoDiasUteis": numero_de_dias_uteis_ou_null,
-      "urgencia": "CRITICA|ALTA|MEDIA|BAIXA|INFORMATIVA",
-      "observacao": "qualquer observacao relevante"
-    }}
-  ],
-  "alertas": [
-    {{
-      "tipo": "PRAZO_VENCENDO|PRAZO_VENCIDO|DECISAO_IMPORTANTE|INTIMACAO_PENDENTE",
-      "mensagem": "descricao do alerta",
-      "urgencia": "CRITICA|ALTA|MEDIA|BAIXA"
-    }}
-  ],
-  "proximosPassos": [
-    "Passo 1...",
-    "Passo 2..."
-  ]
+  "statusAtual": "...",
+  "resumoHistoria": "breve contexto do momento atual",
+  "tarefasPendentes": [{{"acao": "...", "prazoDataFim": "DD/MM/YYYY", "prazoDiasUteis": 15, "urgencia": "ALTA", "observacao": "..."}}],
+  "alertas": [{{"tipo": "PRAZO_VENCENDO", "mensagem": "...", "urgencia": "CRITICA"}}],
+  "proximosPassos": ["..."]
 }}
-```
-
-IMPORTANTE:
-- Considere a data de HOJE como {datetime.now().strftime('%d/%m/%Y')}
-- Prazos processuais contam em DIAS UTEIS (exceto sabados, domingos e feriados)
-- Se o processo esta arquivado, considere se ha tarefas remanescentes
-- Foque nas acoes que dependem do advogado
 """
+
 
     # Chamar Gemini REST API
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    headers = {'Content-Type': 'application/json'}
 
-    for modelo in GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/{modelo}:generateContent?key={api_key}"
-        try:
-            resp = requests.post(url, json=payload, timeout=60)
-            if resp.status_code == 200:
-                res_data = resp.json()
-                candidates = res_data.get("candidates", [])
-                if candidates:
-                    texto = candidates[0]["content"]["parts"][0]["text"].strip()
-                    # Extrair JSON
-                    clean = texto.replace("```json", "").replace("```", "").strip()
-                    json_start = clean.find("{")
-                    json_end = clean.rfind("}") + 1
-                    if json_start >= 0 and json_end > json_start:
-                        try:
-                            return json.loads(clean[json_start:json_end])
-                        except json.JSONDecodeError:
+    # Redundância máxima: Tenta vários modelos e versões da API Google
+    # Especialmente úteis: gemini-2.5-flash (ultra novo), gemini-2.0-flash, gemini-1.5-flash (estável)
+    MODELOS_TENTAR = [
+        "models/gemini-2.5-flash",
+        "models/gemini-2.0-flash",
+        "models/gemini-1.5-flash",
+        "models/gemini-1.5-pro",
+        "models/gemini-2.0-flash-lite",
+    ]
+    API_VERSIONS = ["v1", "v1beta"]
+
+    ultimo_erro = "Nenhum modelo respondeu"
+    
+    for modelo in MODELOS_TENTAR:
+        for version in API_VERSIONS:
+            url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
+            try:
+                resp = requests.post(url, json=payload, headers=headers, timeout=60)
+                
+                if resp.status_code == 200:
+                    res_data = resp.json()
+                    candidates = res_data.get("candidates", [])
+                    if candidates:
+                        texto = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                        if texto:
+                            # Extrair JSON (o modelo pode mandar texto em volta)
+                            clean = texto.replace("```json", "").replace("```", "").strip()
+                            json_start = clean.find("{")
+                            json_end = clean.rfind("}") + 1
+                            if json_start >= 0 and json_end > json_start:
+                                try:
+                                    return json.loads(clean[json_start:json_end])
+                                except json.JSONDecodeError:
+                                    return {"textoRaw": texto}
                             return {"textoRaw": texto}
-                    return {"textoRaw": texto}
+                
+                # Capturar erro para o usuário se todos falharem
+                if resp.status_code != 404:
+                    try:
+                        err_msg = resp.json().get("error", {}).get("message", "")
+                    except:
+                        err_msg = resp.text[:100]
+                    ultimo_erro = f"({resp.status_code}) {err_msg}"
+                    logger.warning(f"IA Gemini Erro ({modelo}): {ultimo_erro}")
 
-            if resp.status_code != 404:
-                err = resp.json().get("error", {}).get("message", "")
-                logger.warning(f"Gemini {modelo}: {resp.status_code} - {err[:150]}")
+            except Exception as e:
+                logger.warning(f"IA Gemini Erro de Conexão ({modelo}): {str(e)}")
+                ultimo_erro = f"Erro de conexão: {str(e)}"
+                continue
 
-        except Exception as e:
-            logger.warning(f"Gemini {modelo}: {e}")
-            continue
+    return {"erro": f"Nenhum modelo Gemini respondeu. Detalhe: {ultimo_erro}. Verifique sua chave de API nas configurações do escritório ou no arquivo .env."}
 
-    return {"erro": "Nenhum modelo Gemini respondeu. Verifique sua chave de API."}
+
+

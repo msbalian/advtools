@@ -6,6 +6,7 @@ via SOAP, e opcionalmente analisa com Gemini AI.
 import json
 import logging
 import requests
+import re
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -471,14 +472,11 @@ Responda em JSON:
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {'Content-Type': 'application/json'}
 
-    # Redundância máxima: Tenta vários modelos e versões da API Google
-    # Especialmente úteis: gemini-2.5-flash (ultra novo), gemini-2.0-flash, gemini-1.5-flash (estável)
+    # Redundância máxima: Prioriza o mais estável e rápido (1.5-flash)
     MODELOS_TENTAR = [
-        "models/gemini-2.5-flash",
-        "models/gemini-2.0-flash",
         "models/gemini-1.5-flash",
-        "models/gemini-1.5-pro",
-        "models/gemini-2.0-flash-lite",
+        "models/gemini-2.5-flash", 
+        "models/gemini-2.0-flash",
     ]
     API_VERSIONS = ["v1", "v1beta"]
 
@@ -488,7 +486,8 @@ Responda em JSON:
         for version in API_VERSIONS:
             url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
             try:
-                resp = requests.post(url, json=payload, headers=headers, timeout=60)
+                # Timeout otimizado
+                resp = requests.post(url, json=payload, headers=headers, timeout=15)
                 
                 if resp.status_code == 200:
                     res_data = resp.json()
@@ -496,7 +495,7 @@ Responda em JSON:
                     if candidates:
                         texto = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
                         if texto:
-                            # Extrair JSON (o modelo pode mandar texto em volta)
+                            # Extrair JSON
                             clean = texto.replace("```json", "").replace("```", "").strip()
                             json_start = clean.find("{")
                             json_end = clean.rfind("}") + 1
@@ -507,19 +506,43 @@ Responda em JSON:
                                     return {"textoRaw": texto}
                             return {"textoRaw": texto}
                 
-                # Capturar erro para o usuário se todos falharem
+                # ERRO DE COTA (429) - O mais importante para o usuário final
+                if resp.status_code == 429:
+                    err_json = resp.json()
+                    msg_original = str(err_json)
+                    
+                    # Tenta extrair o tempo de espera (ex: retry in 49.9s)
+                    match = re.search(r'retry in (\d+\.?\d*)s', msg_original)
+                    tempo_msg = ""
+                    if match:
+                        segundos = float(match.group(1))
+                        tempo_msg = f" Próxima liberação em aproximadamente {int(segundos)} segundos."
+                    
+                    # Para o loop imediatamente (se a cota da chave acabou, acabou para todos os modelos)
+                    return {
+                        "erro": f"⚖️ Inteligência em Pausa: O limite de uso gratuito do Gemini foi atingido hoje.{tempo_msg} Por favor, tente novamente em breve ou utilize uma chave Pro."
+                    }
+
+                # Se for erro de autenticação (403)
+                if resp.status_code == 403:
+                    return {"erro": "Acesso Negado (403): Verifique se sua chave de API do Gemini no Escritório está correta e ativa."}
+
+                # Outros erros (404, etc)
                 if resp.status_code != 404:
                     try:
                         err_msg = resp.json().get("error", {}).get("message", "")
                     except:
                         err_msg = resp.text[:100]
                     ultimo_erro = f"({resp.status_code}) {err_msg}"
-                    logger.warning(f"IA Gemini Erro ({modelo}): {ultimo_erro}")
 
+            except requests.exceptions.Timeout:
+                ultimo_erro = "Timeout (O servidor do Google demorou a responder)"
+                continue
             except Exception as e:
-                logger.warning(f"IA Gemini Erro de Conexão ({modelo}): {str(e)}")
                 ultimo_erro = f"Erro de conexão: {str(e)}"
                 continue
+
+
 
     return {"erro": f"Nenhum modelo Gemini respondeu. Detalhe: {ultimo_erro}. Verifique sua chave de API nas configurações do escritório ou no arquivo .env."}
 

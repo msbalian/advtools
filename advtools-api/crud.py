@@ -685,6 +685,16 @@ async def get_processos_by_cliente(db: AsyncSession, cliente_id: int, escritorio
     )
     return result.scalars().all()
 
+async def get_processo_by_numero(db: AsyncSession, numero_processo: str, escritorio_id: int):
+    result = await db.execute(
+        select(models.Processo)
+        .filter(
+            models.Processo.numero_processo == numero_processo,
+            models.Processo.escritorio_id == escritorio_id
+        )
+    )
+    return result.scalars().first()
+
 async def get_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
     result = await db.execute(
         select(models.Processo)

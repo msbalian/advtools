@@ -277,6 +277,10 @@ class Processo(Base):
     area_direito = Column(String(100))
     fase_processual = Column(String(100))
     polo = Column(String(50), default='Autor') # Polo que o escritório representa
+    
+    # Persistência de Análise IA
+    analise_ia = Column(Text) # JSON com a última análise gerada
+    data_analise_ia = Column(DateTime) # Data em que a análise foi gerada
 
     data_criacao = Column(DateTime, default=func.now())
     data_atualizacao = Column(DateTime, default=func.now(), onupdate=func.now())

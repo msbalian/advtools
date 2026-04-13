@@ -1,0 +1,9 @@
+PARAMETROS:
+- idConsultante
+- senhaConsultante
+- numeroProcesso
+- dataReferencia
+- movimentos
+- incluirCabecalho
+- incluirDocumentos
+- documento

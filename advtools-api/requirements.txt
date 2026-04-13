@@ -81,6 +81,7 @@ watchfiles==1.1.1
 websockets==16.0
 zope.event==6.1
 zope.interface==8.2
+zeep==4.3.1
 openpyxl==3.1.5
 tzdata==2026.1
 

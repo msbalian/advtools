@@ -4,6 +4,7 @@ from datetime import datetime
 import schemas
 import models
 import crud
+import json
 from services.datajud_service import (
     consultar_processo_datajud,
     mapear_dados_datajud_para_processo,
@@ -49,6 +50,14 @@ async def buscar_e_criar_datajud_service(db: AsyncSession, request: schemas.Data
     
     # Mapeia para o nosso modelo
     dados_processo = mapear_dados_datajud_para_processo(proc_data, tribunal)
+    numero_norm = dados_processo["numero_processo"]
+    
+    # Verifica duplicidade
+    existente = await crud.get_processo_by_numero(db, numero_norm, escritorio_id)
+    if existente:
+        # Se existe, apenas atualiza
+        return await atualizar_processo_datajud_service(db, existente.id, escritorio_id, usuario_id)
+
     dados_processo["cliente_id"] = request.cliente_id
     dados_processo["advogado_responsavel_id"] = usuario_id
     
@@ -133,12 +142,20 @@ from services.mni_service import (
 
 async def buscar_e_criar_mni_service(db: AsyncSession, request: schemas.MNIBuscaRequest, escritorio_id: int, usuario_id: int):
     """Importa processo do PROJUDI via MNI/SOAP."""
-    resultado = consultar_processo_mni(request.numero_cnj)
+    resultado = consultar_processo_mni(request.numero_processo)
     if not resultado.get("sucesso"):
         raise HTTPException(status_code=400, detail=resultado.get("erro", "Erro na consulta MNI."))
 
     # Mapear para nosso modelo
     dados_processo = mapear_dados_mni_para_processo(resultado)
+    numero_norm = dados_processo["numero_processo"]
+
+    # Verifica duplicidade
+    existente = await crud.get_processo_by_numero(db, numero_norm, escritorio_id)
+    if existente:
+        # Se existe, apenas atualiza
+        return await atualizar_processo_mni_service(db, existente.id, escritorio_id, usuario_id)
+
     dados_processo["cliente_id"] = request.cliente_id
     dados_processo["advogado_responsavel_id"] = usuario_id
 
@@ -249,5 +266,13 @@ async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escri
 
     # Chamar análise
     analise = analisar_processo_com_ia(mni_data, processo.movimentacoes, api_key)
+    
+    # Persistir se não houver erro
+    if analise and "erro" not in analise:
+        processo.analise_ia = json.dumps(analise, ensure_ascii=False)
+        processo.data_analise_ia = datetime.now()
+        db.add(processo)
+        await db.commit()
+
     return analise or {"erro": "Falha na análise IA."}
 

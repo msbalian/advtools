@@ -26,13 +26,16 @@ GEMINI_MODELS = [
 TRIBUNAIS_MNI = {"TJGO"}
 
 
-def _limpar_numero_cnj(numero: str) -> str:
-    return numero.replace(".", "").replace("-", "").strip()
+def _limpar_numero_processo(numero: str) -> str:
+    """Limpa o número apenas se parecer um CNJ (contém pontos ou traços)."""
+    if any(c in numero for c in ".-"):
+        return numero.replace(".", "").replace("-", "").strip()
+    return numero.strip()
 
 
-def _detectar_tribunal(numero_cnj: str) -> Optional[str]:
+def _detectar_tribunal(numero: str) -> Optional[str]:
     """Detecta o tribunal pela posição J.TT do número CNJ."""
-    limpo = _limpar_numero_cnj(numero_cnj)
+    limpo = _limpar_numero_processo(numero)
     if len(limpo) != 20:
         return None
     justica = limpo[13]
@@ -41,18 +44,68 @@ def _detectar_tribunal(numero_cnj: str) -> Optional[str]:
     return cod_map.get((justica, tribunal_cod))
 
 
-def suporta_mni(numero_cnj: str) -> bool:
-    """Verifica se o número CNJ pertence a um tribunal com MNI configurado."""
-    tribunal = _detectar_tribunal(numero_cnj)
-    return tribunal in TRIBUNAIS_MNI
+def _tentar_completar_cnj_tjgo(numero: str) -> List[str]:
+    """
+    Tenta completar um número curto (N.DD ou N-DD) para um CNJ completo do TJGO.
+    Retorna uma lista de candidatos ordenados por probabilidade.
+    """
+    limpo = numero.replace(".", "").replace("-", "").strip()
+    if not limpo.isdigit() or len(limpo) < 5 or len(limpo) > 12:
+        return []
+
+    # Extrair NNNNNNN e DD (se houver pelo menos 3 dígitos)
+    # Supondo que os últimos 2 são o DD
+    n_seq = int(limpo[:-2])
+    dd_alvo = int(limpo[-2:])
+    
+    candidatos = []
+    # Testar anos recentes e forums comuns (0051=Goiania, etc)
+    # TJGO tem aprox 180 comarcas
+    for ano in range(datetime.now().year, 2010, -1):
+        for forum in range(1, 185):
+            # Calculo MOD 97 do CNJ
+            # NNNNNNN DD AAAA J TR OOOO
+            # Concatenado = NNNNNNNAAAAJTROOOO00
+            n7 = f"{n_seq:07d}"
+            a4 = f"{ano:04d}"
+            jtr = "809"
+            o4 = f"{forum:04d}"
+            concat = int(f"{n7}{a4}{jtr}{o4}00")
+            dd_calc = 98 - (concat % 97)
+            
+            if dd_calc == dd_alvo:
+                candidatos.append(f"{n7}{dd_alvo:02d}{a4}809{o4}")
+                
+    # Ordenar: priorizar forums comuns (Goiânia=51, Aparecida=11, Anápolis=6)
+    vips = {"0051", "0011", "0006"}
+    def prioridade(c):
+        forum = c[-4:]
+        return 0 if forum in vips else 1
+
+    return sorted(candidatos, key=prioridade)
 
 
-def consultar_processo_mni(numero_cnj: str) -> Dict[str, Any]:
+def suporta_mni(numero: str) -> bool:
+    """Verifica se o número pertence a um tribunal com MNI configurado ou se é um ID interno compatível."""
+    if not numero: return False
+    
+    # Se for CNJ (20 dígitos), detecta tribunal
+    limpo = _limpar_numero_processo(numero)
+    if len(limpo) == 20:
+        tribunal = _detectar_tribunal(limpo)
+        return tribunal in TRIBUNAIS_MNI
+    
+    # Se não for CNJ, mas o usuário estiver tentando usar via MNI (frontend decidirá),
+    # aqui retornamos True se o identificador parecer um ID interno do Projudi (numérico longo)
+    return numero.isdigit() and len(numero) > 5
+
+
+def consultar_processo_mni(numero_processo: str) -> Dict[str, Any]:
     """Consulta processo completo via MNI/SOAP e retorna dados estruturados."""
     from zeep import Client
     from zeep.settings import Settings
 
-    numero_limpo = _limpar_numero_cnj(numero_cnj)
+    numero_limpo = _limpar_numero_processo(numero_processo)
 
     if not Config.PROJUDI_USER or not Config.PROJUDI_PASSWORD:
         return {"sucesso": False, "erro": "Credenciais do PROJUDI não configuradas (PROJUDI_USER/PASSWORD)."}
@@ -61,17 +114,40 @@ def consultar_processo_mni(numero_cnj: str) -> Dict[str, Any]:
         settings = Settings(strict=False, xml_huge_tree=True)
         client = Client(wsdl=WSDL_URL, settings=settings)
 
-        response = client.service.consultarProcesso(
-            idConsultante=Config.PROJUDI_USER,
-            senhaConsultante=Config.PROJUDI_PASSWORD,
-            numeroProcesso=numero_limpo,
-            movimentos=True,
-            incluirCabecalho=True,
-            incluirDocumentos=True
-        )
+        # Tentar completar se não for um CNJ válido
+        candidatos = [numero_limpo]
+        if len(numero_limpo) != 20:
+            candidatos = _tentar_completar_cnj_tjgo(numero_processo)
+            if not candidatos:
+                return {"sucesso": False, "erro": "Formato de número inválido para busca MNI/TJGO."}
 
-        if not response.sucesso:
-            return {"sucesso": False, "erro": response.mensagem or "Erro na consulta MNI."}
+        # Tentar cada candidato até um ter sucesso técnico (mesmo que processo não exista)
+        # O WebService retorna sucesso=False se o processo não existe, mas sucesso=True se a busca foi válida.
+        ultimo_erro = "Processo não encontrado nos candidatos tentados."
+        
+        for cand in candidatos[:10]: # Limitar tentativas para performance
+            try:
+                response = client.service.consultarProcesso(
+                    idConsultante=Config.PROJUDI_USER,
+                    senhaConsultante=Config.PROJUDI_PASSWORD,
+                    numeroProcesso=cand,
+                    movimentos=True,
+                    incluirCabecalho=True,
+                    incluirDocumentos=True
+                )
+                
+                if response.sucesso:
+                    # Encontramos o processo!
+                    break
+                else:
+                    ultimo_erro = response.mensagem or "Processo não encontrado."
+                    # Se o erro for de formato (como o do usuário), ignora e tenta o próximo
+                    continue
+            except Exception as e:
+                ultimo_erro = str(e)
+                continue
+        else:
+            return {"sucesso": False, "erro": ultimo_erro}
 
         proc = response.processo
         dados = proc.dadosBasicos
@@ -309,7 +385,9 @@ def analisar_processo_com_ia(
     if mni_data and mni_data.get("movimentacoes"):
         # Usa dados MNI diretos (mais ricos)
         cab = mni_data.get("cabecalho", {})
-        for mov in mni_data["movimentacoes"][:30]:
+        # Ordenar por data decrescente (mais recentes primeiro)
+        movs = sorted(mni_data["movimentacoes"], key=lambda m: m.get("dataISO") or "", reverse=True)
+        for mov in movs[:100]:
             entry = f"[{mov['data']}] {mov.get('descricao', '')}"
             if mov.get("complemento"):
                 entry += f" - {mov['complemento']}"
@@ -330,7 +408,9 @@ def analisar_processo_com_ia(
         valor = cab.get("valorCausa", 0)
     else:
         # Fallback: usa movimentações do banco
-        for mov in movimentacoes_db[:30]:
+        # Ordenar por data decrescente
+        movs = sorted(movimentacoes_db, key=lambda m: m.data_hora.replace(tzinfo=None) if m.data_hora else datetime.min, reverse=True)
+        for mov in movs[:100]:
             dt = mov.data_hora.strftime("%d/%m/%Y %H:%M") if mov.data_hora else ""
             entry = f"[{dt}] {mov.nome_movimento}"
             if mov.complementos_json:

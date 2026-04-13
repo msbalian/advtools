@@ -459,6 +459,8 @@ class ProcessoUpdate(BaseModel):
     advogado_responsavel_id: Optional[int] = None
     cliente_id: Optional[int] = None
     servico_id: Optional[int] = None
+    analise_ia: Optional[str] = None
+    data_analise_ia: Optional[datetime] = None
 
 class ProcessoResponse(ProcessoBase):
     id: int
@@ -472,6 +474,8 @@ class ProcessoResponse(ProcessoBase):
     tarefas: List['TarefaResponse'] = []
     pasta_trabalho: Optional[PastaTrabalho] = None
     servico: Optional[Servico] = None
+    analise_ia: Optional[str] = None
+    data_analise_ia: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -484,7 +488,7 @@ class DataJudBuscaRequest(BaseModel):
 
 # Schema para busca via MNI/PROJUDI
 class MNIBuscaRequest(BaseModel):
-    numero_cnj: str
+    numero_processo: str
     cliente_id: Optional[int] = None
     analisar_com_ia: bool = False
 

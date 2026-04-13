@@ -52,11 +52,13 @@ const importForm = ref({
   numero_cnj: '',
   tribunal: '',
   cliente_id: null,
-  analisar_com_ia: false
+  analisar_com_ia: false,
+  tipo_busca: 'cnj' // 'cnj' ou 'interno'
 })
 
 // Detecta se o número CNJ pertence ao TJGO (MNI)
 const isTJGO = computed(() => {
+  if (importForm.value.tipo_busca === 'interno') return true
   const limpo = importForm.value.numero_cnj.replace(/[.-]/g, '')
   if (limpo.length !== 20) return false
   return limpo[13] === '8' && limpo.substring(14, 16) === '09'
@@ -108,9 +110,8 @@ const handleImport = async () => {
             res = await apiFetch('/api/processos/buscar-mni', {
                 method: 'POST',
                 body: JSON.stringify({
-                    numero_cnj: importForm.value.numero_cnj,
-                    cliente_id: importForm.value.cliente_id,
-                    analisar_com_ia: importForm.value.analisar_com_ia
+                    numero_processo: importForm.value.numero_cnj,
+                    cliente_id: importForm.value.cliente_id
                 })
             })
         } else {
@@ -127,7 +128,7 @@ const handleImport = async () => {
             showMessage(`Processo importado via ${source} com sucesso! ${novoProcesso.movimentacoes?.length || 0} movimentações.`, 'success')
             processos.value.unshift(novoProcesso)
             showImportModal.value = false
-            importForm.value = { numero_cnj: '', tribunal: '', cliente_id: null, analisar_com_ia: false }
+            importForm.value = { numero_cnj: '', tribunal: '', cliente_id: null, analisar_com_ia: false, tipo_busca: 'cnj' }
         } else {
             const err = await res.json()
             showMessage(err.detail || 'Erro ao importar processo.', 'error')
@@ -359,18 +360,30 @@ const formatDate = (dateStr) => {
           <!-- Modal Body -->
           <div class="p-8 pb-10">
              <div class="space-y-6">
-                <!-- CNJ Number -->
-                <div class="space-y-2">
-                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Número do Processo (CNJ)</label>
-                   <div class="relative">
-                      <input v-model="importForm.numero_cnj" 
-                             type="text" 
-                             placeholder="NNNNNNN-DD.AAAA.J.TR.OOOO" 
-                             class="w-full pl-4 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:border-primary-500 focus:bg-white transition-all outline-none" />
-                      <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-black">CNJ FORMAT</div>
-                   </div>
-                   <p class="text-[10px] text-slate-400 font-medium px-1">Exemplo: 5760243-22.2025.8.09.0051</p>
-                </div>
+                 <!-- CNJ Number -->
+                 <div class="space-y-2">
+                    <div class="flex items-center justify-between px-1">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Identificador do Processo</label>
+                        <div class="flex bg-slate-100 p-1 rounded-lg gap-1">
+                            <button @click="importForm.tipo_busca = 'cnj'" 
+                                    :class="['px-2 py-0.5 text-[9px] font-black uppercase rounded-md transition-all', 
+                                             importForm.tipo_busca === 'cnj' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-400']">CNJ</button>
+                            <button @click="importForm.tipo_busca = 'interno'" 
+                                    :class="['px-2 py-0.5 text-[9px] font-black uppercase rounded-md transition-all', 
+                                             importForm.tipo_busca === 'interno' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-400']">Interno</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                       <input v-model="importForm.numero_cnj" 
+                              type="text" 
+                              :placeholder="importForm.tipo_busca === 'cnj' ? 'NNNNNNN-DD.AAAA.J.TR.OOOO' : 'Número interno do sistema (Projudi/Outros)'" 
+                              class="w-full pl-4 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:border-primary-500 focus:bg-white transition-all outline-none" />
+                       <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-black">{{ importForm.tipo_busca.toUpperCase() }}</div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 font-medium px-1">
+                        {{ importForm.tipo_busca === 'cnj' ? 'Exemplo: 5760243-22.2025.8.09.0051' : 'Insira o número de registro interno do processo no tribunal.' }}
+                    </p>
+                 </div>
 
                 <!-- Source Detection Badge -->
                 <div v-if="importForm.numero_cnj.replace(/[.-]/g, '').length >= 20" 
@@ -413,24 +426,6 @@ const formatDate = (dateStr) => {
                    </div>
                 </div>
 
-                <!-- IA Analysis Toggle -->
-                <div v-if="isTJGO" class="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50/80 to-orange-50/80 rounded-2xl border border-amber-200/50">
-                   <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
-                        <Brain class="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p class="text-sm font-black text-amber-800">Análise Inteligente</p>
-                        <p class="text-[11px] text-amber-600 font-medium">Gerar prazos e tarefas com IA</p>
-                      </div>
-                   </div>
-                   <button @click="importForm.analisar_com_ia = !importForm.analisar_com_ia"
-                           :class="['relative w-12 h-7 rounded-full transition-all duration-300', 
-                                    importForm.analisar_com_ia ? 'bg-amber-500' : 'bg-slate-300']">
-                      <div :class="['absolute w-5 h-5 bg-white rounded-full top-1 shadow-md transition-all duration-300', 
-                                    importForm.analisar_com_ia ? 'left-6' : 'left-1']"></div>
-                   </button>
-                </div>
 
                 <!-- Action Button -->
                 <button @click="handleImport" 

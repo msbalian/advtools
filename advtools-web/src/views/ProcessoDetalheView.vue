@@ -130,6 +130,15 @@ const carregarDados = async () => {
                 processo.value = await resProc.json()
                 // As tarefas já vêm no processo por causa do relacionamento e schema
                 tarefas.value = processo.value.tarefas || []
+                
+                // Carregar análise persistida se houver
+                if (processo.value.analise_ia) {
+                    try {
+                        analiseIaResult.value = JSON.parse(processo.value.analise_ia)
+                    } catch (e) {
+                        console.error("Erro ao dar parse na analise salva", e)
+                    }
+                }
             } else {
                 throw new Error("Processo não encontrado")
             }
@@ -609,6 +618,9 @@ const tabs = [
                            <Brain class="w-6 h-6 text-amber-600" /> Inteligência Artificial
                         </h3>
                         <p class="text-xs text-amber-700 font-medium mt-1">Análise de prazos e extração de insights usando o Gemini</p>
+                        <p v-if="processo?.data_analise_ia && !isAnalyzingIa" class="text-[10px] text-amber-600 font-black mt-1 uppercase tracking-widest bg-amber-100/50 px-2 py-0.5 rounded-full inline-block">
+                            Última atualização: {{ formatDate(processo.data_analise_ia, true) }}
+                        </p>
                     </div>
                     <button @click="handleAnaliseIa" :disabled="isAnalyzingIa" class="px-6 py-3 bg-amber-500 text-white font-black text-xs rounded-2xl hover:bg-amber-600 transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50">
                        <Cpu v-if="!isAnalyzingIa" class="w-4 h-4" />

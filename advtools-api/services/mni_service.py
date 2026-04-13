@@ -388,32 +388,20 @@ def analisar_processo_com_ia(
         cab = mni_data.get("cabecalho", {})
         # Ordenar por data decrescente (mais recentes primeiro)
         movs = sorted(mni_data["movimentacoes"], key=lambda m: m.get("dataISO") or "", reverse=True)
-        # Reduzido para 30 para economizar tokens e focar no presente
-        for mov in movs[:30]:
+        # Regime extremo: apenas as 15 últimas para economizar cota (tokens)
+        for mov in movs[:15]:
             entry = f"[{mov['data']}] {mov.get('descricao', '')}"
             if mov.get("complemento"):
                 entry += f" - {mov['complemento']}"
-            if mov.get("documentos"):
-                docs = ", ".join([d.get("descricao", d.get("tipoArquivo", "")) for d in mov["documentos"] if d])
-                if docs:
-                    entry += f" (Docs: {docs})"
             movs_text_lines.append(entry)
 
-        partes_text = "\n".join([
-            f"  - {p['nome']} ({p['polo']})" for p in cab.get("partes", [])
-        ])
         numero = cab.get("numero", "N/A")
-        orgao = cab.get("orgaoJulgador", "N/A")
-        status = cab.get("ProcessoStatus", "N/A")
-        fase = cab.get("ProcessoFase", "N/A")
-        area = cab.get("Area", "N/A")
-        valor = cab.get("valorCausa", 0)
     else:
         # Fallback: usa movimentações do banco
         # Ordenar por data decrescente
         movs = sorted(movimentacoes_db, key=lambda m: m.data_hora.replace(tzinfo=None) if m.data_hora else datetime.min, reverse=True)
-        # Reduzido para 30 para economizar tokens e focar no presente
-        for mov in movs[:30]:
+        # Regime extremo: apenas as 15 últimas
+        for mov in movs[:15]:
             dt = mov.data_hora.strftime("%d/%m/%Y %H:%M") if mov.data_hora else ""
             entry = f"[{dt}] {mov.nome_movimento}"
             if mov.complementos_json:
@@ -422,50 +410,29 @@ def analisar_processo_com_ia(
                     if isinstance(comp, dict) and comp.get("texto"):
                         entry += f" - {comp['texto']}"
                 except Exception:
-                    entry += f" - {mov.complementos_json[:200]}"
+                    pass
             movs_text_lines.append(entry)
-
-        partes_text = "Não disponível"
         numero = "N/A"
-        orgao = "N/A"
-        status = "N/A"
-        fase = "N/A"
-        area = "N/A"
-        valor = 0
 
     movs_text = "\n".join(movs_text_lines)
 
-    prompt = f"""Voce e um assistente juridico especializado em Direito Processual Civil brasileiro.
-Analise as MOVIMENTACOES RECENTES de um processo judicial e identifique EXCLUSIVAMENTE:
+    prompt = f"""Analise as 15 MOVIMENTACOES RECENTES do processo {numero} e retorne em JSON:
+1. acoes_advogado: o que ele deve fazer e prazo (se houver).
+2. status_resumido: o momento atual do processo.
 
-1.acoes pendentes do advogado (prazo correndo, intimacao recebida, despacho a cumprir).
-2.Prazos calculados - Se houver uma intimacao recente, calcule o prazo final em dias uteis.
-3.Status atual resumido.
-
-## DADOS DO PROCESSO
-**Numero:** {numero}
-**Orgao:** {orgao}
-**Valor:** R$ {valor:,.2f}
-{partes_text}
-
-## MOVIMENTACOES RECENTES
+MOVIMENTACOES:
 {movs_text}
 
-## REGRAS DE ANALISE
-- FOCO TOTAL no que o advogado precisa fazer AGORA ou nos proximos dias.
-- Ignore movimentacoes antigas que ja tiveram seus prazos resolvidos.
-- Se nao houver acao pendente, informe no statusAtual que o processo aguarda proximo andamento.
-- Considere HOJE como {datetime.now().strftime('%d/%m/%Y')}.
-
-Responda em JSON:
+JSON esperado:
 {{
   "statusAtual": "...",
-  "resumoHistoria": "breve contexto do momento atual",
-  "tarefasPendentes": [{{"acao": "...", "prazoDataFim": "DD/MM/YYYY", "prazoDiasUteis": 15, "urgencia": "ALTA", "observacao": "..."}}],
-  "alertas": [{{"tipo": "PRAZO_VENCENDO", "mensagem": "...", "urgencia": "CRITICA"}}],
+  "resumoHistoria": "breve contexto",
+  "tarefasPendentes": [{{"acao": "...", "prazoDataFim": "DD/MM/YYYY", "urgencia": "ALTA"}}],
+  "alertas": [{{"tipo": "PRAZO", "mensagem": "..."}}],
   "proximosPassos": ["..."]
 }}
 """
+
 
 
     # Chamar Gemini REST API

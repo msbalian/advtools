@@ -23,7 +23,9 @@ import {
   TrendingUp,
   ChevronRight,
   User,
-  Settings
+  Settings,
+  Brain,
+  Zap
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -45,12 +47,22 @@ const currentUser = ref(null)
 const searchQuery = ref('')
 const statusFilter = ref('Todos')
 
-// DataJud Import Form
+// Import Form (Unified: DataJud + MNI)
 const importForm = ref({
   numero_cnj: '',
   tribunal: '',
-  cliente_id: null
+  cliente_id: null,
+  analisar_com_ia: false
 })
+
+// Detecta se o número CNJ pertence ao TJGO (MNI)
+const isTJGO = computed(() => {
+  const limpo = importForm.value.numero_cnj.replace(/[.-]/g, '')
+  if (limpo.length !== 20) return false
+  return limpo[13] === '8' && limpo.substring(14, 16) === '09'
+})
+
+const importSource = computed(() => isTJGO.value ? 'PROJUDI/MNI' : 'DataJud')
 
 const showMessage = (msg, type = 'success') => {
     notification.value = { show: true, message: msg, type }
@@ -85,22 +97,37 @@ const filteredProcessos = computed(() => {
     })
 })
 
-const handleImportDataJud = async () => {
+const handleImport = async () => {
     if (!importForm.value.numero_cnj) return
     
     isImporting.value = true
     try {
-        const res = await apiFetch('/api/processos/buscar-datajud', {
-            method: 'POST',
-            body: JSON.stringify(importForm.value)
-        })
+        let res
+        if (isTJGO.value) {
+            // Importar via MNI/PROJUDI
+            res = await apiFetch('/api/processos/buscar-mni', {
+                method: 'POST',
+                body: JSON.stringify({
+                    numero_cnj: importForm.value.numero_cnj,
+                    cliente_id: importForm.value.cliente_id,
+                    analisar_com_ia: importForm.value.analisar_com_ia
+                })
+            })
+        } else {
+            // Importar via DataJud (original)
+            res = await apiFetch('/api/processos/buscar-datajud', {
+                method: 'POST',
+                body: JSON.stringify(importForm.value)
+            })
+        }
         
         if (res.ok) {
             const novoProcesso = await res.json()
-            showMessage('Processo importado com sucesso!', 'success')
+            const source = isTJGO.value ? 'PROJUDI' : 'DataJud'
+            showMessage(`Processo importado via ${source} com sucesso! ${novoProcesso.movimentacoes?.length || 0} movimentações.`, 'success')
             processos.value.unshift(novoProcesso)
             showImportModal.value = false
-            importForm.value = { numero_cnj: '', tribunal: '', cliente_id: null }
+            importForm.value = { numero_cnj: '', tribunal: '', cliente_id: null, analisar_com_ia: false }
         } else {
             const err = await res.json()
             showMessage(err.detail || 'Erro ao importar processo.', 'error')
@@ -206,7 +233,7 @@ const formatDate = (dateStr) => {
           </div>
           <div class="mt-4 sm:mt-0 flex gap-3">
             <button @click="showImportModal = true" class="px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 border border-indigo-200 shadow-sm shadow-indigo-500/10">
-               <SearchCode class="w-4 h-4" /> Importar DataJud
+               <SearchCode class="w-4 h-4" /> Importar Processo
             </button>
             <button @click="router.push('/processos/novo')" class="btn-primary flex items-center gap-2 shadow-primary-500/30">
                <Plus class="w-4 h-4" /> Cadastrar Manual
@@ -309,9 +336,7 @@ const formatDate = (dateStr) => {
         </div>
 
       </main>
-    </div>
-
-    <!-- DataJud Import Modal -->
+       <!-- Import Modal (Unified: DataJud + MNI/PROJUDI) -->
     <div v-show="showImportModal" class="fixed inset-0 z-[60] overflow-y-auto px-4 py-8 flex items-center justify-center">
        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" @click="showImportModal = false"></div>
        <div class="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-white/20 animate-fade-in-up">
@@ -323,8 +348,8 @@ const formatDate = (dateStr) => {
                 <div class="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-4">
                    <SearchCode class="w-6 h-6" />
                 </div>
-                <h2 class="text-2xl font-black">Importar da Base CNJ</h2>
-                <p class="text-white/70 text-sm font-medium">Conectando ao sistema DataJud para coleta de dados oficiais.</p>
+                <h2 class="text-2xl font-black">Importar Processo</h2>
+                <p class="text-white/70 text-sm font-medium">Conectando ao sistema do tribunal para coleta de dados oficiais.</p>
              </div>
              <button @click="showImportModal = false" class="absolute top-6 right-6 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
                 <X class="w-5 h-5 text-white" />
@@ -344,16 +369,36 @@ const formatDate = (dateStr) => {
                              class="w-full pl-4 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:border-primary-500 focus:bg-white transition-all outline-none" />
                       <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-black">CNJ FORMAT</div>
                    </div>
-                   <p class="text-[10px] text-slate-400 font-medium px-1">Exemplo: 0800123-45.2023.8.19.0001</p>
+                   <p class="text-[10px] text-slate-400 font-medium px-1">Exemplo: 5760243-22.2025.8.09.0051</p>
                 </div>
 
-                <!-- Tribunal Selection -->
-                <div class="space-y-2">
+                <!-- Source Detection Badge -->
+                <div v-if="importForm.numero_cnj.replace(/[.-]/g, '').length >= 20" 
+                     :class="['flex items-center gap-3 p-4 rounded-2xl border transition-all', 
+                              isTJGO ? 'bg-emerald-50/60 border-emerald-200' : 'bg-blue-50/60 border-blue-200']">
+                   <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', 
+                                isTJGO ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600']">
+                     <Zap v-if="isTJGO" class="w-5 h-5" />
+                     <SearchCode v-else class="w-5 h-5" />
+                   </div>
+                   <div>
+                     <p :class="['text-sm font-black', isTJGO ? 'text-emerald-800' : 'text-blue-800']">
+                       {{ isTJGO ? '⚡ PROJUDI TJGO detectado' : '🔗 Tribunal detectado' }}
+                     </p>
+                     <p :class="['text-[11px] font-medium', isTJGO ? 'text-emerald-600' : 'text-blue-600']">
+                       {{ isTJGO ? 'Importação via MNI — dados enriquecidos (partes, advogados, 100+ movimentações)' : 'Importação via DataJud — dados básicos do CNJ' }}
+                     </p>
+                   </div>
+                </div>
+
+                <!-- Tribunal Selection (only for non-TJGO) -->
+                <div v-if="!isTJGO" class="space-y-2">
                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Tribunal (Opcional)</label>
                    <div class="relative">
                       <select v-model="importForm.tribunal" 
                               class="w-full pl-4 pr-10 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold appearance-none focus:border-primary-500 focus:bg-white transition-all outline-none">
-                         <option value="">Detetar Automaticamente</option>
+                         <option value="">Detectar Automaticamente</option>
+                         <option value="TJGO">TJGO - Goiás</option>
                          <option value="TJSP">TJSP - São Paulo</option>
                          <option value="TJRJ">TJRJ - Rio de Janeiro</option>
                          <option value="TJMG">TJMG - Minas Gerais</option>
@@ -368,12 +413,32 @@ const formatDate = (dateStr) => {
                    </div>
                 </div>
 
+                <!-- IA Analysis Toggle -->
+                <div v-if="isTJGO" class="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50/80 to-orange-50/80 rounded-2xl border border-amber-200/50">
+                   <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                        <Brain class="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p class="text-sm font-black text-amber-800">Análise Inteligente</p>
+                        <p class="text-[11px] text-amber-600 font-medium">Gerar prazos e tarefas com IA</p>
+                      </div>
+                   </div>
+                   <button @click="importForm.analisar_com_ia = !importForm.analisar_com_ia"
+                           :class="['relative w-12 h-7 rounded-full transition-all duration-300', 
+                                    importForm.analisar_com_ia ? 'bg-amber-500' : 'bg-slate-300']">
+                      <div :class="['absolute w-5 h-5 bg-white rounded-full top-1 shadow-md transition-all duration-300', 
+                                    importForm.analisar_com_ia ? 'left-6' : 'left-1']"></div>
+                   </button>
+                </div>
+
                 <!-- Action Button -->
-                <button @click="handleImportDataJud" 
+                <button @click="handleImport" 
                         :disabled="isImporting || !importForm.numero_cnj"
                         class="w-full py-5 bg-gradient-to-r from-primary-600 to-indigo-700 text-white rounded-3xl font-black text-lg shadow-xl shadow-primary-500/30 hover:shadow-primary-500/50 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
                    <template v-if="isImporting">
-                      <RefreshCw class="w-6 h-6 animate-spin" /> Processando...
+                      <RefreshCw class="w-6 h-6 animate-spin" />
+                      <span>{{ isTJGO ? 'Conectando ao PROJUDI...' : 'Consultando DataJud...' }}</span>
                    </template>
                    <template v-else>
                       <TrendingUp class="w-6 h-6" /> Buscar Processo
@@ -386,10 +451,14 @@ const formatDate = (dateStr) => {
                 <p class="text-[11px] text-blue-700 font-medium leading-relaxed">
                    A importação trará automaticamente a <span class="font-bold">capa</span>, 
                    <span class="font-bold">partes</span>, <span class="font-bold">assuntos</span> e a <span class="font-bold">timeline completa</span> de movimentações direto do Tribunal.
+                   <template v-if="isTJGO">
+                     <br/><span class="text-emerald-700 font-bold">Via PROJUDI:</span> inclui advogados, documentos catalogados e complementos detalhados.
+                   </template>
                 </p>
              </div>
           </div>
        </div>
+    </div>
     </div>
     
   </div>

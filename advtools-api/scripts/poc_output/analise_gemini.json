@@ -1,0 +1,57 @@
+{
+  "statusAtual": "O processo encontra-se ARQUIVADO desde 11/04/2026. O arquivamento ocorreu após a homologação de um acordo entre as partes, que resolveu o mérito da causa, e a determinação de custas.",
+  "resumoHistoria": "O processo foi iniciado por Lucas Mendes De Oliveira e Stephany Lima Cardoso contra Jsl S.a. e Unimed Goiania Cooperativa De Trabalho Medico. Em 05/02/2026, uma decisão que não acolheu embargos de declaração transitou em julgado em 04/03/2026, levando ao arquivamento inicial do processo em 09/03/2026. Contudo, em 02/04/2026, foi protocolado um pedido de homologação de acordo entre as partes. O processo foi desarquivado em 07/04/2026 e, em 08/04/2026, o juízo proferiu sentença homologando a transação, com determinação de custas e arquivamento dos autos. Todas as partes, incluindo os clientes da advogada Nubia, foram intimadas desta decisão no mesmo dia. Finalmente, o processo foi novamente arquivado em 11/04/2026, indicando a resolução consensual da lide e a conclusão da fase de conhecimento pelo tribunal.",
+  "tarefasPendentes": [
+    {
+      "acao": "Verificar o cumprimento dos termos do acordo homologado",
+      "responsavel": "Advogada Nubia",
+      "prazoOrigem": "Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (08/04/2026)",
+      "prazoDataInicio": null,
+      "prazoDataFim": null,
+      "prazoDiasUteis": null,
+      "urgencia": "ALTA",
+      "status": "PENDENTE",
+      "observacao": "Embora o processo esteja arquivado judicialmente, é crucial acompanhar se as obrigações e prazos estipulados no acordo estão sendo devidamente cumpridos por todas as partes envolvidas, em benefício dos clientes."
+    },
+    {
+      "acao": "Acompanhar o recolhimento das custas processuais",
+      "responsavel": "Advogada Nubia",
+      "prazoOrigem": "Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) - Sentença-homologa acordo- com custas (08/04/2026)",
+      "prazoDataInicio": null,
+      "prazoDataFim": null,
+      "prazoDiasUteis": null,
+      "urgencia": "MEDIA",
+      "status": "PENDENTE",
+      "observacao": "A sentença mencionou 'com custas'. É necessário verificar quem ficou responsável pelo pagamento das custas processuais conforme o acordo ou a decisão judicial e se houve o devido recolhimento."
+    },
+    {
+      "acao": "Avaliar a necessidade de interposição de recurso da decisão homologatória (prazo teórico)",
+      "responsavel": "Advogada Nubia",
+      "prazoOrigem": "Mov. Intimação Efetivada - Adv(s). de Lucas Mendes De Oliveira (08/04/2026)",
+      "prazoDataInicio": "09/04/2026",
+      "prazoDataFim": "30/04/2026",
+      "prazoDiasUteis": 15,
+      "urgencia": "BAIXA",
+      "status": "PENDENTE",
+      "observacao": "O prazo de 15 dias úteis para eventual recurso contra a decisão de homologação (ex: Embargos de Declaração ou Apelação) encerra em 30/04/2026. No entanto, o processo já foi arquivado em 11/04/2026, o que sugere que o Tribunal considera a fase encerrada. A interposição de recurso exigiria o desarquivamento e uma justificativa para impugnar a própria homologação consensual, o que é incomum."
+    }
+  ],
+  "alertas": [
+    {
+      "tipo": "STATUS_PROCESSO_FINALIZADO",
+      "mensagem": "O processo foi arquivado em 11/04/2026 após a homologação de acordo. Do ponto de vista judicial, a lide está resolvida na fase de conhecimento.",
+      "urgencia": "INFORMATIVA"
+    },
+    {
+      "tipo": "PRAZO_TEORICO_RECURSAL",
+      "mensagem": "Existe um prazo teórico para eventual recurso contra a decisão de homologação do acordo, que se encerra em 30/04/2026. Contudo, devido ao arquivamento do processo, a urgência é baixa e a pertinência de recurso é questionável sem vícios graves na decisão homologatória em si.",
+      "urgencia": "BAIXA"
+    }
+  ],
+  "proximosPassos": [
+    "Entrar em contato com os clientes Lucas Mendes De Oliveira e Stephany Lima Cardoso para revisar os termos do acordo homologado e orientá-los sobre os próximos passos para o cumprimento.",
+    "Monitorar ativamente o cumprimento das obrigações estabelecidas no acordo pelas partes adversas.",
+    "Verificar junto à secretaria judicial ou sistema de custas a situação do recolhimento das custas processuais determinadas na sentença.",
+    "Manter o acompanhamento do processo no sistema do tribunal, mesmo arquivado, para identificar qualquer eventual movimentação extraordinária."
+  ]
+}

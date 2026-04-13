@@ -482,6 +482,35 @@ class DataJudBuscaRequest(BaseModel):
     tribunal: Optional[str] = None
     cliente_id: Optional[int] = None
 
+# Schema para busca via MNI/PROJUDI
+class MNIBuscaRequest(BaseModel):
+    numero_cnj: str
+    cliente_id: Optional[int] = None
+    analisar_com_ia: bool = False
+
+# Schema para resultado da análise IA
+class TarefaIA(BaseModel):
+    acao: str
+    responsavel: Optional[str] = None
+    prazoDataFim: Optional[str] = None
+    prazoDiasUteis: Optional[int] = None
+    urgencia: str = "MEDIA"
+    observacao: Optional[str] = None
+
+class AlertaIA(BaseModel):
+    tipo: str
+    mensagem: str
+    urgencia: str = "MEDIA"
+
+class MNIAnaliseResponse(BaseModel):
+    statusAtual: Optional[str] = None
+    resumoHistoria: Optional[str] = None
+    tarefasPendentes: List[TarefaIA] = []
+    alertas: List[AlertaIA] = []
+    proximosPassos: List[str] = []
+    erro: Optional[str] = None
+    textoRaw: Optional[str] = None
+
 # ==========================
 # DASHBOARD SCHEMAS
 # ==========================

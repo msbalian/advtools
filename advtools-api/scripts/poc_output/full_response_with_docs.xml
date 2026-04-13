@@ -1,0 +1,1029 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ns5:consultarProcessoResposta xmlns:ns2="http://www.cnj.jus.br/tipos-servico-intercomunicacao-2.2.2" xmlns:ns3="http://www.cnj.jus.br/intercomunicacao-2.2.2" xmlns:ns4="http://www.cnj.jus.br/mni/cda" xmlns:ns5="http://www.cnj.jus.br/servico-intercomunicacao-2.2.2/">
+      <ns2:sucesso>true</ns2:sucesso>
+      <ns2:processo>
+        <ns3:dadosBasicos numero="5760243-22.2025.8.09.0051" competencia="1" classeProcessual="12134" codigoLocalidade="9203" nivelSigilo="0" intervencaoMP="false" tamanhoProcesso="0">
+          <ns3:polo polo="AT">
+            <ns3:parte>
+              <ns3:pessoa nome="Lucas Mendes De Oliveira" sexo="M" nomeGenitor="Ronaldo De Oliveira Lopes" nomeGenitora="Solange Mendes De Santana Oliveira" numeroDocumentoPrincipal="75681072134" tipoPessoa="fisica" cidadeNatural=""/>
+              <ns3:advogado nome="NUBIA DE SOUZA COZAC BALIAN" inscricao="47259-A-" numeroDocumentoPrincipal="71449353134" intimacao="true" tipoRepresentante="A"/>
+            </ns3:parte>
+            <ns3:parte>
+              <ns3:pessoa nome="Stephany Lima Cardoso" sexo="F" nomeGenitor="" nomeGenitora="Silvia Pereira Lima Cardoso" dataNascimento="20000729" numeroDocumentoPrincipal="70756006139" tipoPessoa="fisica" cidadeNatural=""/>
+              <ns3:advogado nome="NUBIA DE SOUZA COZAC BALIAN" inscricao="47259-A-" numeroDocumentoPrincipal="71449353134" intimacao="true" tipoRepresentante="A"/>
+            </ns3:parte>
+          </ns3:polo>
+          <ns3:polo polo="PA">
+            <ns3:parte>
+              <ns3:pessoa nome="Jsl S.a." sexo="M" nomeGenitor="" nomeGenitora="" dataNascimento="20120127" numeroDocumentoPrincipal="52548435018701" tipoPessoa="juridica" cidadeNatural=""/>
+              <ns3:advogado nome="ELIZANDRA MENDES DE CAMARGO DA ANA" inscricao="210065-A-" numeroDocumentoPrincipal="21364038854" intimacao="true" tipoRepresentante="A"/>
+            </ns3:parte>
+            <ns3:parte>
+              <ns3:pessoa nome="Unimed Goiania Cooperativa De Trabalho Medico" sexo="M" nomeGenitor="" nomeGenitora="" dataNascimento="19780602" numeroDocumentoPrincipal="02476067000122" tipoPessoa="juridica" cidadeNatural=""/>
+              <ns3:advogado nome="STELLA CHRISTINA ALVES COIMBRA" inscricao="25775-N-" numeroDocumentoPrincipal="93526164134" intimacao="true" tipoRepresentante="A"/>
+              <ns3:advogado nome="LUCYMAYRY GUILHERME DIAS RATES" inscricao="28689-A-" numeroDocumentoPrincipal="89907914134" intimacao="true" tipoRepresentante="A"/>
+              <ns3:advogado nome="Aline do Espirito Santo Ribeiro Galvao" inscricao="52880-A-" numeroDocumentoPrincipal="97544604187" intimacao="true" tipoRepresentante="A"/>
+              <ns3:advogado nome="ANA CLARA DE SOUZA NUNES" inscricao="59202-A-" numeroDocumentoPrincipal="75720221115" intimacao="true" tipoRepresentante="A"/>
+            </ns3:parte>
+          </ns3:polo>
+          <ns3:assunto principal="true">
+            <ns3:codigoNacional>10440</ns3:codigoNacional>
+            <ns3:assuntoLocal codigoAssunto="8220" codigoPaiNacional="0" descricao="DIREITO CIVIL -&gt; Responsabilidade Civil -&gt; Indenização por Dano Material -&gt; Serviços de Saúde - Lei 10406/02"/>
+          </ns3:assunto>
+          <ns3:assunto principal="false">
+            <ns3:codigoNacional>10434</ns3:codigoNacional>
+            <ns3:assuntoLocal codigoAssunto="8043" codigoPaiNacional="0" descricao="DIREITO CIVIL -&gt; Responsabilidade Civil -&gt; Indenização por Dano Moral -&gt; Serviços de Saúde - Lei 10406/02"/>
+          </ns3:assunto>
+          <ns3:assunto principal="false">
+            <ns3:codigoNacional>12489</ns3:codigoNacional>
+            <ns3:assuntoLocal codigoAssunto="3100" codigoPaiNacional="0" descricao="DIREITO DA SAÚDE -&gt; Suplementar -&gt; Planos de saúde -&gt; Tratamento médico-hospitalar">
+              <ns3:assuntoLocalPai codigoAssunto="3098" codigoPaiNacional="0" descricao="DIREITO DA SAÚDE -&gt; Suplementar -&gt; Planos de saúde"/>
+            </ns3:assuntoLocal>
+          </ns3:assunto>
+          <ns3:magistradoAtuante>Magistrado UPJ-Abilio Wolney Aires Neto-Goiânia - Gabinete da 9ª Vara Cível</ns3:magistradoAtuante>
+          <ns3:prioridade>1-Normal</ns3:prioridade>
+          <ns3:outroParametro nome="Area" valor="Cível"/>
+          <ns3:outroParametro nome="ForumCodigo" valor="51"/>
+          <ns3:outroParametro nome="ProcessoFase" valor="Conhecimento"/>
+          <ns3:outroParametro nome="ProcessoStatus" valor="Arquivado"/>
+          <ns3:outroParametro nome="ProcessoTipo" valor="PROCESSO CÍVEL E DO TRABALHO -&gt; Tutela Provisória de Urgência e Tutela Provisória de Evidência -&gt; Tutela Cautelar Antecedente"/>
+          <ns3:outroParametro nome="Serventia" valor="Goiânia - 3ª UPJ Varas Cíveis: 6ª, 7ª, 8ª, 9ª, 10ª e 11ª"/>
+          <ns3:outroParametro nome="ServentiaCodigo" valor="6799"/>
+          <ns3:outroParametro nome="ServentiaTipoCodigo" valor="16"/>
+          <ns3:outroParametro nome="ProcessoStatusCodigo" valor="1"/>
+          <ns3:outroParametro nome="EfeitoSuspensivo" valor="false"/>
+          <ns3:outroParametro nome="Penhora" valor="false"/>
+          <ns3:outroParametro nome="ValorCondenacao" valor=""/>
+          <ns3:outroParametro nome="DataDistribuicao" valor="20250918"/>
+          <ns3:outroParametro nome="DataTransitoJulgado"/>
+          <ns3:outroParametro nome="Sistema" valor="1"/>
+          <ns3:outroParametro nome="IdProcesso" valor="9797930"/>
+          <ns3:outroParametro nome="HashProcesso" valor="77117393768446864306778950921718493030"/>
+          <ns3:valorCausa>20300.0</ns3:valorCausa>
+          <ns3:orgaoJulgador codigoOrgao="6804" nomeOrgao="Goiânia - Gabinete da 9ª Vara Cível" codigoMunicipioIBGE="74884120"/>
+        </ns3:dadosBasicos>
+        <ns3:movimento dataHora="20260411175645" nivelSigilo="0" identificadorMovimento="468192429">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="246"/>
+          <ns3:movimentoLocal codigoMovimento="347" codigoPaiNacional="0" descricao="Processo Arquivado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408145403" nivelSigilo="0" identificadorMovimento="467187655">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408145403" nivelSigilo="0" identificadorMovimento="467187648">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Jsl S.a. (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408145402" nivelSigilo="0" identificadorMovimento="467187641">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408145402" nivelSigilo="0" identificadorMovimento="467187636">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408144147" nivelSigilo="0" identificadorMovimento="467177172">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (CNJ:466) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408144147" nivelSigilo="0" identificadorMovimento="467177171">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de JS (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (CNJ:466) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408144147" nivelSigilo="0" identificadorMovimento="467177170">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (CNJ:466) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408144147" nivelSigilo="0" identificadorMovimento="467177169">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado) (CNJ:466) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260408144147" nivelSigilo="0" identificadorMovimento="467177168">
+          <ns3:complemento>Sentença-homologa acordo- com custas; arquivar</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="466"/>
+          <ns3:movimentoLocal codigoMovimento="19" codigoPaiNacional="0" descricao="Julgamento -&gt; Com Resolução do Mérito -&gt; Homologação de Transação (Acordo Homologado)"/>
+          <ns3:idDocumentoVinculado>516529955</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260407191240" nivelSigilo="0" identificadorMovimento="466972504">
+          <ns3:complemento>P/ SENTENÇA</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260407191204" nivelSigilo="0" identificadorMovimento="466972252">
+          <ns3:complemento>CERTIDÃO - Reativação autos - 3UPJ</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="849"/>
+          <ns3:movimentoLocal codigoMovimento="346" codigoPaiNacional="0" descricao="Processo Reativado"/>
+          <ns3:idDocumentoVinculado>516323305</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260407191002" nivelSigilo="0" identificadorMovimento="466971410">
+          <ns3:complemento>CERTIDÃO - Reativação autos - 3UPJ</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="60"/>
+          <ns3:movimentoLocal codigoMovimento="222" codigoPaiNacional="0" descricao="Certidão Expedida"/>
+          <ns3:idDocumentoVinculado>516321951</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260407190838" nivelSigilo="0" identificadorMovimento="466970727">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="893"/>
+          <ns3:movimentoLocal codigoMovimento="356" codigoPaiNacional="0" descricao="Processo Desarquivado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260407113817" nivelSigilo="0" identificadorMovimento="466682374">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="581"/>
+          <ns3:movimentoLocal codigoMovimento="339" codigoPaiNacional="0" descricao="Juntada de Documento"/>
+          <ns3:idDocumentoVinculado>516046678</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260402142631" nivelSigilo="0" identificadorMovimento="466056272">
+          <ns3:complemento>Pedido de Homologação de Acordo</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>515391818</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260309121802" nivelSigilo="0" identificadorMovimento="459315921">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="246"/>
+          <ns3:movimentoLocal codigoMovimento="347" codigoPaiNacional="0" descricao="Processo Arquivado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260309121719" nivelSigilo="0" identificadorMovimento="459315616">
+          <ns3:complemento>para Unimed Goiania Cooperativa De Trabalho Medico em 04/03/2026 23:59:59 (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="848"/>
+          <ns3:movimentoLocal codigoMovimento="345" codigoPaiNacional="0" descricao="Transitado em Julgado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260309121716" nivelSigilo="0" identificadorMovimento="459315604">
+          <ns3:complemento>para Jsl S.a. em 04/03/2026 23:59:59 (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="848"/>
+          <ns3:movimentoLocal codigoMovimento="345" codigoPaiNacional="0" descricao="Transitado em Julgado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260309121713" nivelSigilo="0" identificadorMovimento="459315584">
+          <ns3:complemento>para Stephany Lima Cardoso em 04/03/2026 23:59:59 (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="848"/>
+          <ns3:movimentoLocal codigoMovimento="345" codigoPaiNacional="0" descricao="Transitado em Julgado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260309121710" nivelSigilo="0" identificadorMovimento="459315566">
+          <ns3:complemento>para Lucas Mendes De Oliveira em 04/03/2026 23:59:59 (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="848"/>
+          <ns3:movimentoLocal codigoMovimento="345" codigoPaiNacional="0" descricao="Transitado em Julgado"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205005003" nivelSigilo="0" identificadorMovimento="450726775">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205005003" nivelSigilo="0" identificadorMovimento="450726774">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Jsl S.a. (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205005003" nivelSigilo="0" identificadorMovimento="450726773">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205005002" nivelSigilo="0" identificadorMovimento="450726772">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205004356" nivelSigilo="0" identificadorMovimento="450726408">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (CNJ:15164) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205004356" nivelSigilo="0" identificadorMovimento="450726407">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de JS (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (CNJ:15164) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205004356" nivelSigilo="0" identificadorMovimento="450726406">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (CNJ:15164) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205004356" nivelSigilo="0" identificadorMovimento="450726405">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -&gt; Não Acolhimento de Embargos de Declaração (CNJ:15164) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260205004356" nivelSigilo="0" identificadorMovimento="450726404">
+          <ns3:complemento>Embargos não acolhidos/improvidos; intimar</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="15164"/>
+          <ns3:movimentoLocal codigoMovimento="15164" codigoPaiNacional="0" descricao="Decisão -&gt; Não Acolhimento de Embargos de Declaração"/>
+          <ns3:idDocumentoVinculado>500228053</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260203170041" nivelSigilo="0" identificadorMovimento="450244876">
+          <ns3:complemento>P/ DECISÃO</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260129213450" nivelSigilo="0" identificadorMovimento="449066404">
+          <ns3:complemento>Contrarrazões aos Embargos Declaratórios</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="998" codigoPaiNacional="0" descricao="Juntada -&gt; Petição -&gt; Contrarrazões"/>
+          <ns3:idDocumentoVinculado>498596333</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260116093120" nivelSigilo="0" identificadorMovimento="445382939">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Embargos de declaração (14/01/2026 15:42:04))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260116093119" nivelSigilo="0" identificadorMovimento="445382938">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Embargos de declaração (14/01/2026 15:42:04))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260116092442" nivelSigilo="0" identificadorMovimento="445381774">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Embargos de declaração - 14/01/2026 15:42:04)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260116092442" nivelSigilo="0" identificadorMovimento="445381773">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Embargos de declaração - 14/01/2026 15:42:04)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20260114154204" nivelSigilo="0" identificadorMovimento="444931808">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="1003" codigoPaiNacional="0" descricao="Juntada -&gt; Petição -&gt; Embargos de declaração"/>
+          <ns3:idDocumentoVinculado>494617428</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>494617431</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>494617432</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218110218" nivelSigilo="0" identificadorMovimento="441984085">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (18/12/2025 10:59:30))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218110218" nivelSigilo="0" identificadorMovimento="441984084">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (18/12/2025 10:59:30))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218110218" nivelSigilo="0" identificadorMovimento="441984081">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (18/12/2025 10:59:30))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218105930" nivelSigilo="0" identificadorMovimento="441982710">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (CNJ:219) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218105930" nivelSigilo="0" identificadorMovimento="441982709">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (CNJ:219) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218105930" nivelSigilo="0" identificadorMovimento="441982708">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência (CNJ:219) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251218105930" nivelSigilo="0" identificadorMovimento="441982707">
+          <ns3:complemento>Sentença-procedente o pedido</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="219"/>
+          <ns3:movimentoLocal codigoMovimento="275" codigoPaiNacional="0" descricao="Julgamento -&gt; Com Resolução do Mérito -&gt; Procedência"/>
+          <ns3:idDocumentoVinculado>491471189</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251216094244" nivelSigilo="0" identificadorMovimento="441205797">
+          <ns3:complemento>P/ DECISÃO</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251215212705" nivelSigilo="0" identificadorMovimento="441162497">
+          <ns3:complemento>Produção de Provas Justificadas</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>490656526</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251211112941" nivelSigilo="0" identificadorMovimento="440099929">
+          <ns3:complemento>Dispensa produção de provas e indica pontos controvertidos</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>489624276</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203155308" nivelSigilo="0" identificadorMovimento="438147224">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203155308" nivelSigilo="0" identificadorMovimento="438147220">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203155308" nivelSigilo="0" identificadorMovimento="438147216">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203154513" nivelSigilo="0" identificadorMovimento="438141989">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Certidão Expedida (CNJ:60) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203154513" nivelSigilo="0" identificadorMovimento="438141987">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Certidão Expedida (CNJ:60) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203154513" nivelSigilo="0" identificadorMovimento="438141986">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Certidão Expedida (CNJ:60) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251203154513" nivelSigilo="0" identificadorMovimento="438141985">
+          <ns3:complemento>ATO ORDINATÓRIO 3UPJ - INTIMAÇÃO PROVAS</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="60"/>
+          <ns3:movimentoLocal codigoMovimento="222" codigoPaiNacional="0" descricao="Certidão Expedida"/>
+          <ns3:idDocumentoVinculado>487755681</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251201170643" nivelSigilo="0" identificadorMovimento="437460984">
+          <ns3:complemento>Citação Efetivada</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>487084943</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>487084944</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>487084945</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251126200301" nivelSigilo="0" identificadorMovimento="436342354">
+          <ns3:complemento>Impugnação à Contestação</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="86" codigoPaiNacional="0" descricao="Juntada -&gt; Petição -&gt; Impugnação"/>
+          <ns3:idDocumentoVinculado>485986160</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251118230046" nivelSigilo="0" identificadorMovimento="434624265">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -&gt; Determinação de Citação (18/11/2025 22:51:43))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251118230046" nivelSigilo="0" identificadorMovimento="434624264">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -&gt; Determinação de Citação (18/11/2025 22:51:43))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251118225143" nivelSigilo="0" identificadorMovimento="434623402">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -&gt; Determinação de Citação (CNJ:15216) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251118225143" nivelSigilo="0" identificadorMovimento="434623401">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -&gt; Determinação de Citação (CNJ:15216) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251118225143" nivelSigilo="0" identificadorMovimento="434623400">
+          <ns3:complemento>Autora viabilizar citação da 1ª requerida</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="15216"/>
+          <ns3:movimentoLocal codigoMovimento="15216" codigoPaiNacional="0" descricao="Despacho -&gt; Determinação de Citação"/>
+          <ns3:idDocumentoVinculado>484258272</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251117100554" nivelSigilo="0" identificadorMovimento="433924139">
+          <ns3:complemento>P/ DESPACHO</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251110204936" nivelSigilo="0" identificadorMovimento="432373546">
+          <ns3:complemento>Intimação JSL</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>482066025</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>482066026</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030175419" nivelSigilo="0" identificadorMovimento="429543954">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (30/10/2025 17:19:59))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030175419" nivelSigilo="0" identificadorMovimento="429543949">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (30/10/2025 17:19:59))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030175315" nivelSigilo="0" identificadorMovimento="429543244">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Contestação (23/10/2025 17:54:25))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030175314" nivelSigilo="0" identificadorMovimento="429543242">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Contestação (23/10/2025 17:54:25))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030171959" nivelSigilo="0" identificadorMovimento="429522455">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (CNJ:11383) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030171959" nivelSigilo="0" identificadorMovimento="429522454">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (CNJ:11383) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030171959" nivelSigilo="0" identificadorMovimento="429522453">
+          <ns3:complemento>PARTE AUTORA PROMOVER A CITAÇÃO DA 1ª REQUERIDA</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="11383"/>
+          <ns3:movimentoLocal codigoMovimento="830" codigoPaiNacional="0" descricao="Ato Ordinatório"/>
+          <ns3:idDocumentoVinculado>479297403</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030171704" nivelSigilo="0" identificadorMovimento="429520966">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Contestação - 23/10/2025 17:54:25)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251030171704" nivelSigilo="0" identificadorMovimento="429520965">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Contestação - 23/10/2025 17:54:25)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251023175425" nivelSigilo="0" identificadorMovimento="428502767">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="65" codigoPaiNacional="0" descricao="Juntada -&gt; Petição -&gt; Contestação"/>
+          <ns3:idDocumentoVinculado>478156706</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156707</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156708</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156712</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156713</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156715</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156717</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156719</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156720</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156722</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156724</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156725</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156726</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>478156729</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251014162555" nivelSigilo="0" identificadorMovimento="425826195">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Habilitação Requerida (09/10/2025 16:04:31))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251014162555" nivelSigilo="0" identificadorMovimento="425826190">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Habilitação Requerida (09/10/2025 16:04:31))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251014152535" nivelSigilo="0" identificadorMovimento="425782151">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -&gt; Petição -&gt; Habilitação Requerida - 09/10/2025 16:04:31)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251014152535" nivelSigilo="0" identificadorMovimento="425782150">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -&gt; Petição -&gt; Habilitação Requerida - 09/10/2025 16:04:31)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251009160431" nivelSigilo="0" identificadorMovimento="424629951">
+          <ns3:complemento>Comprova cumprimento liminar</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="81" codigoPaiNacional="0" descricao="Juntada -&gt; Petição -&gt; Habilitação Requerida"/>
+          <ns3:idDocumentoVinculado>474415930</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>474415931</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>474415934</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>474415937</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>474415939</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007174054" nivelSigilo="0" identificadorMovimento="423963543">
+          <ns3:complemento>Para Unimed Goiania Cooperativa De Trabalho Medico (Mandado nº 6004846 / Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (04/10/2025 00:30:33))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="106"/>
+          <ns3:movimentoLocal codigoMovimento="91" codigoPaiNacional="0" descricao="Mandado Cumprido"/>
+          <ns3:idDocumentoVinculado>473775415</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>473775416</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007125200" nivelSigilo="0" identificadorMovimento="423779655">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Mandado Não Cumprido (07/10/2025 12:27:10))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007125159" nivelSigilo="0" identificadorMovimento="423779653">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Mandado Não Cumprido (07/10/2025 12:27:10))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007124522" nivelSigilo="0" identificadorMovimento="423776863">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Mandado Não Cumprido - 07/10/2025 12:27:10)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007124522" nivelSigilo="0" identificadorMovimento="423776861">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Mandado Não Cumprido - 07/10/2025 12:27:10)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251007122710" nivelSigilo="0" identificadorMovimento="423769127">
+          <ns3:complemento>Para JS (Mandado nº 6004464 / Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (04/10/2025 00:30:33))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="106"/>
+          <ns3:movimentoLocal codigoMovimento="18" codigoPaiNacional="0" descricao="Mandado Não Cumprido"/>
+          <ns3:idDocumentoVinculado>473578658</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251006094255" nivelSigilo="0" identificadorMovimento="423356268">
+          <ns3:complemento>Para Goiânia - Central de Mandados (Mandado nº 6004846 / Para: Unimed Goiania Cooperativa De Trabalho Medico)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="60"/>
+          <ns3:movimentoLocal codigoMovimento="90" codigoPaiNacional="0" descricao="Mandado Expedido"/>
+          <ns3:idDocumentoVinculado>473153163</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251006094135" nivelSigilo="0" identificadorMovimento="423355932">
+          <ns3:complemento>Para Goiânia - Central de Mandados (Mandado nº 6004464 / Para: JS)</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="60"/>
+          <ns3:movimentoLocal codigoMovimento="90" codigoPaiNacional="0" descricao="Mandado Expedido"/>
+          <ns3:idDocumentoVinculado>473152405</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004004026" nivelSigilo="0" identificadorMovimento="423242843">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (04/10/2025 00:30:33))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004004026" nivelSigilo="0" identificadorMovimento="423242842">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (04/10/2025 00:30:33))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004003033" nivelSigilo="0" identificadorMovimento="423242699">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (CNJ:332) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004003033" nivelSigilo="0" identificadorMovimento="423242698">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -&gt; Concessão -&gt; Tutela Provisória (CNJ:332) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004003033" nivelSigilo="0" identificadorMovimento="423242697">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="787"/>
+          <ns3:movimentoLocal codigoMovimento="715" codigoPaiNacional="0" descricao="Decisão -&gt; Concessão -&gt; Gratuidade da Justiça"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251004003033" nivelSigilo="0" identificadorMovimento="423242696">
+          <ns3:complemento>Defere - Gratuidade; defere tutela de urgência; citar</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="332"/>
+          <ns3:movimentoLocal codigoMovimento="302" codigoPaiNacional="0" descricao="Decisão -&gt; Concessão -&gt; Tutela Provisória"/>
+          <ns3:idDocumentoVinculado>473037810</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251003125446" nivelSigilo="0" identificadorMovimento="423010879">
+          <ns3:complemento>COM PEDIDO DE GRATUIDADE DA JUSTIÇA</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20251001205516" nivelSigilo="0" identificadorMovimento="422525008">
+          <ns3:complemento>Manifestação Gratuidade</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="260" codigoPaiNacional="0" descricao="Juntada -&gt; Petição"/>
+          <ns3:idDocumentoVinculado>472373781</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373782</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373783</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373784</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373785</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373789</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373790</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373791</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373802</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>472373803</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250922120132" nivelSigilo="0" identificadorMovimento="419585738">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -&gt; Requisição de Informações (22/09/2025 11:55:11))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250922120131" nivelSigilo="0" identificadorMovimento="419585735">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -&gt; Requisição de Informações (22/09/2025 11:55:11))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250922115511" nivelSigilo="0" identificadorMovimento="419583499">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -&gt; Requisição de Informações (CNJ:11020) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250922115511" nivelSigilo="0" identificadorMovimento="419583498">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -&gt; Requisição de Informações (CNJ:11020) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250922115511" nivelSigilo="0" identificadorMovimento="419583497">
+          <ns3:complemento>decurso do prazo</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="11020"/>
+          <ns3:movimentoLocal codigoMovimento="633" codigoPaiNacional="0" descricao="Despacho -&gt; Requisição de Informações"/>
+          <ns3:idDocumentoVinculado>469526807</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918190405" nivelSigilo="0" identificadorMovimento="419057385">
+          <ns3:complemento>Informativo BERNA: A BERNA IA nao detectou, no sistema Projudi/PJD, outros processos envolvendo as mesmas partes.</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="581"/>
+          <ns3:movimentoLocal codigoMovimento="339" codigoPaiNacional="0" descricao="Juntada de Documento"/>
+          <ns3:idDocumentoVinculado>469004261</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918140031" nivelSigilo="0" identificadorMovimento="418880364">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (18/09/2025 13:51:15))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918140031" nivelSigilo="0" identificadorMovimento="418880363">
+          <ns3:complemento>Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (18/09/2025 13:51:15))</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12266"/>
+          <ns3:movimentoLocal codigoMovimento="178" codigoPaiNacional="0" descricao="Intimação Efetivada"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918135115" nivelSigilo="0" identificadorMovimento="418874468">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (CNJ:11383) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918135115" nivelSigilo="0" identificadorMovimento="418874467">
+          <ns3:complemento>Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (CNJ:11383) - )</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="12265"/>
+          <ns3:movimentoLocal codigoMovimento="5" codigoPaiNacional="0" descricao="Intimação Expedida"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918135115" nivelSigilo="0" identificadorMovimento="418874465">
+          <ns3:complemento>Verificação inicial - gratuidade pessoa física 3UPJ</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="11383"/>
+          <ns3:movimentoLocal codigoMovimento="830" codigoPaiNacional="0" descricao="Ato Ordinatório"/>
+          <ns3:idDocumentoVinculado>468823482</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918130332" nivelSigilo="0" identificadorMovimento="418845748">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="51"/>
+          <ns3:movimentoLocal codigoMovimento="21" codigoPaiNacional="0" descricao="Autos Conclusos"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918130332" nivelSigilo="0" identificadorMovimento="418845747">
+          <ns3:complemento>Goiânia - 3ª UPJ Varas Cíveis: 6ª, 7ª, 8ª, 9ª, 10ª e 11ª (Normal) - Distribuído para: Abilio Wolney Aires Neto</ns3:complemento>
+          <ns3:movimentoNacional codigoNacional="26"/>
+          <ns3:movimentoLocal codigoMovimento="168" codigoPaiNacional="0" descricao="Processo Distribuído"/>
+        </ns3:movimento>
+        <ns3:movimento dataHora="20250918130328" nivelSigilo="0" identificadorMovimento="418845724">
+          <ns3:complemento/>
+          <ns3:movimentoNacional codigoNacional="85"/>
+          <ns3:movimentoLocal codigoMovimento="167" codigoPaiNacional="0" descricao="Peticão Enviada"/>
+          <ns3:idDocumentoVinculado>468796985</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796987</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796988</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796990</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796991</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796992</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796993</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796995</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796998</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468796999</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797002</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797003</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797004</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797005</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797006</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797007</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797009</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797011</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797012</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797013</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797014</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797015</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797016</ns3:idDocumentoVinculado>
+          <ns3:idDocumentoVinculado>468797017</ns3:idDocumentoVinculado>
+        </ns3:movimento>
+        <ns3:documento idDocumento="516529955" tipoDocumento="14" dataHora="20260408144147" mimetype="text/html" nivelSigilo="0" movimento="467177168" hash="283924189784697109885526463371804962086" descricao="Sentença">
+          <ns3:outroParametro nome="NomeArquivo" valor="sentencahomologa_acordo_com_custas_arquivar.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Sentença"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="516323305" tipoDocumento="13" dataHora="20260407191204" mimetype="text/html" nivelSigilo="0" movimento="466972252" hash="311036084093509202199235208660187158328" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="certidao_reativacao_autos_3upj.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="516321951" tipoDocumento="13" dataHora="20260407191002" mimetype="text/html" nivelSigilo="0" movimento="466971410" hash="21686731512261659673088378302284792937" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="certidao_reativacao_autos_3upj.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="516046678" tipoDocumento="13" dataHora="20260407113817" mimetype="text/html" nivelSigilo="0" movimento="466682374" hash="255728921178107887865851194058506655749" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="devolve_custas_acordo_evento_retro.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="515391818" tipoDocumento="16" dataHora="20260402142631" mimetype="application/pdf" nivelSigilo="0" movimento="466056272" hash="19929325023092655801330580705859965977" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="minutadeacordoassinadalucasmendesdeoliveira.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="500228053" tipoDocumento="15" dataHora="20260205004356" mimetype="text/html" nivelSigilo="0" movimento="450726404" hash="76365420084963704004571570399403111034" descricao="Decisão">
+          <ns3:outroParametro nome="NomeArquivo" valor="embargos_nao_acolhidosimprovidos_intimar.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Decisão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="498596333" tipoDocumento="16" dataHora="20260129213450" mimetype="application/pdf" nivelSigilo="0" movimento="449066404" hash="238933736937302096810457679807834229198" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="contrarrazoesaosembargosdeclaratorios.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="494617428" tipoDocumento="16" dataHora="20260114154204" mimetype="application/pdf" nivelSigilo="0" movimento="444931808" hash="124410748361030175739671130588456283873" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="ednasentencanulidadecitacaolucasmendesdeoliveiraxjsl.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="494617431" tipoDocumento="8" dataHora="20260114154204" mimetype="application/pdf" nivelSigilo="0" movimento="444931808" hash="62642452787730478081551167758242059297" descricao="Procuração">
+          <ns3:outroParametro nome="NomeArquivo" valor="procuracaopublicajsls.a..pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Procuração"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="494617432" tipoDocumento="17" dataHora="20260114154204" mimetype="application/pdf" nivelSigilo="0" movimento="444931808" hash="248885913243859848935972120698692068688" descricao="Substabelecimento">
+          <ns3:outroParametro nome="NomeArquivo" valor="substabelecimento.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Substabelecimento"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="491471189" tipoDocumento="15" dataHora="20251218105930" mimetype="text/html" nivelSigilo="0" movimento="441982707" hash="120488650096677471910612032242011114683" descricao="Decisão">
+          <ns3:outroParametro nome="NomeArquivo" valor="sentencaprocedente_o_pedido.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Decisão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="490656526" tipoDocumento="16" dataHora="20251215212705" mimetype="application/pdf" nivelSigilo="0" movimento="441162497" hash="62015194916276035223664480027169201441" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="producaodeprovas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="489624276" tipoDocumento="16" dataHora="20251211112941" mimetype="application/pdf" nivelSigilo="0" movimento="440099929" hash="304792968468777840029439504904704110229" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="manifestacaodesinteresseemproducaodeprovas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="487755681" tipoDocumento="199" dataHora="20251203154513" mimetype="text/html" nivelSigilo="0" movimento="438141985" hash="214575900542723336294984839144380788375" descricao="Ato Ordinatório">
+          <ns3:outroParametro nome="NomeArquivo" valor="ato_ordinatorio_3upj_intimacao_provas.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Ato Ordinatório"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="487084943" tipoDocumento="16" dataHora="20251201170642" mimetype="application/pdf" nivelSigilo="0" movimento="437460984" hash="307234111166526846745976382069084241502" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="manifestacaointimacaojslcorreios.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="487084944" tipoDocumento="1" dataHora="20251201170643" mimetype="application/pdf" nivelSigilo="0" movimento="437460984" hash="264306151392587104753876109214428590281" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="enviocorreios.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="487084945" tipoDocumento="1" dataHora="20251201170643" mimetype="application/pdf" nivelSigilo="0" movimento="437460984" hash="168813897677283700667847531883769824403" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="entregaintimacaocorreios.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="485986160" tipoDocumento="16" dataHora="20251126200301" mimetype="application/pdf" nivelSigilo="0" movimento="436342354" hash="137447353253425748743381007644909195344" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="impugnacaoacontestacao.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="484258272" tipoDocumento="38" dataHora="20251118225143" mimetype="text/html" nivelSigilo="0" movimento="434623400" hash="11076172227304094940955298495238999184" descricao="Despacho">
+          <ns3:outroParametro nome="NomeArquivo" valor="autora_viabilizar_citacao_da_1_requerida.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Despacho"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="482066025" tipoDocumento="16" dataHora="20251110204936" mimetype="application/pdf" nivelSigilo="0" movimento="432373546" hash="6738100366816832225944713028553363071" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="manifestacaointimacaojsl.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="482066026" tipoDocumento="16" dataHora="20251110204936" mimetype="application/pdf" nivelSigilo="0" movimento="432373546" hash="91302070261426249535818955118618143825" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="intimacaowhatsapp.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="479297403" tipoDocumento="199" dataHora="20251030171959" mimetype="text/html" nivelSigilo="0" movimento="429522453" hash="130962302832097655172323353666352017659" descricao="Ato Ordinatório">
+          <ns3:outroParametro nome="NomeArquivo" valor="online.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Ato Ordinatório"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156706" tipoDocumento="23" dataHora="20251023175422" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="245684444284781198488050156683979587018" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="contestacaovcadesaoilegitimidadediligenciasdeonusdaempregadoradesidiadeoutremdmo.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156707" tipoDocumento="23" dataHora="20251023175422" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="126651735535847412184991393179800539549" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.contrato1.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156708" tipoDocumento="23" dataHora="20251023175422" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="294129680975968025975331196108222931899" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.contrato2.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156712" tipoDocumento="23" dataHora="20251023175423" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="306151905890911186044878697115566941169" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.contrato3.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156713" tipoDocumento="23" dataHora="20251023175423" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="125501959891168698150473945290884060143" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.contrato4.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156715" tipoDocumento="23" dataHora="20251023175423" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="40789258328537701122255683990887489979" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.contrato5.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156717" tipoDocumento="23" dataHora="20251023175423" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="186588139196637692165294211336246709834" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.condicoesgerais1.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156719" tipoDocumento="23" dataHora="20251023175424" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="112126348740374574135751249222896214002" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.condicoesgerais2.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156720" tipoDocumento="23" dataHora="20251023175424" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="315256553205699862788329733386440251035" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.condicoesgerais3.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156722" tipoDocumento="23" dataHora="20251023175424" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="303055490511220294997217128588527236438" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.condicoesgerais4.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156724" tipoDocumento="23" dataHora="20251023175424" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="329211327064432528397720660273988283815" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.condicoesgerais5.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156725" tipoDocumento="23" dataHora="20251023175425" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="86447569905460251861132617952984528547" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="3.informacoesdobeneficiario.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156726" tipoDocumento="23" dataHora="20251023175425" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="241909484683688208121683068095230820159" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="6.movimento_anexos_2505191746521.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="478156729" tipoDocumento="23" dataHora="20251023175425" mimetype="application/pdf" nivelSigilo="0" movimento="428502767" hash="316683971777117303258033856831736677825" descricao="Contestação">
+          <ns3:outroParametro nome="NomeArquivo" valor="6.movimento_anexos_2505191746521.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Contestação"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="474415930" tipoDocumento="16" dataHora="20251009160430" mimetype="application/pdf" nivelSigilo="0" movimento="424629951" hash="63890188660940212236625686257443631705" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="manifestacaocomprovarcumprimentoliminar.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="474415931" tipoDocumento="16" dataHora="20251009160430" mimetype="application/pdf" nivelSigilo="0" movimento="424629951" hash="37563785926012720686573905358573757018" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="atadeposse2024a2028.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="474415934" tipoDocumento="16" dataHora="20251009160431" mimetype="application/pdf" nivelSigilo="0" movimento="424629951" hash="66765949805624670134974313206421170270" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="estatutosocial.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="474415937" tipoDocumento="16" dataHora="20251009160431" mimetype="application/pdf" nivelSigilo="0" movimento="424629951" hash="246786172343450012291262640592030760709" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="procuracaopublica.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="474415939" tipoDocumento="16" dataHora="20251009160431" mimetype="application/pdf" nivelSigilo="0" movimento="424629951" hash="137482351636842030962807646185527976119" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="substabelecimento.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473775415" tipoDocumento="13" dataHora="20251007174054" mimetype="application/pdf" nivelSigilo="0" movimento="423963543" hash="91808229663113371325212914812570438300" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="6004846.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473775416" tipoDocumento="13" dataHora="20251007174054" mimetype="text/html" nivelSigilo="0" movimento="423963543" hash="52315635632147977863579988307812241000" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="online.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473578658" tipoDocumento="13" dataHora="20251007122710" mimetype="text/html" nivelSigilo="0" movimento="423769127" hash="204929678557370472502857530181119432171" descricao="Certidão">
+          <ns3:outroParametro nome="NomeArquivo" valor="online.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Certidão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473153163" tipoDocumento="33" dataHora="20251006094254" mimetype="text/html" nivelSigilo="0" movimento="423356268" hash="319117246646335379109845827545857302244" descricao="Mandado">
+          <ns3:outroParametro nome="NomeArquivo" valor="online.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Mandado"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473152405" tipoDocumento="33" dataHora="20251006094135" mimetype="text/html" nivelSigilo="0" movimento="423355932" hash="30251159937741876989663214386404474499" descricao="Mandado">
+          <ns3:outroParametro nome="NomeArquivo" valor="online.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Mandado"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="473037810" tipoDocumento="15" dataHora="20251004003033" mimetype="text/html" nivelSigilo="0" movimento="423242696" hash="232989875849896921435613706586082677787" descricao="Decisão">
+          <ns3:outroParametro nome="NomeArquivo" valor="defere_gratuidade_defere_tutela_de_urgencia_citar.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Decisão"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373781" tipoDocumento="16" dataHora="20251001205507" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="330695242552506419493562776050911767552" descricao="Petição">
+          <ns3:outroParametro nome="NomeArquivo" valor="manifestacaogratuidade.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373782" tipoDocumento="1" dataHora="20251001205507" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="48050102555048010414454826584494341742" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="comprovantedeendereco.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373783" tipoDocumento="1" dataHora="20251001205507" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="125071970063762098201312983459030252549" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="comprovantederendasthefany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373784" tipoDocumento="1" dataHora="20251001205508" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="246333945136823660441076144197496136005" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="extratobancariolucasi.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373785" tipoDocumento="1" dataHora="20251001205509" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="5778639960411795337741892834529850074" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="extratobancariolucasii.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373789" tipoDocumento="1" dataHora="20251001205511" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="117237362475787004162124875902240168205" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="extratobancariolucasiii.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373790" tipoDocumento="1" dataHora="20251001205513" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="61094315922377311012022917873852212783" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="extratobancariostephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373791" tipoDocumento="1" dataHora="20251001205513" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="133260982551328071239153977889541065735" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="irlucas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373802" tipoDocumento="1" dataHora="20251001205516" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="231280927535123562256089329948842578976" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="irlucasii.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="472373803" tipoDocumento="1" dataHora="20251001205516" mimetype="application/pdf" nivelSigilo="0" movimento="422525008" hash="207758849949922352970343408958229578261" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="6.despesasfinanciamentoimobiliario.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="469526807" tipoDocumento="38" dataHora="20250922115510" mimetype="text/html" nivelSigilo="0" movimento="419583497" hash="329985170999368229959299297674887275016" descricao="Despacho">
+          <ns3:outroParametro nome="NomeArquivo" valor="decurso_do_prazo.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Despacho"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="469004261" tipoDocumento="1" dataHora="20250918190405" mimetype="text/html" nivelSigilo="0" movimento="419057385" hash="42631374597846012983934688634990956068" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="ia_berna_analisepartes_tjgo.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468823482" tipoDocumento="199" dataHora="20250918135115" mimetype="text/html" nivelSigilo="0" movimento="418874465" hash="161606906132129781927427229869889530169" descricao="Ato Ordinatório">
+          <ns3:outroParametro nome="NomeArquivo" valor="verificacao_inicial_gratuidade_pessoa_fisica_3upj.html"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Ato Ordinatório"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796985" tipoDocumento="6" dataHora="20250918130328" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="77695212829974731773821163654526041295" descricao="Petição Inicial">
+          <ns3:outroParametro nome="NomeArquivo" valor="peticaoinicialrv.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Petição Inicial"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796987" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="25286793460932005102191762385292366988" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.1ctpslucas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796988" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="100889670193855350126654123557364210098" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="1.cnhlucas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796990" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="138624062374123804064289830122581830511" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.1ctpssthefany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796991" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="145944212465580227295162282368521719219" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="2.rgstephanyfrente.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796992" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="224775051960302755649303058723933259460" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="3.certidaodenascimentobianca.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796993" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="248778261680377233668936854193437662929" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="4.1.procuracaostephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796995" tipoDocumento="1" dataHora="20250918130329" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="336635962336206454431987098820990267866" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="4.procuracaolucas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796998" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="94725029270827319479967072433258618771" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="5.1.declaracaohipossuficienciastephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468796999" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="304629429373773032615159335238847846675" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="5.declaracaodehipossuficiencialucas.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797002" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="213269460511498439608615081013845861132" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="6.despesasfinanciamentoimobiliario.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797003" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="329512408821663672740222563501704307210" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="7.pagamentoprestacaocreditoimobiliario.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797004" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="197764394718895852979312554346237362024" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="8.laudoavaliacaoneuropsicologicastephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797005" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="90047752412152461266047809075630748317" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="9.encaminhamentoparapsicoterapia.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797006" tipoDocumento="1" dataHora="20250918130330" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="73517050135747468948979724552309371866" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="10.relatoriomedicostephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797007" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="183760461309562724979534680581820930383" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="11.declaracaoservicodepsicologia.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797009" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="267561321570963438280259205632615854270" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="12.conversasunimed.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797011" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="325265933900163302675396815029447370969" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="13.conversasrhjsl.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797012" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="198312115287816339118319353484207434788" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="14.examesstephany.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797013" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="82377332825413244111926990632215049235" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="15.seguroimobiliario.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797014" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="232045653800230987500704668038597229911" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="16.cnpjjsl.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797015" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="173713478249311171756144979974757414726" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="17.opcaoporpermanencianoplano.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797016" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="60767839823812214085314762003480509432" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="18.1.comprovantedepagamentoconsultapsiquiatrica.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+        <ns3:documento idDocumento="468797017" tipoDocumento="1" dataHora="20250918130331" mimetype="application/pdf" nivelSigilo="0" movimento="418845724" hash="279185873037368985465113468624219479088" descricao="Outros">
+          <ns3:outroParametro nome="NomeArquivo" valor="18.consultapsiquiatricaagendamento.pdf"/>
+          <ns3:outroParametro nome="ArquivoTipo" valor="Outros"/>
+        </ns3:documento>
+      </ns2:processo>
+    </ns5:consultarProcessoResposta>
+  </soap:Body>
+</soap:Envelope>

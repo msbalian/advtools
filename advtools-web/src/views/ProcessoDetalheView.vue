@@ -44,7 +44,10 @@ import {
   CheckSquare,
   Check,
   Edit2,
-  User
+  User,
+  Brain,
+  Zap,
+  Cpu
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -140,6 +143,40 @@ const carregarDados = async () => {
     }
 }
 
+// ==========================
+// Estado da Análise IA
+// ==========================
+const isAnalyzingIa = ref(false)
+const analiseIaResult = ref(null)
+
+const handleAnaliseIa = async () => {
+    if (!processo.value?.id) return
+    isAnalyzingIa.value = true
+    try {
+        const res = await apiFetch(`/api/processos/${processo.value.id}/analisar-ia`, {
+            method: 'POST'
+        })
+        if (res.ok) {
+            analiseIaResult.value = await res.json()
+            showMessage("Análise IA concluída com sucesso!", "success")
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro na análise.", "error")
+        }
+    } catch (e) {
+        showMessage("Erro de conexão com a IA.", "error")
+    } finally {
+        isAnalyzingIa.value = false
+    }
+}
+
+const isTJGO = computed(() => {
+    if (!processo.value?.numero_processo) return false
+    const limpo = processo.value.numero_processo.replace(/[.-]/g, '')
+    if (limpo.length !== 20) return false
+    return limpo[13] === '8' && limpo.substring(14, 16) === '09'
+})
+
 const handleSaveProcesso = async (formData) => {
     isSaving.value = true
     try {
@@ -172,11 +209,12 @@ const handleSaveProcesso = async (formData) => {
     }
 }
 
-const handleAtualizarDataJud = async () => {
+const handleAtualizarProcesso = async () => {
     if (!processo.value?.numero_processo || isNew.value) return
     isUpdating.value = true
     try {
-        const res = await apiFetch(`/api/processos/${processo.value.id}/atualizar-datajud`, {
+        const endpoint = isTJGO.value ? `/api/processos/${processo.value.id}/atualizar-mni` : `/api/processos/${processo.value.id}/atualizar-datajud`
+        const res = await apiFetch(endpoint, {
             method: 'POST'
         })
         if (res.ok) {
@@ -321,6 +359,7 @@ onMounted(carregarDados)
 const tabs = [
     { id: 'resumo', name: 'Resumo', icon: Scale },
     { id: 'timeline', name: 'Movimentações', icon: History },
+    { id: 'analise', name: 'Análise IA', icon: Brain },
     { id: 'tarefas', name: 'Tarefas', icon: CheckSquare },
     { id: 'partes', name: 'Partes e Assuntos', icon: Users },
     { id: 'documentos', name: 'Documentos', icon: FileText }
@@ -406,11 +445,12 @@ const tabs = [
                  </div>
                  <div class="mt-6 sm:mt-0 flex gap-3">
                     <button v-if="processo.numero_processo"
-                            @click="handleAtualizarDataJud" 
+                            @click="handleAtualizarProcesso" 
                             :disabled="isUpdating"
-                            class="px-6 py-3 bg-indigo-50 text-indigo-700 font-black rounded-2xl hover:bg-indigo-100 transition-all flex items-center gap-2 border border-indigo-200 shadow-sm shadow-indigo-500/10 active:scale-95 disabled:opacity-50">
+                            :class="['px-6 py-3 font-black rounded-2xl transition-all flex items-center gap-2 border shadow-sm active:scale-95 disabled:opacity-50',
+                                     isTJGO ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 shadow-emerald-500/10' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200 shadow-indigo-500/10']">
                        <RefreshCw :class="['w-5 h-5', isUpdating ? 'animate-spin' : '']" />
-                       {{ isUpdating ? 'Sincronizando...' : 'Atualizar DataJud' }}
+                       {{ isUpdating ? 'Sincronizando...' : (isTJGO ? 'Atualizar PROJUDI' : 'Atualizar DataJud') }}
                     </button>
                     <button @click="showEditForm = true" class="p-3 bg-white text-slate-400 border border-slate-200 rounded-2xl hover:bg-slate-50 hover:text-primary-600 transition-all" title="Editar Processo">
                        <Pencil class="w-6 h-6" />
@@ -558,6 +598,88 @@ const tabs = [
                     <div v-if="!(processo.movimentacoes?.length)" class="text-center py-20">
                        <p class="text-slate-400 font-bold text-sm">Nenhuma movimentação registrada.</p>
                     </div>
+                 </div>
+              </div>
+
+              <!-- Tab Content: Análise IA -->
+              <div v-show="activeTab === 'analise'" class="bg-gradient-to-br from-amber-50 to-orange-50 p-8 rounded-[40px] shadow-sm ring-1 ring-amber-100 animate-fade-in-up">
+                 <div class="flex items-center justify-between mb-10">
+                    <div>
+                        <h3 class="text-lg font-black text-amber-900 flex items-center gap-2">
+                           <Brain class="w-6 h-6 text-amber-600" /> Inteligência Artificial
+                        </h3>
+                        <p class="text-xs text-amber-700 font-medium mt-1">Análise de prazos e extração de insights usando o Gemini</p>
+                    </div>
+                    <button @click="handleAnaliseIa" :disabled="isAnalyzingIa" class="px-6 py-3 bg-amber-500 text-white font-black text-xs rounded-2xl hover:bg-amber-600 transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50">
+                       <Cpu v-if="!isAnalyzingIa" class="w-4 h-4" />
+                       <RefreshCw v-else class="w-4 h-4 animate-spin" />
+                       {{ isAnalyzingIa ? 'Analisando 100+ Movimentações...' : 'Gerar Nova Análise' }}
+                    </button>
+                 </div>
+
+                 <!-- Estado Vazio -->
+                 <div v-if="!analiseIaResult && !isAnalyzingIa" class="text-center py-20 bg-white/50 backdrop-blur-sm rounded-[30px] border border-amber-200/50">
+                    <Zap class="w-12 h-12 text-amber-300 mx-auto mb-4" />
+                    <h4 class="text-xl font-black text-amber-900">Nenhuma análise disponível</h4>
+                    <p class="text-sm text-amber-700 mt-2 max-w-md mx-auto">Solicite à inteligência artificial para examinar todo o histórico do processo e identificar prazos, tarefas e pontos de atenção urgentes.</p>
+                 </div>
+
+                 <!-- Loading State -->
+                 <div v-if="isAnalyzingIa" class="py-20 text-center">
+                    <div class="relative w-24 h-24 mx-auto mb-6">
+                        <div class="absolute inset-0 border-4 border-amber-200 rounded-full animate-pulse"></div>
+                        <div class="absolute inset-0 border-4 border-amber-500 rounded-full animate-spin border-t-transparent"></div>
+                        <Brain class="w-10 h-10 text-amber-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <h4 class="text-lg font-black text-amber-900 animate-pulse">Lendo milhares de páginas...</h4>
+                    <p class="text-sm text-amber-700 mt-2 font-medium">O modelo Gemini está raciocinando sobre as peças judiciais.</p>
+                 </div>
+
+                 <!-- Resultados -->
+                 <div v-if="analiseIaResult && !isAnalyzingIa" class="space-y-6">
+                     <!-- Card Resumo -->
+                     <div class="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm">
+                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo Processual</h4>
+                         <p class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.resumoHistoria }}</p>
+                     </div>
+
+                     <!-- Alertas Grid -->
+                     <div v-if="analiseIaResult.alertas?.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div v-for="(alerta, index) in analiseIaResult.alertas" :key="'alerta-'+index" 
+                              :class="['p-5 rounded-2xl border', alerta.urgencia === 'ALTA' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200']">
+                             <div class="flex items-start gap-3">
+                                 <ShieldAlert :class="['w-5 h-5 flex-shrink-0', alerta.urgencia === 'ALTA' ? 'text-red-500' : 'text-orange-500']" />
+                                 <div>
+                                     <h5 :class="['text-xs font-black uppercase mb-1', alerta.urgencia === 'ALTA' ? 'text-red-800' : 'text-orange-800']">{{ alerta.tipo }}</h5>
+                                     <p :class="['text-sm font-medium leading-snug', alerta.urgencia === 'ALTA' ? 'text-red-900' : 'text-orange-900']">{{ alerta.mensagem }}</p>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+
+                     <!-- Tarefas Recomendadas -->
+                     <div v-if="analiseIaResult.tarefasPendentes?.length > 0">
+                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 mt-8">Ações Recomendadas</h4>
+                         <div class="space-y-3">
+                             <div v-for="(tarefa, index) in analiseIaResult.tarefasPendentes" :key="'taref-'+index" 
+                                  class="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm group">
+                                 <div>
+                                     <div class="flex items-center gap-2 mb-1">
+                                         <BadgeDollarSign v-if="tarefa.acao.toLowerCase().includes('pagar') || tarefa.acao.toLowerCase().includes('custas')" class="w-4 h-4 text-emerald-500" />
+                                         <FileSearch v-else class="w-4 h-4 text-indigo-500" />
+                                         <span class="text-sm font-black text-slate-800">{{ tarefa.acao }}</span>
+                                     </div>
+                                     <p v-if="tarefa.observacao" class="text-xs text-slate-500 font-medium ml-6">{{ tarefa.observacao }}</p>
+                                 </div>
+                                 <div class="text-right flex-shrink-0">
+                                     <div v-if="tarefa.prazoDataFim || tarefa.prazoDiasUteis" class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-1 rounded-lg uppercase">
+                                         <span v-if="tarefa.prazoDataFim">Prazo: {{ tarefa.prazoDataFim }}</span>
+                                         <span v-else>{{ tarefa.prazoDiasUteis }} dias úteis</span>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
                  </div>
               </div>
 

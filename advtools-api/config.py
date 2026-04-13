@@ -35,6 +35,10 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     DATAJUD_KEY = os.getenv("DATAJUD_KEY")
 
+    # PROJUDI / MNI WebService
+    PROJUDI_USER = os.getenv("PROJUDI_USER")
+    PROJUDI_PASSWORD = os.getenv("PROJUDI_PASSWORD")
+
     # CORS e Frontend
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:5173,http://localhost:5174")
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")

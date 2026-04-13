@@ -14,7 +14,10 @@ from services.processo_service import (
     update_processo_service,
     delete_processo_service,
     buscar_e_criar_datajud_service,
-    atualizar_processo_datajud_service
+    atualizar_processo_datajud_service,
+    buscar_e_criar_mni_service,
+    atualizar_processo_mni_service,
+    analisar_processo_ia_service,
 )
 
 router = APIRouter(prefix="/api/processos", tags=["Processos"])
@@ -86,4 +89,34 @@ async def update_processo_datajud(
 ):
     return await atualizar_processo_datajud_service(
         db, processo_id, current_user.escritorio_id, current_user.id
+    )
+
+@router.post("/buscar-mni", response_model=schemas.ProcessoResponse)
+async def import_processo_mni(
+    request: schemas.MNIBuscaRequest,
+    current_user: models.Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await buscar_e_criar_mni_service(
+        db, request, current_user.escritorio_id, current_user.id
+    )
+
+@router.post("/{processo_id}/atualizar-mni", response_model=schemas.ProcessoResponse)
+async def update_processo_mni(
+    processo_id: int,
+    current_user: models.Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await atualizar_processo_mni_service(
+        db, processo_id, current_user.escritorio_id, current_user.id
+    )
+
+@router.post("/{processo_id}/analisar-ia", response_model=schemas.MNIAnaliseResponse)
+async def analisar_processo_ia(
+    processo_id: int,
+    current_user: models.Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await analisar_processo_ia_service(
+        db, processo_id, current_user.escritorio_id
     )

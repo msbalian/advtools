@@ -1,0 +1,1721 @@
+{
+  "cabecalho": {
+    "numero": "5760243-22.2025.8.09.0051",
+    "classeProcessual": 12134,
+    "valorCausa": 20300.0,
+    "nivelSigilo": 0,
+    "orgaoJulgador": "Goiânia - Gabinete da 9ª Vara Cível",
+    "partes": [
+      {
+        "nome": "Lucas Mendes De Oliveira",
+        "polo": "AT"
+      },
+      {
+        "nome": "Stephany Lima Cardoso",
+        "polo": "AT"
+      },
+      {
+        "nome": "Jsl S.a.",
+        "polo": "PA"
+      },
+      {
+        "nome": "Unimed Goiania Cooperativa De Trabalho Medico",
+        "polo": "PA"
+      }
+    ],
+    "advogadosDoEscritorio": [
+      {
+        "nome": "NUBIA DE SOUZA COZAC BALIAN",
+        "oab": "47259-A-",
+        "parte": "Lucas Mendes De Oliveira",
+        "polo": "AT"
+      },
+      {
+        "nome": "NUBIA DE SOUZA COZAC BALIAN",
+        "oab": "47259-A-",
+        "parte": "Stephany Lima Cardoso",
+        "polo": "AT"
+      }
+    ],
+    "Area": "Cível",
+    "ProcessoFase": "Conhecimento",
+    "ProcessoStatus": "Arquivado",
+    "DataDistribuicao": "20250918"
+  },
+  "totalMovimentacoes": 108,
+  "movimentacoes": [
+    {
+      "data": "11/04/2026 17:56",
+      "dataRaw": "20260411175645",
+      "idMovimento": "468192429",
+      "codigoNacional": 246,
+      "descricao": "Processo Arquivado",
+      "complemento": "",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:54",
+      "dataRaw": "20260408145403",
+      "idMovimento": "467187655",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:54",
+      "dataRaw": "20260408145403",
+      "idMovimento": "467187648",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Jsl S.a. (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:54",
+      "dataRaw": "20260408145402",
+      "idMovimento": "467187641",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:54",
+      "dataRaw": "20260408145402",
+      "idMovimento": "467187636",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (08/04/2026 14:41:47))",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:41",
+      "dataRaw": "20260408144147",
+      "idMovimento": "467177172",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (CNJ:466) - )",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:41",
+      "dataRaw": "20260408144147",
+      "idMovimento": "467177171",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de JS (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (CNJ:466) - )",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:41",
+      "dataRaw": "20260408144147",
+      "idMovimento": "467177170",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (CNJ:466) - )",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:41",
+      "dataRaw": "20260408144147",
+      "idMovimento": "467177169",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado) (CNJ:466) - )",
+      "documentos": null
+    },
+    {
+      "data": "08/04/2026 14:41",
+      "dataRaw": "20260408144147",
+      "idMovimento": "467177168",
+      "codigoNacional": 466,
+      "descricao": "Julgamento -> Com Resolução do Mérito -> Homologação de Transação (Acordo Homologado)",
+      "complemento": "Sentença-homologa acordo- com custas; arquivar",
+      "documentos": [
+        {
+          "id": "516529955",
+          "tipo": "14",
+          "descricao": "Sentença",
+          "mimetype": "text/html",
+          "nomeArquivo": "sentencahomologa_acordo_com_custas_arquivar.html",
+          "tipoArquivo": "Sentença"
+        }
+      ]
+    },
+    {
+      "data": "07/04/2026 19:12",
+      "dataRaw": "20260407191240",
+      "idMovimento": "466972504",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "P/ SENTENÇA",
+      "documentos": null
+    },
+    {
+      "data": "07/04/2026 19:12",
+      "dataRaw": "20260407191204",
+      "idMovimento": "466972252",
+      "codigoNacional": 849,
+      "descricao": "Processo Reativado",
+      "complemento": "CERTIDÃO - Reativação autos - 3UPJ",
+      "documentos": [
+        {
+          "id": "516323305",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "text/html",
+          "nomeArquivo": "certidao_reativacao_autos_3upj.html",
+          "tipoArquivo": "Certidão"
+        }
+      ]
+    },
+    {
+      "data": "07/04/2026 19:10",
+      "dataRaw": "20260407191002",
+      "idMovimento": "466971410",
+      "codigoNacional": 60,
+      "descricao": "Certidão Expedida",
+      "complemento": "CERTIDÃO - Reativação autos - 3UPJ",
+      "documentos": [
+        {
+          "id": "516321951",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "text/html",
+          "nomeArquivo": "certidao_reativacao_autos_3upj.html",
+          "tipoArquivo": "Certidão"
+        }
+      ]
+    },
+    {
+      "data": "07/04/2026 19:08",
+      "dataRaw": "20260407190838",
+      "idMovimento": "466970727",
+      "codigoNacional": 893,
+      "descricao": "Processo Desarquivado",
+      "complemento": "",
+      "documentos": null
+    },
+    {
+      "data": "07/04/2026 11:38",
+      "dataRaw": "20260407113817",
+      "idMovimento": "466682374",
+      "codigoNacional": 581,
+      "descricao": "Juntada de Documento",
+      "complemento": "",
+      "documentos": [
+        {
+          "id": "516046678",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "text/html",
+          "nomeArquivo": "devolve_custas_acordo_evento_retro.html",
+          "tipoArquivo": "Certidão"
+        }
+      ]
+    },
+    {
+      "data": "02/04/2026 14:26",
+      "dataRaw": "20260402142631",
+      "idMovimento": "466056272",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Pedido de Homologação de Acordo",
+      "documentos": [
+        {
+          "id": "515391818",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "minutadeacordoassinadalucasmendesdeoliveira.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "09/03/2026 12:18",
+      "dataRaw": "20260309121802",
+      "idMovimento": "459315921",
+      "codigoNacional": 246,
+      "descricao": "Processo Arquivado",
+      "complemento": "",
+      "documentos": null
+    },
+    {
+      "data": "09/03/2026 12:17",
+      "dataRaw": "20260309121719",
+      "idMovimento": "459315616",
+      "codigoNacional": 848,
+      "descricao": "Transitado em Julgado",
+      "complemento": "para Unimed Goiania Cooperativa De Trabalho Medico em 04/03/2026 23:59:59 (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "09/03/2026 12:17",
+      "dataRaw": "20260309121716",
+      "idMovimento": "459315604",
+      "codigoNacional": 848,
+      "descricao": "Transitado em Julgado",
+      "complemento": "para Jsl S.a. em 04/03/2026 23:59:59 (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "09/03/2026 12:17",
+      "dataRaw": "20260309121713",
+      "idMovimento": "459315584",
+      "codigoNacional": 848,
+      "descricao": "Transitado em Julgado",
+      "complemento": "para Stephany Lima Cardoso em 04/03/2026 23:59:59 (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "09/03/2026 12:17",
+      "dataRaw": "20260309121710",
+      "idMovimento": "459315566",
+      "codigoNacional": 848,
+      "descricao": "Transitado em Julgado",
+      "complemento": "para Lucas Mendes De Oliveira em 04/03/2026 23:59:59 (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:50",
+      "dataRaw": "20260205005003",
+      "idMovimento": "450726775",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:50",
+      "dataRaw": "20260205005003",
+      "idMovimento": "450726774",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Jsl S.a. (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:50",
+      "dataRaw": "20260205005003",
+      "idMovimento": "450726773",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:50",
+      "dataRaw": "20260205005002",
+      "idMovimento": "450726772",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (05/02/2026 00:43:56))",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:43",
+      "dataRaw": "20260205004356",
+      "idMovimento": "450726408",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (CNJ:15164) - )",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:43",
+      "dataRaw": "20260205004356",
+      "idMovimento": "450726407",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de JS (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (CNJ:15164) - )",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:43",
+      "dataRaw": "20260205004356",
+      "idMovimento": "450726406",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (CNJ:15164) - )",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:43",
+      "dataRaw": "20260205004356",
+      "idMovimento": "450726405",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -> Não Acolhimento de Embargos de Declaração (CNJ:15164) - )",
+      "documentos": null
+    },
+    {
+      "data": "05/02/2026 00:43",
+      "dataRaw": "20260205004356",
+      "idMovimento": "450726404",
+      "codigoNacional": 15164,
+      "descricao": "Decisão -> Não Acolhimento de Embargos de Declaração",
+      "complemento": "Embargos não acolhidos/improvidos; intimar",
+      "documentos": [
+        {
+          "id": "500228053",
+          "tipo": "15",
+          "descricao": "Decisão",
+          "mimetype": "text/html",
+          "nomeArquivo": "embargos_nao_acolhidosimprovidos_intimar.html",
+          "tipoArquivo": "Decisão"
+        }
+      ]
+    },
+    {
+      "data": "03/02/2026 17:00",
+      "dataRaw": "20260203170041",
+      "idMovimento": "450244876",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "P/ DECISÃO",
+      "documentos": null
+    },
+    {
+      "data": "29/01/2026 21:34",
+      "dataRaw": "20260129213450",
+      "idMovimento": "449066404",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição -> Contrarrazões",
+      "complemento": "Contrarrazões aos Embargos Declaratórios",
+      "documentos": [
+        {
+          "id": "498596333",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "contrarrazoesaosembargosdeclaratorios.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "16/01/2026 09:31",
+      "dataRaw": "20260116093120",
+      "idMovimento": "445382939",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Embargos de declaração (14/01/2026 15:42:04))",
+      "documentos": null
+    },
+    {
+      "data": "16/01/2026 09:31",
+      "dataRaw": "20260116093119",
+      "idMovimento": "445382938",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Embargos de declaração (14/01/2026 15:42:04))",
+      "documentos": null
+    },
+    {
+      "data": "16/01/2026 09:24",
+      "dataRaw": "20260116092442",
+      "idMovimento": "445381774",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Embargos de declaração - 14/01/2026 15:42:04)",
+      "documentos": null
+    },
+    {
+      "data": "16/01/2026 09:24",
+      "dataRaw": "20260116092442",
+      "idMovimento": "445381773",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Embargos de declaração - 14/01/2026 15:42:04)",
+      "documentos": null
+    },
+    {
+      "data": "14/01/2026 15:42",
+      "dataRaw": "20260114154204",
+      "idMovimento": "444931808",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição -> Embargos de declaração",
+      "complemento": "",
+      "documentos": [
+        {
+          "id": "494617428",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "ednasentencanulidadecitacaolucasmendesdeoliveiraxjsl.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "494617431",
+          "tipo": "8",
+          "descricao": "Procuração",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "procuracaopublicajsls.a..pdf",
+          "tipoArquivo": "Procuração"
+        },
+        {
+          "id": "494617432",
+          "tipo": "17",
+          "descricao": "Substabelecimento",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "substabelecimento.pdf",
+          "tipoArquivo": "Substabelecimento"
+        }
+      ]
+    },
+    {
+      "data": "18/12/2025 11:02",
+      "dataRaw": "20251218110218",
+      "idMovimento": "441984085",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (18/12/2025 10:59:30))",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 11:02",
+      "dataRaw": "20251218110218",
+      "idMovimento": "441984084",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (18/12/2025 10:59:30))",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 11:02",
+      "dataRaw": "20251218110218",
+      "idMovimento": "441984081",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (18/12/2025 10:59:30))",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 10:59",
+      "dataRaw": "20251218105930",
+      "idMovimento": "441982710",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (CNJ:219) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 10:59",
+      "dataRaw": "20251218105930",
+      "idMovimento": "441982709",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (CNJ:219) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 10:59",
+      "dataRaw": "20251218105930",
+      "idMovimento": "441982708",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Julgamento -> Com Resolução do Mérito -> Procedência (CNJ:219) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/12/2025 10:59",
+      "dataRaw": "20251218105930",
+      "idMovimento": "441982707",
+      "codigoNacional": 219,
+      "descricao": "Julgamento -> Com Resolução do Mérito -> Procedência",
+      "complemento": "Sentença-procedente o pedido",
+      "documentos": [
+        {
+          "id": "491471189",
+          "tipo": "15",
+          "descricao": "Decisão",
+          "mimetype": "text/html",
+          "nomeArquivo": "sentencaprocedente_o_pedido.html",
+          "tipoArquivo": "Decisão"
+        }
+      ]
+    },
+    {
+      "data": "16/12/2025 09:42",
+      "dataRaw": "20251216094244",
+      "idMovimento": "441205797",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "P/ DECISÃO",
+      "documentos": null
+    },
+    {
+      "data": "15/12/2025 21:27",
+      "dataRaw": "20251215212705",
+      "idMovimento": "441162497",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Produção de Provas Justificadas",
+      "documentos": [
+        {
+          "id": "490656526",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "producaodeprovas.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "11/12/2025 11:29",
+      "dataRaw": "20251211112941",
+      "idMovimento": "440099929",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Dispensa produção de provas e indica pontos controvertidos",
+      "documentos": [
+        {
+          "id": "489624276",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "manifestacaodesinteresseemproducaodeprovas.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "03/12/2025 15:53",
+      "dataRaw": "20251203155308",
+      "idMovimento": "438147224",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:53",
+      "dataRaw": "20251203155308",
+      "idMovimento": "438147220",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:53",
+      "dataRaw": "20251203155308",
+      "idMovimento": "438147216",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Certidão Expedida (03/12/2025 15:45:13))",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:45",
+      "dataRaw": "20251203154513",
+      "idMovimento": "438141989",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Unimed Goiania Cooperativa De Trabalho Medico (Referente à Mov. Certidão Expedida (CNJ:60) - )",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:45",
+      "dataRaw": "20251203154513",
+      "idMovimento": "438141987",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Certidão Expedida (CNJ:60) - )",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:45",
+      "dataRaw": "20251203154513",
+      "idMovimento": "438141986",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Certidão Expedida (CNJ:60) - )",
+      "documentos": null
+    },
+    {
+      "data": "03/12/2025 15:45",
+      "dataRaw": "20251203154513",
+      "idMovimento": "438141985",
+      "codigoNacional": 60,
+      "descricao": "Certidão Expedida",
+      "complemento": "ATO ORDINATÓRIO 3UPJ - INTIMAÇÃO PROVAS",
+      "documentos": [
+        {
+          "id": "487755681",
+          "tipo": "199",
+          "descricao": "Ato Ordinatório",
+          "mimetype": "text/html",
+          "nomeArquivo": "ato_ordinatorio_3upj_intimacao_provas.html",
+          "tipoArquivo": "Ato Ordinatório"
+        }
+      ]
+    },
+    {
+      "data": "01/12/2025 17:06",
+      "dataRaw": "20251201170643",
+      "idMovimento": "437460984",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Citação Efetivada",
+      "documentos": [
+        {
+          "id": "487084943",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "manifestacaointimacaojslcorreios.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "487084944",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "enviocorreios.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "487084945",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "entregaintimacaocorreios.pdf",
+          "tipoArquivo": "Outros"
+        }
+      ]
+    },
+    {
+      "data": "26/11/2025 20:03",
+      "dataRaw": "20251126200301",
+      "idMovimento": "436342354",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição -> Impugnação",
+      "complemento": "Impugnação à Contestação",
+      "documentos": [
+        {
+          "id": "485986160",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "impugnacaoacontestacao.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "18/11/2025 23:00",
+      "dataRaw": "20251118230046",
+      "idMovimento": "434624265",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -> Determinação de Citação (18/11/2025 22:51:43))",
+      "documentos": null
+    },
+    {
+      "data": "18/11/2025 23:00",
+      "dataRaw": "20251118230046",
+      "idMovimento": "434624264",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -> Determinação de Citação (18/11/2025 22:51:43))",
+      "documentos": null
+    },
+    {
+      "data": "18/11/2025 22:51",
+      "dataRaw": "20251118225143",
+      "idMovimento": "434623402",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -> Determinação de Citação (CNJ:15216) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/11/2025 22:51",
+      "dataRaw": "20251118225143",
+      "idMovimento": "434623401",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -> Determinação de Citação (CNJ:15216) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/11/2025 22:51",
+      "dataRaw": "20251118225143",
+      "idMovimento": "434623400",
+      "codigoNacional": 15216,
+      "descricao": "Despacho -> Determinação de Citação",
+      "complemento": "Autora viabilizar citação da 1ª requerida",
+      "documentos": [
+        {
+          "id": "484258272",
+          "tipo": "38",
+          "descricao": "Despacho",
+          "mimetype": "text/html",
+          "nomeArquivo": "autora_viabilizar_citacao_da_1_requerida.html",
+          "tipoArquivo": "Despacho"
+        }
+      ]
+    },
+    {
+      "data": "17/11/2025 10:05",
+      "dataRaw": "20251117100554",
+      "idMovimento": "433924139",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "P/ DESPACHO",
+      "documentos": null
+    },
+    {
+      "data": "10/11/2025 20:49",
+      "dataRaw": "20251110204936",
+      "idMovimento": "432373546",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Intimação JSL",
+      "documentos": [
+        {
+          "id": "482066025",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "manifestacaointimacaojsl.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "482066026",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "intimacaowhatsapp.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "30/10/2025 17:54",
+      "dataRaw": "20251030175419",
+      "idMovimento": "429543954",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (30/10/2025 17:19:59))",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:54",
+      "dataRaw": "20251030175419",
+      "idMovimento": "429543949",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (30/10/2025 17:19:59))",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:53",
+      "dataRaw": "20251030175315",
+      "idMovimento": "429543244",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Contestação (23/10/2025 17:54:25))",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:53",
+      "dataRaw": "20251030175314",
+      "idMovimento": "429543242",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Contestação (23/10/2025 17:54:25))",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:19",
+      "dataRaw": "20251030171959",
+      "idMovimento": "429522455",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (CNJ:11383) - )",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:19",
+      "dataRaw": "20251030171959",
+      "idMovimento": "429522454",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (CNJ:11383) - )",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:19",
+      "dataRaw": "20251030171959",
+      "idMovimento": "429522453",
+      "codigoNacional": 11383,
+      "descricao": "Ato Ordinatório",
+      "complemento": "PARTE AUTORA PROMOVER A CITAÇÃO DA 1ª REQUERIDA",
+      "documentos": [
+        {
+          "id": "479297403",
+          "tipo": "199",
+          "descricao": "Ato Ordinatório",
+          "mimetype": "text/html",
+          "nomeArquivo": "online.html",
+          "tipoArquivo": "Ato Ordinatório"
+        }
+      ]
+    },
+    {
+      "data": "30/10/2025 17:17",
+      "dataRaw": "20251030171704",
+      "idMovimento": "429520966",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Contestação - 23/10/2025 17:54:25)",
+      "documentos": null
+    },
+    {
+      "data": "30/10/2025 17:17",
+      "dataRaw": "20251030171704",
+      "idMovimento": "429520965",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Contestação - 23/10/2025 17:54:25)",
+      "documentos": null
+    },
+    {
+      "data": "23/10/2025 17:54",
+      "dataRaw": "20251023175425",
+      "idMovimento": "428502767",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição -> Contestação",
+      "complemento": "",
+      "documentos": [
+        {
+          "id": "478156706",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "contestacaovcadesaoilegitimidadediligenciasdeonusdaempregadoradesidiadeoutremdmo.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156707",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.contrato1.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156708",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.contrato2.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156712",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.contrato3.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156713",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.contrato4.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156715",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.contrato5.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156717",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.condicoesgerais1.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156719",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.condicoesgerais2.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156720",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.condicoesgerais3.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156722",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.condicoesgerais4.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156724",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.condicoesgerais5.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156725",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "3.informacoesdobeneficiario.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156726",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "6.movimento_anexos_2505191746521.pdf",
+          "tipoArquivo": "Contestação"
+        },
+        {
+          "id": "478156729",
+          "tipo": "23",
+          "descricao": "Contestação",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "6.movimento_anexos_2505191746521.pdf",
+          "tipoArquivo": "Contestação"
+        }
+      ]
+    },
+    {
+      "data": "14/10/2025 16:25",
+      "dataRaw": "20251014162555",
+      "idMovimento": "425826195",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Habilitação Requerida (09/10/2025 16:04:31))",
+      "documentos": null
+    },
+    {
+      "data": "14/10/2025 16:25",
+      "dataRaw": "20251014162555",
+      "idMovimento": "425826190",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Habilitação Requerida (09/10/2025 16:04:31))",
+      "documentos": null
+    },
+    {
+      "data": "14/10/2025 15:25",
+      "dataRaw": "20251014152535",
+      "idMovimento": "425782151",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Juntada -> Petição -> Habilitação Requerida - 09/10/2025 16:04:31)",
+      "documentos": null
+    },
+    {
+      "data": "14/10/2025 15:25",
+      "dataRaw": "20251014152535",
+      "idMovimento": "425782150",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Juntada -> Petição -> Habilitação Requerida - 09/10/2025 16:04:31)",
+      "documentos": null
+    },
+    {
+      "data": "09/10/2025 16:04",
+      "dataRaw": "20251009160431",
+      "idMovimento": "424629951",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição -> Habilitação Requerida",
+      "complemento": "Comprova cumprimento liminar",
+      "documentos": [
+        {
+          "id": "474415930",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "manifestacaocomprovarcumprimentoliminar.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "474415931",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "atadeposse2024a2028.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "474415934",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "estatutosocial.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "474415937",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "procuracaopublica.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "474415939",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "substabelecimento.pdf",
+          "tipoArquivo": "Petição"
+        }
+      ]
+    },
+    {
+      "data": "07/10/2025 17:40",
+      "dataRaw": "20251007174054",
+      "idMovimento": "423963543",
+      "codigoNacional": 106,
+      "descricao": "Mandado Cumprido",
+      "complemento": "Para Unimed Goiania Cooperativa De Trabalho Medico (Mandado nº 6004846 / Referente à Mov. Decisão -> Concessão -> Tutela Provisória (04/10/2025 00:30:33))",
+      "documentos": [
+        {
+          "id": "473775415",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "6004846.pdf",
+          "tipoArquivo": "Certidão"
+        },
+        {
+          "id": "473775416",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "text/html",
+          "nomeArquivo": "online.html",
+          "tipoArquivo": "Certidão"
+        }
+      ]
+    },
+    {
+      "data": "07/10/2025 12:52",
+      "dataRaw": "20251007125200",
+      "idMovimento": "423779655",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Mandado Não Cumprido (07/10/2025 12:27:10))",
+      "documentos": null
+    },
+    {
+      "data": "07/10/2025 12:51",
+      "dataRaw": "20251007125159",
+      "idMovimento": "423779653",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Mandado Não Cumprido (07/10/2025 12:27:10))",
+      "documentos": null
+    },
+    {
+      "data": "07/10/2025 12:45",
+      "dataRaw": "20251007124522",
+      "idMovimento": "423776863",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Mandado Não Cumprido - 07/10/2025 12:27:10)",
+      "documentos": null
+    },
+    {
+      "data": "07/10/2025 12:45",
+      "dataRaw": "20251007124522",
+      "idMovimento": "423776861",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Mandado Não Cumprido - 07/10/2025 12:27:10)",
+      "documentos": null
+    },
+    {
+      "data": "07/10/2025 12:27",
+      "dataRaw": "20251007122710",
+      "idMovimento": "423769127",
+      "codigoNacional": 106,
+      "descricao": "Mandado Não Cumprido",
+      "complemento": "Para JS (Mandado nº 6004464 / Referente à Mov. Decisão -> Concessão -> Tutela Provisória (04/10/2025 00:30:33))",
+      "documentos": [
+        {
+          "id": "473578658",
+          "tipo": "13",
+          "descricao": "Certidão",
+          "mimetype": "text/html",
+          "nomeArquivo": "online.html",
+          "tipoArquivo": "Certidão"
+        }
+      ]
+    },
+    {
+      "data": "06/10/2025 09:42",
+      "dataRaw": "20251006094255",
+      "idMovimento": "423356268",
+      "codigoNacional": 60,
+      "descricao": "Mandado Expedido",
+      "complemento": "Para Goiânia - Central de Mandados (Mandado nº 6004846 / Para: Unimed Goiania Cooperativa De Trabalho Medico)",
+      "documentos": [
+        {
+          "id": "473153163",
+          "tipo": "33",
+          "descricao": "Mandado",
+          "mimetype": "text/html",
+          "nomeArquivo": "online.html",
+          "tipoArquivo": "Mandado"
+        }
+      ]
+    },
+    {
+      "data": "06/10/2025 09:41",
+      "dataRaw": "20251006094135",
+      "idMovimento": "423355932",
+      "codigoNacional": 60,
+      "descricao": "Mandado Expedido",
+      "complemento": "Para Goiânia - Central de Mandados (Mandado nº 6004464 / Para: JS)",
+      "documentos": [
+        {
+          "id": "473152405",
+          "tipo": "33",
+          "descricao": "Mandado",
+          "mimetype": "text/html",
+          "nomeArquivo": "online.html",
+          "tipoArquivo": "Mandado"
+        }
+      ]
+    },
+    {
+      "data": "04/10/2025 00:40",
+      "dataRaw": "20251004004026",
+      "idMovimento": "423242843",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -> Concessão -> Tutela Provisória (04/10/2025 00:30:33))",
+      "documentos": null
+    },
+    {
+      "data": "04/10/2025 00:40",
+      "dataRaw": "20251004004026",
+      "idMovimento": "423242842",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -> Concessão -> Tutela Provisória (04/10/2025 00:30:33))",
+      "documentos": null
+    },
+    {
+      "data": "04/10/2025 00:30",
+      "dataRaw": "20251004003033",
+      "idMovimento": "423242699",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Decisão -> Concessão -> Tutela Provisória (CNJ:332) - )",
+      "documentos": null
+    },
+    {
+      "data": "04/10/2025 00:30",
+      "dataRaw": "20251004003033",
+      "idMovimento": "423242698",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Decisão -> Concessão -> Tutela Provisória (CNJ:332) - )",
+      "documentos": null
+    },
+    {
+      "data": "04/10/2025 00:30",
+      "dataRaw": "20251004003033",
+      "idMovimento": "423242697",
+      "codigoNacional": 787,
+      "descricao": "Decisão -> Concessão -> Gratuidade da Justiça",
+      "complemento": "",
+      "documentos": null
+    },
+    {
+      "data": "04/10/2025 00:30",
+      "dataRaw": "20251004003033",
+      "idMovimento": "423242696",
+      "codigoNacional": 332,
+      "descricao": "Decisão -> Concessão -> Tutela Provisória",
+      "complemento": "Defere - Gratuidade; defere tutela de urgência; citar",
+      "documentos": [
+        {
+          "id": "473037810",
+          "tipo": "15",
+          "descricao": "Decisão",
+          "mimetype": "text/html",
+          "nomeArquivo": "defere_gratuidade_defere_tutela_de_urgencia_citar.html",
+          "tipoArquivo": "Decisão"
+        }
+      ]
+    },
+    {
+      "data": "03/10/2025 12:54",
+      "dataRaw": "20251003125446",
+      "idMovimento": "423010879",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "COM PEDIDO DE GRATUIDADE DA JUSTIÇA",
+      "documentos": null
+    },
+    {
+      "data": "01/10/2025 20:55",
+      "dataRaw": "20251001205516",
+      "idMovimento": "422525008",
+      "codigoNacional": 85,
+      "descricao": "Juntada -> Petição",
+      "complemento": "Manifestação Gratuidade",
+      "documentos": [
+        {
+          "id": "472373781",
+          "tipo": "16",
+          "descricao": "Petição",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "manifestacaogratuidade.pdf",
+          "tipoArquivo": "Petição"
+        },
+        {
+          "id": "472373782",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "comprovantedeendereco.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373783",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "comprovantederendasthefany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373784",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "extratobancariolucasi.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373785",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "extratobancariolucasii.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373789",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "extratobancariolucasiii.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373790",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "extratobancariostephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373791",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "irlucas.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373802",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "irlucasii.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "472373803",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "6.despesasfinanciamentoimobiliario.pdf",
+          "tipoArquivo": "Outros"
+        }
+      ]
+    },
+    {
+      "data": "22/09/2025 12:01",
+      "dataRaw": "20250922120132",
+      "idMovimento": "419585738",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -> Requisição de Informações (22/09/2025 11:55:11))",
+      "documentos": null
+    },
+    {
+      "data": "22/09/2025 12:01",
+      "dataRaw": "20250922120131",
+      "idMovimento": "419585735",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -> Requisição de Informações (22/09/2025 11:55:11))",
+      "documentos": null
+    },
+    {
+      "data": "22/09/2025 11:55",
+      "dataRaw": "20250922115511",
+      "idMovimento": "419583499",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Despacho -> Requisição de Informações (CNJ:11020) - )",
+      "documentos": null
+    },
+    {
+      "data": "22/09/2025 11:55",
+      "dataRaw": "20250922115511",
+      "idMovimento": "419583498",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Despacho -> Requisição de Informações (CNJ:11020) - )",
+      "documentos": null
+    },
+    {
+      "data": "22/09/2025 11:55",
+      "dataRaw": "20250922115511",
+      "idMovimento": "419583497",
+      "codigoNacional": 11020,
+      "descricao": "Despacho -> Requisição de Informações",
+      "complemento": "decurso do prazo",
+      "documentos": [
+        {
+          "id": "469526807",
+          "tipo": "38",
+          "descricao": "Despacho",
+          "mimetype": "text/html",
+          "nomeArquivo": "decurso_do_prazo.html",
+          "tipoArquivo": "Despacho"
+        }
+      ]
+    },
+    {
+      "data": "18/09/2025 19:04",
+      "dataRaw": "20250918190405",
+      "idMovimento": "419057385",
+      "codigoNacional": 581,
+      "descricao": "Juntada de Documento",
+      "complemento": "Informativo BERNA: A BERNA IA nao detectou, no sistema Projudi/PJD, outros processos envolvendo as mesmas partes.",
+      "documentos": [
+        {
+          "id": "469004261",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "text/html",
+          "nomeArquivo": "ia_berna_analisepartes_tjgo.html",
+          "tipoArquivo": "Outros"
+        }
+      ]
+    },
+    {
+      "data": "18/09/2025 14:00",
+      "dataRaw": "20250918140031",
+      "idMovimento": "418880364",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (18/09/2025 13:51:15))",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 14:00",
+      "dataRaw": "20250918140031",
+      "idMovimento": "418880363",
+      "codigoNacional": 12266,
+      "descricao": "Intimação Efetivada",
+      "complemento": "Disponibilizada no primeiro e publicada no segundo dia útil (Lei 11.419/2006, art. 4º, §§ 3º e 4º) - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (18/09/2025 13:51:15))",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 13:51",
+      "dataRaw": "20250918135115",
+      "idMovimento": "418874468",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Stephany Lima Cardoso (Referente à Mov. Ato Ordinatório (CNJ:11383) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 13:51",
+      "dataRaw": "20250918135115",
+      "idMovimento": "418874467",
+      "codigoNacional": 12265,
+      "descricao": "Intimação Expedida",
+      "complemento": "Aguardando processamento de envio para o DJEN - Adv(s). de Lucas Mendes De Oliveira (Referente à Mov. Ato Ordinatório (CNJ:11383) - )",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 13:51",
+      "dataRaw": "20250918135115",
+      "idMovimento": "418874465",
+      "codigoNacional": 11383,
+      "descricao": "Ato Ordinatório",
+      "complemento": "Verificação inicial - gratuidade pessoa física 3UPJ",
+      "documentos": [
+        {
+          "id": "468823482",
+          "tipo": "199",
+          "descricao": "Ato Ordinatório",
+          "mimetype": "text/html",
+          "nomeArquivo": "verificacao_inicial_gratuidade_pessoa_fisica_3upj.html",
+          "tipoArquivo": "Ato Ordinatório"
+        }
+      ]
+    },
+    {
+      "data": "18/09/2025 13:03",
+      "dataRaw": "20250918130332",
+      "idMovimento": "418845748",
+      "codigoNacional": 51,
+      "descricao": "Autos Conclusos",
+      "complemento": "",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 13:03",
+      "dataRaw": "20250918130332",
+      "idMovimento": "418845747",
+      "codigoNacional": 26,
+      "descricao": "Processo Distribuído",
+      "complemento": "Goiânia - 3ª UPJ Varas Cíveis: 6ª, 7ª, 8ª, 9ª, 10ª e 11ª (Normal) - Distribuído para: Abilio Wolney Aires Neto",
+      "documentos": null
+    },
+    {
+      "data": "18/09/2025 13:03",
+      "dataRaw": "20250918130328",
+      "idMovimento": "418845724",
+      "codigoNacional": 85,
+      "descricao": "Peticão Enviada",
+      "complemento": "",
+      "documentos": [
+        {
+          "id": "468796985",
+          "tipo": "6",
+          "descricao": "Petição Inicial",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "peticaoinicialrv.pdf",
+          "tipoArquivo": "Petição Inicial"
+        },
+        {
+          "id": "468796987",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.1ctpslucas.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796988",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "1.cnhlucas.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796990",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.1ctpssthefany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796991",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "2.rgstephanyfrente.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796992",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "3.certidaodenascimentobianca.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796993",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "4.1.procuracaostephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796995",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "4.procuracaolucas.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796998",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "5.1.declaracaohipossuficienciastephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468796999",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "5.declaracaodehipossuficiencialucas.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797002",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "6.despesasfinanciamentoimobiliario.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797003",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "7.pagamentoprestacaocreditoimobiliario.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797004",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "8.laudoavaliacaoneuropsicologicastephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797005",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "9.encaminhamentoparapsicoterapia.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797006",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "10.relatoriomedicostephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797007",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "11.declaracaoservicodepsicologia.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797009",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "12.conversasunimed.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797011",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "13.conversasrhjsl.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797012",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "14.examesstephany.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797013",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "15.seguroimobiliario.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797014",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "16.cnpjjsl.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797015",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "17.opcaoporpermanencianoplano.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797016",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "18.1.comprovantedepagamentoconsultapsiquiatrica.pdf",
+          "tipoArquivo": "Outros"
+        },
+        {
+          "id": "468797017",
+          "tipo": "1",
+          "descricao": "Outros",
+          "mimetype": "application/pdf",
+          "nomeArquivo": "18.consultapsiquiatricaagendamento.pdf",
+          "tipoArquivo": "Outros"
+        }
+      ]
+    }
+  ]
+}

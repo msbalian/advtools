@@ -5,7 +5,9 @@ import schemas
 import models
 import crud
 import json
+from config import Config
 from services.datajud_service import (
+
     consultar_processo_datajud,
     mapear_dados_datajud_para_processo,
     extrair_movimentacoes,

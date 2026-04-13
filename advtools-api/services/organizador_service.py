@@ -23,9 +23,9 @@ import schemas
 from services.ai_service import analisar_documento_para_organizacao
 from services.storage_service import get_storage_provider
 from services.job_manager import job_manager
-from config import Config
 
 logger = logging.getLogger(__name__)
+
 
 async def extrair_texto_documento(file_path: str) -> str:
     """Extrai texto de PDF ou DOCX."""

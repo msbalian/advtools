@@ -650,10 +650,12 @@ const tabs = [
                  <!-- Resultados -->
                  <div v-if="analiseIaResult && !isAnalyzingIa" class="space-y-6">
                      <!-- Card Resumo -->
-                     <div class="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm">
-                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo Processual</h4>
-                         <p class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.resumoHistoria }}</p>
-                     </div>
+                      <div class="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm">
+                          <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo Processual</h4>
+                          <p v-if="analiseIaResult.resumoHistoria" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.resumoHistoria }}</p>
+                          <p v-else-if="analiseIaResult.textoRaw" class="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">{{ analiseIaResult.textoRaw }}</p>
+                          <p v-else class="text-slate-400 text-sm italic">O resumo não pôde ser estruturado para este processo.</p>
+                      </div>
 
                      <!-- Alertas Grid -->
                      <div v-if="analiseIaResult.alertas?.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">

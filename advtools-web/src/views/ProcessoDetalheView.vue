@@ -7,6 +7,7 @@ import ProcessoForm from '../components/ProcessoForm.vue'
 import FileExplorer from '../components/FileExplorer.vue'
 import TarefaBadge from '../components/TarefaBadge.vue'
 import TarefaFormModal from '../components/TarefaFormModal.vue'
+import TarefaCard from '../components/TarefaCard.vue'
 import {
   ArrowLeft,
   Scale,
@@ -152,6 +153,37 @@ const carregarDados = async () => {
     }
 }
 
+const aprovarSugestaoIA = async (tarefa) => {
+    try {
+        const res = await apiFetch(`/api/tarefas/${tarefa.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'Pendente' })
+        })
+        if (res.ok) {
+            const updated = await res.json()
+            const index = tarefas.value.findIndex(t => t.id === tarefa.id)
+            if (index !== -1) tarefas.value[index] = updated
+            showMessage("Tarefa aprovada e movida para o fluxo de trabalho!", "success")
+        }
+    } catch (e) {
+        showMessage("Erro ao aprovar tarefa.", "error")
+    }
+}
+
+const descartarSugestaoIA = async (tarefaId) => {
+    confirmAction("Deseja descartar esta sugestão da IA?", async () => {
+        try {
+            const res = await apiFetch(`/api/tarefas/${tarefaId}`, { method: 'DELETE' })
+            if (res.ok) {
+                tarefas.value = tarefas.value.filter(t => t.id !== tarefaId)
+                showMessage("Sugestão descartada.", "success")
+            }
+        } catch (e) {
+            showMessage("Erro ao descartar sugestão.", "error")
+        }
+    }, "Descartar Sugestão", "danger")
+}
+
 // ==========================
 // Estado da Análise IA
 // ==========================
@@ -172,16 +204,37 @@ const handleAnaliseIa = async () => {
                 showMessage(data.erro, "error")
             } else {
                 analiseIaResult.value = data
-                showMessage("Análise IA concluída com sucesso!", "success")
+                showMessage("Análise IA concluída e sugestões de tarefas geradas!", "success")
+                // Recarrega o processo para pegar as novas tarefas criadas pela IA
+                await carregarDados()
             }
         } else {
             const err = await res.json()
-            showMessage(err.detail || "Erro na análise.", "error")
+            showMessage(err.detail || "Erro inesperado na análise IA.", "error")
         }
     } catch (e) {
-        showMessage("Erro de conexão com a IA.", "error")
+        showMessage("Erro ao conectar com o serviço de IA.", "error")
     } finally {
         isAnalyzingIa.value = false
+    }
+}
+
+const isGeneratingTasks = ref(false)
+const handleGerarTarefasIA = async () => {
+    isGeneratingTasks.value = true
+    try {
+        const res = await apiFetch(`/api/processos/${processo.value.id}/gerar-tarefas-ia`, { method: 'POST' })
+        if (res.ok) {
+            showMessage("Tarefas geradas com sucesso a partir da análise!", "success")
+            await carregarDados()
+        } else {
+            const err = await res.json()
+            showMessage(err.detail || "Erro ao gerar tarefas.", "error")
+        }
+    } catch (e) {
+        showMessage("Erro de conexão.", "error")
+    } finally {
+        isGeneratingTasks.value = false
     }
 }
 
@@ -628,11 +681,21 @@ const tabs = [
                             Última atualização: {{ formatDate(processo.data_analise_ia, true) }}
                         </p>
                     </div>
-                    <button @click="handleAnaliseIa" :disabled="isAnalyzingIa" class="px-6 py-3 bg-amber-500 text-white font-black text-xs rounded-2xl hover:bg-amber-600 transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50">
-                       <Cpu v-if="!isAnalyzingIa" class="w-4 h-4" />
-                       <RefreshCw v-else class="w-4 h-4 animate-spin" />
-                       {{ isAnalyzingIa ? 'Analisando 100+ Movimentações...' : 'Gerar Nova Análise' }}
-                    </button>
+                     <div class="flex gap-3">
+                        <button v-if="analiseIaResult && !isAnalyzingIa" 
+                                @click="handleGerarTarefasIA" 
+                                :disabled="isGeneratingTasks"
+                                class="px-6 py-3 bg-white text-amber-600 font-bold text-xs rounded-2xl hover:bg-amber-50 transition-all flex items-center gap-2 border border-amber-200 active:scale-95 disabled:opacity-50">
+                           <Sparkles v-if="!isGeneratingTasks" class="w-4 h-4" />
+                           <RefreshCw v-else class="w-4 h-4 animate-spin" />
+                           Sincronizar Tarefas
+                        </button>
+                        <button @click="handleAnaliseIa" :disabled="isAnalyzingIa" class="px-6 py-3 bg-amber-500 text-white font-black text-xs rounded-2xl hover:bg-amber-600 transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50">
+                           <Cpu v-if="!isAnalyzingIa" class="w-4 h-4" />
+                           <RefreshCw v-else class="w-4 h-4 animate-spin" />
+                           {{ isAnalyzingIa ? 'Analisando...' : (analiseIaResult ? 'Atualizar Análise' : 'Gerar Análise') }}
+                        </button>
+                     </div>
                  </div>
 
                  <!-- Estado Vazio -->
@@ -724,55 +787,18 @@ const tabs = [
                     </button>
                  </div>
 
-                 <div class="space-y-4">
-                    <div v-for="tarefa in tarefas" :key="tarefa.id" 
-                         class="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 group transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 relative overflow-hidden">
-                       
-                       <!-- Barra Lateral de Prioridade -->
-                       <div :class="['absolute left-0 top-0 bottom-0 w-1.5 transition-all', 
-                          tarefa.prioridade === 'Urgente' ? 'bg-red-500' : 
-                          tarefa.prioridade === 'Alta' ? 'bg-orange-500' : 
-                          tarefa.prioridade === 'Normal' ? 'bg-sky-500' : 'bg-slate-300']"></div>
-
-                       <div class="flex items-center gap-6">
-                          <!-- Checkbox Custom -->
-                          <button @click="toggleTarefaStatus(tarefa)" 
-                                  :class="['w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all', 
-                                  tarefa.status === 'Concluída' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white border-slate-200 text-slate-200 hover:border-primary-500']">
-                             <Check class="w-5 h-5" />
-                          </button>
-
-                          <div class="flex-1">
-                             <div class="flex items-center gap-3 mb-1">
-                                <h4 :class="['text-base font-black transition-all', tarefa.status === 'Concluída' ? 'text-slate-400 line-through' : 'text-slate-900']">
-                                   {{ tarefa.titulo }}
-                                </h4>
-                                <TarefaBadge type="prioridade" :value="tarefa.prioridade" />
-                                <TarefaBadge type="status" :value="tarefa.status" />
-                             </div>
-                             <p v-if="tarefa.descricao" class="text-xs text-slate-500 font-medium line-clamp-1">{{ tarefa.descricao }}</p>
-                             
-                             <div class="mt-4 flex items-center gap-6">
-                                <div v-if="tarefa.data_vencimento" class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                   <Calendar class="w-3.5 h-3.5" /> 
-                                   Vence {{ formatDate(tarefa.data_vencimento) }}
-                                </div>
-                                <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                   <User class="w-3.5 h-3.5" /> 
-                                   Responsável: {{ tarefa.responsavel_id ? 'Atribuído' : 'Não atribuído' }}
-                                </div>
-                             </div>
-                          </div>
-
-                          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <button @click="openEditTarefa(tarefa)" class="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-primary-600 transition-colors">
-                                <Edit2 class="w-4 h-4" />
-                             </button>
-                             <button @click="deleteTarefa(tarefa.id)" class="p-2 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-600 transition-colors">
-                                <Trash2 class="w-4 h-4" />
-                             </button>
-                          </div>
-                       </div>
+                 <div class="grid grid-cols-1 gap-4">
+                       <TarefaCard 
+                          v-for="tarefa in tarefas" 
+                          :key="tarefa.id" 
+                          :tarefa="tarefa"
+                          :showProcessInfo="false"
+                          @edit="openEditTarefa"
+                          @delete="deleteTarefa"
+                          @toggle-status="toggleTarefaStatus"
+                          @aprovar-ia="aprovarSugestaoIA"
+                          @descartar-ia="descartarSugestaoIA"
+                       />
                     </div>
 
                     <div v-if="!tarefas.length" class="text-center py-20 bg-slate-50/30 rounded-[40px] border-2 border-dashed border-slate-100">
@@ -785,7 +811,6 @@ const tabs = [
                        </button>
                     </div>
                  </div>
-              </div>
 
               <!-- Tab Content: Partes e Assuntos -->
               <div v-show="activeTab === 'partes'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">

@@ -23,6 +23,7 @@ import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
 import TarefaBadge from '../components/TarefaBadge.vue'
 import TarefaFormModal from '../components/TarefaFormModal.vue'
+import TarefaCard from '../components/TarefaCard.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -329,68 +330,14 @@ const formatData = (data) => {
         </div>
 
         <div v-else class="grid grid-cols-1 gap-4">
-          <div v-for="tarefa in tarefasFiltradas" :key="tarefa.id" 
-               class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 transition-all cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            <div class="flex items-start gap-4 flex-1">
-              <!-- Checkbox Custom -->
-              <button @click.stop="toggleTarefaStatus(tarefa)" 
-                      :class="['mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0', 
-                      tarefa.status === 'Concluída' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white border-slate-200 text-slate-200 hover:border-primary-500']">
-                 <Check class="w-4 h-4" />
-              </button>
-
-              <div @click="editarTarefa(tarefa)" class="min-w-0 flex-1">
-                <div class="flex items-center gap-3 mb-1.5">
-                  <h3 :class="['font-bold truncate group-hover:text-primary-600 transition-colors leading-tight', tarefa.status === 'Concluída' ? 'text-slate-400 line-through' : 'text-slate-900']">
-                    {{ tarefa.titulo }}
-                  </h3>
-                  <div class="flex gap-2">
-                    <TarefaBadge type="status" :value="tarefa.status" />
-                    <TarefaBadge type="prioridade" :value="tarefa.prioridade" />
-                  </div>
-                </div>
-                
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <Calendar class="w-3.5 h-3.5" />
-                    <span :class="{'text-red-600 font-bold': tarefa.data_vencimento && new Date(tarefa.data_vencimento) < new Date()}">
-                      {{ formatData(tarefa.data_vencimento) }}
-                    </span>
-                  </div>
-                  
-                  <div v-if="tarefa.processo" class="flex items-center gap-1.5 text-xs text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100">
-                    <Briefcase class="w-3.5 h-3.5" />
-                    <span class="truncate max-w-[250px]">Proc: {{ tarefa.processo.numero_processo || tarefa.processo.titulo }}</span>
-                  </div>
-
-                  <div v-if="tarefa.cliente || tarefa.processo?.cliente" class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <UserIcon class="w-3.5 h-3.5" />
-                    <span class="truncate max-w-[150px] font-medium">{{ (tarefa.cliente || tarefa.processo?.cliente).nome }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between md:justify-end gap-6 pl-9 md:pl-0 border-t md:border-t-0 border-slate-50 pt-3 md:pt-0">
-              <div class="flex items-center gap-2">
-                <div class="flex flex-col items-end">
-                  <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">Responsável</span>
-                  <span class="text-xs font-bold text-slate-700">{{ tarefa.responsavel?.nome || 'Não atribuído' }}</span>
-                </div>
-                <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center border border-primary-200 text-primary-700 text-[10px] font-black shadow-sm">
-                  {{ tarefa.responsavel?.nome.charAt(0).toUpperCase() || '?' }}
-                </div>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <button @click.stop="deleteTarefa(tarefa.id)" class="p-2 hover:bg-red-50 rounded-xl text-slate-300 hover:text-red-600 transition-colors">
-                  <Trash2 class="w-5 h-5" />
-                </button>
-                <ChevronRight @click="editarTarefa(tarefa)" class="w-5 h-5 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
-              </div>
-            </div>
-          </div>
+          <TarefaCard 
+            v-for="tarefa in tarefasFiltradas" 
+            :key="tarefa.id" 
+            :tarefa="tarefa"
+            @edit="editarTarefa"
+            @delete="deleteTarefa"
+            @toggle-status="toggleTarefaStatus"
+          />
         </div>
       </main>
 

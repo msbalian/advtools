@@ -247,7 +247,7 @@ async def atualizar_processo_mni_service(db: AsyncSession, processo_id: int, esc
     return await crud.get_processo(db, processo.id, escritorio_id)
 
 
-async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escritorio_id: int):
+async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escritorio_id: int, usuario_id: int):
     """Gera análise inteligente de prazos e tarefas via Gemini AI."""
     processo = await crud.get_processo(db, processo_id, escritorio_id)
     if not processo:
@@ -255,13 +255,12 @@ async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escri
 
     # Buscar chave Gemini (banco > .env)
     escritorio = await crud.get_escritorio(db, escritorio_id)
-    # Prioriza a chave do banco. Se não houver, usa Config para fallback sanitizado.
     api_key = Config.get_gemini_api_key(escritorio.gemini_api_key if escritorio else None)
 
     if not api_key:
-        raise HTTPException(status_code=400, detail="Chave do Gemini não configurada. Configure nas Configurações do Escritório.")
+        raise HTTPException(status_code=400, detail="Chave do Gemini não configurada.")
 
-    # Tenta buscar dados MNI frescos se for TJGO
+    # Consultar MNI se suportado
     mni_data = None
     if processo.numero_processo and suporta_mni(processo.numero_processo):
         resultado = consultar_processo_mni(processo.numero_processo)
@@ -271,12 +270,90 @@ async def analisar_processo_ia_service(db: AsyncSession, processo_id: int, escri
     # Chamar análise
     analise = analisar_processo_com_ia(mni_data, processo.movimentacoes, api_key)
     
-    # Persistir se não houver erro
     if analise and "erro" not in analise:
         processo.analise_ia = json.dumps(analise, ensure_ascii=False)
         processo.data_analise_ia = datetime.now()
         db.add(processo)
+        
+        # Gerar tarefas automaticamente
+        await _criar_tarefas_do_json_analise(db, processo, analise, escritorio_id, usuario_id)
         await db.commit()
 
     return analise or {"erro": "Falha na análise IA."}
+
+async def gerar_tarefas_ia_existente_service(db: AsyncSession, processo_id: int, escritorio_id: int, usuario_id: int):
+    """Gera tarefas a partir de uma análise já salva no banco de dados."""
+    processo = await crud.get_processo(db, processo_id, escritorio_id)
+    if not processo or not processo.analise_ia:
+        raise HTTPException(status_code=400, detail="Nenhuma análise IA encontrada para este processo.")
+
+    try:
+        analise = json.loads(processo.analise_ia)
+        await _criar_tarefas_do_json_analise(db, processo, analise, escritorio_id, usuario_id)
+        await db.commit()
+        return {"sucesso": True, "mensagem": "Tarefas geradas com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar análise salva: {str(e)}")
+
+async def _criar_tarefas_do_json_analise(db: AsyncSession, processo, analise, escritorio_id, usuario_id):
+    """Helper interno para extrair tarefas do JSON e persistir no banco."""
+    from services.tarefa_service import create_tarefa_service, get_tarefas_service
+    import schemas
+    
+    tarefas_sugeridas = analise.get("tarefasPendentes", [])
+    if not tarefas_sugeridas:
+        return
+
+    # Buscar tarefas atuais para evitar duplicatas (mesmo título parcial)
+    tarefas_atuais = await get_tarefas_service(db, escritorio_id, processo_id=processo.id)
+    titulos_existentes = [t.titulo.lower() for t in tarefas_atuais]
+
+    import re
+    from datetime import datetime
+
+    for t_sug in tarefas_sugeridas:
+        titulo = f"[IA] {t_sug.get('acao', 'Tarefa Sugerida')}"
+        if titulo.lower() in titulos_existentes:
+            continue # Pula se já existir
+
+        # Parsing de Data Robusto (Regex + Múltiplos Formatos)
+        vencimento = None
+        raw_date = t_sug.get("prazoDataFim")
+        
+        if raw_date and isinstance(raw_date, str):
+            # Tentar extrair data no formato DD/MM/YYYY de dentro da string (caso a IA mande texto junto)
+            match = re.search(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})', raw_date)
+            if match:
+                d, m, y = match.groups()
+                # Normalizar ano se vier com 2 dígitos
+                if len(y) == 2: y = f"20{y}"
+                try:
+                    vencimento = datetime(int(y), int(m), int(d))
+                except: pass
+            
+            # Se falhou, tentar formatos padrão ISO se a IA mandar direto
+            if not vencimento:
+                formats = ["%d/%m/%Y", "%Y-%m-%d"]
+                for fmt in formats:
+                    try:
+                        vencimento = datetime.strptime(raw_date.strip(), fmt)
+                        break
+                    except: continue
+        
+        # Montar schema
+        t_create = schemas.TarefaCreate(
+            titulo=titulo,
+            descricao=f"Sugestão automática da IA.\nUrgência: {t_sug.get('urgencia', 'Normal')}",
+            status="Sugestão (IA)",
+            prioridade=t_sug.get("urgencia", "Normal") if t_sug.get("urgencia") in ["Baixa", "Normal", "Alta", "Urgente"] else "Normal",
+            data_vencimento=vencimento,
+            processo_id=processo.id,
+            cliente_id=processo.cliente_id,
+            responsavel_id=processo.advogado_responsavel_id
+        )
+        
+        try:
+            await create_tarefa_service(db, t_create, escritorio_id, usuario_id)
+        except Exception as e:
+            print(f"Erro ao criar tarefa automática: {e}")
 

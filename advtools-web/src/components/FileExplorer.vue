@@ -107,7 +107,19 @@ const getEndpoints = () => {
   }
   if (props.contextType === 'processo') {
     // Para processos, listamos documentos da pasta específica que pertence ao processo
-    const pIdParam = currentFolderId.value === -1 ? 'null' : currentFolderId.value
+    const pIdParam = currentFolderId.value
+    
+    // Fallback: Se não tiver cliente vinculado, usamos o endpoint de documentos do escritório
+    // que filtra por cliente_id IS NULL e permite visualizar os arquivos da pasta do processo.
+    if (!props.clienteId) {
+      return {
+        docs: `/api/documentos/escritorio?pasta_id=${pIdParam}`,
+        pastas: `/api/pastas?processo_id=${props.contextId}&parent_id=${pIdParam}`,
+        upload: `/api/documentos/escritorio`,
+        createFolder: `/api/pastas`
+      }
+    }
+
     return {
         docs: `/api/clientes/${props.clienteId}/documentos?pasta_id=${pIdParam}`,
         pastas: `/api/pastas?processo_id=${props.contextId}&parent_id=${pIdParam}`,
@@ -121,6 +133,11 @@ const loadData = async () => {
   loading.value = true
   try {
     const endpoints = getEndpoints()
+    if (!endpoints?.docs || !endpoints?.pastas) {
+      loading.value = false
+      return
+    }
+
     const [resDocs, resPastas] = await Promise.all([
       apiFetch(endpoints.docs),
       apiFetch(endpoints.pastas)

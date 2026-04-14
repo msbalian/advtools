@@ -307,8 +307,8 @@ class ProcessoParte(Base):
     nome = Column(String(255), nullable=False)
     cpf_cnpj = Column(String(50))
     tipo_pessoa = Column(String(50), default='Física')
-    advogado_nome = Column(String(255))
-    advogado_oab = Column(String(50))
+    advogado_nome = Column(Text)
+    advogado_oab = Column(Text)
 
     processo = relationship("Processo", back_populates="partes")
 

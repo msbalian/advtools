@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { AlertCircle, Clock, CheckCircle2, XCircle } from 'lucide-vue-next'
+import { AlertCircle, Clock, CheckCircle2, XCircle, Sparkles } from 'lucide-vue-next'
 
 const props = defineProps({
   type: {
@@ -20,6 +20,7 @@ const config = computed(() => {
       'Em Andamento': { color: 'bg-amber-100 text-amber-700 border-amber-200', icon: AlertCircle },
       'Concluída': { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
       'Cancelada': { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+      'Sugestão (IA)': { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Sparkles },
     }
     return statuses[props.value] || { color: 'bg-slate-100 text-slate-600 border-slate-200', icon: Clock }
   } else {

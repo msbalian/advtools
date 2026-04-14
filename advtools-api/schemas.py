@@ -540,6 +540,7 @@ class ProcessoTarefaInfo(BaseModel):
     id: int
     numero_processo: Optional[str] = None
     titulo: Optional[str] = None
+    cliente: Optional[Cliente] = None
 
     class Config:
         from_attributes = True

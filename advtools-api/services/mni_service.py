@@ -388,8 +388,8 @@ def analisar_processo_com_ia(
         cab = mni_data.get("cabecalho", {})
         # Ordenar por data decrescente (mais recentes primeiro)
         movs = sorted(mni_data["movimentacoes"], key=lambda m: m.get("dataISO") or "", reverse=True)
-        # Regime extremo: apenas as 15 últimas para economizar cota (tokens)
-        for mov in movs[:15]:
+        # Regime equilibrado: as 30 últimas para fornecer contexto adequado sem estourar cota
+        for mov in movs[:30]:
             entry = f"[{mov['data']}] {mov.get('descricao', '')}"
             if mov.get("complemento"):
                 entry += f" - {mov['complemento']}"
@@ -400,8 +400,8 @@ def analisar_processo_com_ia(
         # Fallback: usa movimentações do banco
         # Ordenar por data decrescente
         movs = sorted(movimentacoes_db, key=lambda m: m.data_hora.replace(tzinfo=None) if m.data_hora else datetime.min, reverse=True)
-        # Regime extremo: apenas as 15 últimas
-        for mov in movs[:15]:
+        # Regime equilibrado: as 30 últimas
+        for mov in movs[:30]:
             dt = mov.data_hora.strftime("%d/%m/%Y %H:%M") if mov.data_hora else ""
             entry = f"[{dt}] {mov.nome_movimento}"
             if mov.complementos_json:
@@ -415,19 +415,31 @@ def analisar_processo_com_ia(
         numero = "N/A"
 
     movs_text = "\n".join(movs_text_lines)
-
-    prompt = f"""Analise as 15 MOVIMENTACOES RECENTES do processo {numero} e retorne em JSON:
-1. acoes_advogado: o que ele deve fazer e prazo (se houver).
-2. status_resumido: o momento atual do processo.
-
+    hoje = datetime.now().strftime("%d/%m/%Y")
+ 
+    prompt = f"""Analise as 30 MOVIMENTACOES RECENTES do processo {numero} e retorne em JSON.
+    
+DATA DE HOJE: {hoje}
+ 
 MOVIMENTACOES:
 {movs_text}
-
-JSON esperado:
+ 
+INSTRUÇÕES DE PRAZO:
+1. Se a movimentação cita um prazo (ex: 'prazo de 15 dias'), CALCULE a data de vencimento somando os dias à data daquela movimentação específica.
+2. Se NÃO houver prazo explícito na movimentação, mas a ação for necessária (ex: 'Pagar custas'), INfIRA um prazo razoável baseado na lei (ex: +15 dias corridos a partir de hoje).
+3. O campo 'prazoDataFim' deve sempre conter uma data no formato DD/MM/YYYY. NUNCA use 'null', 'a definir' ou texto. ESTIME uma data se necessário.
+ 
+JSON esperado (MANTENHA EXATAMENTE ESTA ESTRUTURA):
 {{
-  "statusAtual": "...",
-  "resumoHistoria": "breve contexto",
-  "tarefasPendentes": [{{"acao": "...", "prazoDataFim": "DD/MM/YYYY", "urgencia": "ALTA"}}],
+  "statusAtual": "Momento resumido do processo",
+  "resumoHistoria": "breve contexto do que aconteceu até agora",
+  "tarefasPendentes": [
+    {{
+      "acao": "Título curto e direto da tarefa",
+      "prazoDataFim": "DD/MM/YYYY", 
+      "urgencia": "ALTA, MEDIA ou BAIXA"
+    }}
+  ],
   "alertas": [{{"tipo": "PRAZO", "mensagem": "..."}}],
   "proximosPassos": ["..."]
 }}
@@ -439,11 +451,12 @@ JSON esperado:
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {'Content-Type': 'application/json'}
 
-    # Redundância máxima: Prioriza o mais estável e rápido (1.5-flash)
+    # Lista baseada nos modelos estáveis e aliases disponíveis (list_all_models.py)
     MODELOS_TENTAR = [
         "models/gemini-1.5-flash",
-        "models/gemini-2.5-flash", 
-        "models/gemini-2.0-flash",
+        "models/gemini-flash-latest",
+        "models/gemini-1.5-pro",
+        "models/gemini-pro-latest",
     ]
     API_VERSIONS = ["v1", "v1beta"]
 
@@ -452,9 +465,11 @@ JSON esperado:
     for modelo in MODELOS_TENTAR:
         for version in API_VERSIONS:
             url = f"https://generativelanguage.googleapis.com/{version}/{modelo}:generateContent?key={api_key}"
+            print(f" >>> [IA - Tentativa] {version} | {modelo}")
             try:
                 # Timeout otimizado
                 resp = requests.post(url, json=payload, headers=headers, timeout=15)
+                print(f" >>> [IA - Resposta] Status: {resp.status_code}")
                 
                 if resp.status_code == 200:
                     res_data = resp.json()
@@ -462,6 +477,7 @@ JSON esperado:
                     if candidates:
                         texto = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
                         if texto:
+                            print(f" >>> [IA - Sucesso] Modelo {modelo} respondeu.")
                             # Extrair JSON
                             clean = texto.replace("```json", "").replace("```", "").strip()
                             json_start = clean.find("{")
@@ -473,21 +489,36 @@ JSON esperado:
                                     return {"textoRaw": texto}
                             return {"textoRaw": texto}
                 
+                # Se não for 200, logamos o erro para saber o que houve
+                try:
+                    raw_err = resp.text[:200]
+                    print(f" >>> [IA - Detalhe] Body: {raw_err}")
+                except:
+                    pass
+                
                 # ERRO DE COTA (429) - O mais importante para o usuário final
                 if resp.status_code == 429:
-                    err_json = resp.json()
-                    msg_original = str(err_json)
+                    try:
+                        err_json = resp.json()
+                        msg_google = err_json.get("error", {}).get("message", "Sem detalhe")
+                        reason = err_json.get("error", {}).get("status", "")
+                    except:
+                        msg_google = resp.text[:200]
+                        reason = "UNKNOWN"
+                    
+                    print(f" >>> [IA - 429] Status: {reason} | Msg: {msg_google}")
                     
                     # Tenta extrair o tempo de espera (ex: retry in 49.9s)
-                    match = re.search(r'retry in (\d+\.?\d*)s', msg_original)
-                    tempo_msg = ""
+                    match = re.search(r'retry in (\d+\.?\d*)s', msg_google)
                     if match:
-                        segundos = float(match.group(1))
-                        tempo_msg = f" Próxima liberação em aproximadamente {int(segundos)} segundos."
+                        segundos = int(float(match.group(1)))
+                        return {
+                            "erro": f"⏳ Frequência Excedida: O Google pediu para aguardar {segundos} segundos. Motivo: {msg_google}"
+                        }
                     
-                    # Para o loop imediatamente (se a cota da chave acabou, acabou para todos os modelos)
+                    # Mensagem amigável mas técnica
                     return {
-                        "erro": f"⚖️ Inteligência em Pausa: O limite de uso gratuito do Gemini foi atingido hoje.{tempo_msg} Por favor, tente novamente em breve ou utilize uma chave Pro."
+                        "erro": f"⚖️ Cota Gemini: {msg_google}. Se você não usou a IA hoje, verifique na console do Google se sua chave não está restrita ou se o Billing está OK (mesmo no plano Free)."
                     }
 
                 # Se for erro de autenticação (403)

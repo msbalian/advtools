@@ -13,7 +13,8 @@ import {
   RefreshCw,
   LayoutGrid,
   List,
-  ArrowLeft
+  ArrowLeft,
+  Menu
 } from 'lucide-vue-next'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
@@ -113,7 +114,7 @@ const filteredVirtualFolders = computed(() => {
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <button @click="sidebarOpen = true" class="md:hidden p-2 -ml-2 text-slate-500">
-                            <Folder class="h-6 w-6" />
+                             <Menu class="h-6 w-6" /> <!-- Alterado para Menu icon para clareza -->
                         </button>
                         <div class="flex items-center gap-2">
                              <div class="p-2 bg-primary-50 rounded-xl">
@@ -127,6 +128,24 @@ const filteredVirtualFolders = computed(() => {
                     </div>
                 </div>
             </header>
+
+            <!-- MOBILE CATEGORY SELECTOR (VISIBLE < LG) -->
+            <div class="lg:hidden bg-white border-b border-slate-100 overflow-x-auto no-scrollbar">
+                <div class="flex items-center gap-2 p-4 min-w-max">
+                    <button @click="activeCategory = 'internos'" :class="[activeCategory === 'internos' ? 'bg-primary-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 border border-slate-100', 'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all transition-all flex items-center gap-2']">
+                        <Building2 class="w-4 h-4" /> Internos
+                    </button>
+                    <button @click="activeCategory = 'clientes'" :class="[activeCategory === 'clientes' ? 'bg-primary-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 border border-slate-100', 'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all transition-all flex items-center gap-2']">
+                        <Users class="w-4 h-4" /> Clientes
+                    </button>
+                    <button @click="activeCategory = 'processos'" :class="[activeCategory === 'processos' ? 'bg-primary-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 border border-slate-100', 'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all transition-all flex items-center gap-2']">
+                        <Scale class="w-4 h-4" /> Processos
+                    </button>
+                    <button @click="activeCategory = 'modelos'" :class="[activeCategory === 'modelos' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 border border-slate-100', 'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all transition-all flex items-center gap-2']">
+                        <Wand2 class="w-4 h-4" /> Modelos
+                    </button>
+                </div>
+            </div>
 
             <div class="flex-1 flex overflow-hidden">
                 <!-- CATEGORY SIDEBAR -->
@@ -262,5 +281,13 @@ const filteredVirtualFolders = computed(() => {
 <style scoped>
 .group:hover {
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

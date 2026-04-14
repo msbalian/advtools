@@ -18,6 +18,7 @@ from services.processo_service import (
     buscar_e_criar_mni_service,
     atualizar_processo_mni_service,
     analisar_processo_ia_service,
+    gerar_tarefas_ia_existente_service,
 )
 
 router = APIRouter(prefix="/api/processos", tags=["Processos"])
@@ -118,5 +119,15 @@ async def analisar_processo_ia(
     db: AsyncSession = Depends(get_db)
 ):
     return await analisar_processo_ia_service(
-        db, processo_id, current_user.escritorio_id
+        db, processo_id, current_user.escritorio_id, current_user.id
+    )
+
+@router.post("/{processo_id}/gerar-tarefas-ia")
+async def gerar_tarefas_ia(
+    processo_id: int,
+    current_user: models.Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await gerar_tarefas_ia_existente_service(
+        db, processo_id, current_user.escritorio_id, current_user.id
     )

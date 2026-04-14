@@ -64,6 +64,12 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: '/movimentacoes',
+            name: 'movimentacoes',
+            component: () => import('./views/MovimentacoesGeralView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/tarefas',
             name: 'tarefas',
             component: () => import('./views/TarefasView.vue'),

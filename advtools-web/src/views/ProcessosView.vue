@@ -25,7 +25,11 @@ import {
   User,
   Settings,
   Brain,
-  Zap
+  Zap,
+  Download,
+  Users,
+  FileText,
+  AlertTriangle
 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
@@ -37,7 +41,11 @@ const sidebarOpen = ref(false)
 const showProfileMenu = ref(false)
 const isLoading = ref(true)
 const isImporting = ref(false)
+const isImportingMassa = ref(false)
 const showImportModal = ref(false)
+const showProjudiConfirm = ref(false)
+const showProjudiRelatorio = ref(false)
+const projudiRelatorio = ref(null)
 const notification = ref({ show: false, message: '', type: 'success' })
 
 // Data State
@@ -45,7 +53,11 @@ const processos = ref([])
 const escritorio = ref(null)
 const currentUser = ref(null)
 const searchQuery = ref('')
-const statusFilter = ref('Todos')
+const statusFilter = ref('Ativo')
+
+// Pagination State
+const currentPage = ref(1)
+const itemsPerPage = ref(9)
 
 // Import Form (Unified: DataJud + MNI)
 const importForm = ref({
@@ -90,6 +102,12 @@ const carregarDados = async () => {
     }
 }
 
+// Reseta página quando filtros mudam
+import { watch } from 'vue'
+watch([statusFilter, searchQuery], () => {
+    currentPage.value = 1
+})
+
 const filteredProcessos = computed(() => {
     return processos.value.filter(p => {
         const matchesSearch = p.titulo.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
@@ -98,6 +116,17 @@ const filteredProcessos = computed(() => {
         return matchesSearch && matchesStatus
     })
 })
+
+const paginatedProcessos = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value
+    const end = start + itemsPerPage.value
+    return filteredProcessos.value.slice(start, end)
+})
+
+const totalPages = computed(() => Math.ceil(filteredProcessos.value.length / itemsPerPage.value))
+
+const nextPag = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const prevPag = () => { if (currentPage.value > 1) currentPage.value-- }
 
 const handleImport = async () => {
     if (!importForm.value.numero_cnj) return
@@ -146,6 +175,26 @@ const handleLogout = () => {
 }
 
 onMounted(carregarDados)
+
+// Importação em massa PROJUDI
+const handleImportMassaProjudi = async () => {
+    showProjudiConfirm.value = false
+    isImportingMassa.value = true
+    try {
+        const res = await apiFetch('/api/importacao/projudi', { method: 'POST' })
+        if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.detail || 'Erro na importação')
+        }
+        projudiRelatorio.value = await res.json()
+        showProjudiRelatorio.value = true
+        await carregarDados()
+    } catch (e) {
+        showMessage(e.message, 'error')
+    } finally {
+        isImportingMassa.value = false
+    }
+}
 
 const getPriorityClass = (priority) => {
     switch (priority) {
@@ -233,6 +282,16 @@ const formatDate = (dateStr) => {
             <p class="mt-1 text-sm text-slate-500">Monitoramento DataJud e gestão interna de tramitações.</p>
           </div>
           <div class="mt-4 sm:mt-0 flex gap-3">
+            <button @click="showProjudiConfirm = true" 
+                    :disabled="isImportingMassa"
+                    class="px-4 py-2.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2 border border-emerald-200 shadow-sm shadow-emerald-500/10 disabled:opacity-50">
+               <template v-if="isImportingMassa">
+                  <RefreshCw class="w-4 h-4 animate-spin" /> Importando...
+               </template>
+               <template v-else>
+                  <Download class="w-4 h-4" /> Importar do PROJUDI
+               </template>
+            </button>
             <button @click="showImportModal = true" class="px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 border border-indigo-200 shadow-sm shadow-indigo-500/10">
                <SearchCode class="w-4 h-4" /> Importar Processo
             </button>
@@ -274,7 +333,7 @@ const formatDate = (dateStr) => {
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-fade-in-up" style="animation-delay: 0.1s">
-           <div v-for="p in filteredProcessos" 
+           <div v-for="p in paginatedProcessos" 
                 :key="p.id" 
                 @click="router.push('/processos/' + p.id)"
                 class="group bg-white p-6 rounded-3xl border border-slate-100 hover:border-primary-500/30 shadow-sm hover:shadow-xl hover:shadow-primary-500/5 transition-all cursor-pointer relative overflow-hidden flex flex-col">
@@ -297,6 +356,11 @@ const formatDate = (dateStr) => {
                     </h3>
                     <div class="flex items-center gap-1.5 mt-1 text-primary-600 font-bold text-xs uppercase tracking-tight">
                        {{ p.numero_processo || 'NÃO CADASTRADO' }}
+                    </div>
+                    <!-- Nome do Cliente -->
+                    <div v-if="p.cliente" class="mt-2.5 flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
+                       <User class="w-3.5 h-3.5 text-slate-400" />
+                       <span class="text-[11px] font-black text-slate-600 truncate">{{ p.cliente.nome }}</span>
                     </div>
                  </div>
               </div>
@@ -321,7 +385,10 @@ const formatDate = (dateStr) => {
               <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
                  <div class="flex items-center gap-2">
                     <div :class="['w-2 h-2 rounded-full', p.status === 'Ativo' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300']"></div>
-                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ p.status }}</span>
+                     <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ p.status }}</span>
+                     <span v-if="p.origem === 'PROJUDI'" class="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[8px] font-black uppercase tracking-wider border border-emerald-200">
+                        <Zap class="w-2.5 h-2.5" /> PROJUDI
+                     </span>
                  </div>
                  <div class="flex items-center gap-1.5 text-slate-400 text-xs">
                     <RefreshCw class="w-3 h-3" />
@@ -335,6 +402,25 @@ const formatDate = (dateStr) => {
               </div>
            </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="mt-10 flex items-center justify-between bg-white px-8 py-4 rounded-[40px] border border-slate-100 shadow-sm">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-widest">
+               Página {{ currentPage }} de {{ totalPages }}
+            </div>
+            <div class="flex gap-4">
+               <button @click="prevPag" 
+                       :disabled="currentPage === 1"
+                       class="p-2 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-slate-50 transition-all border border-slate-100">
+                  <ArrowRight class="w-5 h-5 rotate-180" />
+               </button>
+               <button @click="nextPag" 
+                       :disabled="currentPage === totalPages"
+                       class="p-2 bg-slate-600 text-white rounded-2xl hover:bg-slate-700 disabled:opacity-30 transition-all shadow-lg shadow-slate-500/10">
+                  <ArrowRight class="w-5 h-5" />
+               </button>
+            </div>
+         </div>
 
       </main>
        <!-- Import Modal (Unified: DataJud + MNI/PROJUDI) -->
@@ -454,6 +540,98 @@ const formatDate = (dateStr) => {
           </div>
        </div>
     </div>
+    </div>
+
+    <!-- Modal Confirmação Importação PROJUDI -->
+    <div v-if="showProjudiConfirm" class="fixed inset-0 z-[70] overflow-y-auto px-4 py-8 flex items-center justify-center">
+       <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md" @click="showProjudiConfirm = false"></div>
+       <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 animate-fade-in-up">
+          <div class="text-center">
+             <div class="mx-auto w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mb-4">
+                <Download class="w-8 h-8 text-emerald-600" />
+             </div>
+             <h3 class="text-xl font-black text-slate-900 mb-2">Importar do PROJUDI</h3>
+             <p class="text-sm text-slate-500 leading-relaxed">
+                Isso consultará suas <span class="font-bold">intimações pendentes</span> no PROJUDI/TJGO e importará automaticamente todos os processos encontrados.
+             </p>
+             <p class="text-xs text-slate-400 mt-2">Processos existentes serão atualizados. Clientes serão identificados e vinculados automaticamente.</p>
+          </div>
+          <div class="mt-6 flex gap-3">
+             <button @click="showProjudiConfirm = false" class="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-all">Cancelar</button>
+             <button @click="handleImportMassaProjudi" class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+                <Zap class="w-4 h-4" /> Confirmar
+             </button>
+          </div>
+       </div>
+    </div>
+
+    <!-- Modal Relatório PROJUDI -->
+    <div v-if="showProjudiRelatorio" class="fixed inset-0 z-[70] overflow-y-auto px-4 py-8 flex items-center justify-center">
+       <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md" @click="showProjudiRelatorio = false"></div>
+       <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <!-- Header -->
+          <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 text-white">
+             <div class="flex items-center gap-3">
+                <CheckCircle2 class="w-8 h-8" />
+                <div>
+                   <h3 class="text-xl font-black">Importação Concluída</h3>
+                   <p class="text-emerald-100 text-sm">{{ projudiRelatorio?.total_avisos || 0 }} avisos encontrados no PROJUDI</p>
+                </div>
+             </div>
+             <button @click="showProjudiRelatorio = false" class="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 rounded-full">
+                <X class="w-5 h-5 text-white" />
+             </button>
+          </div>
+          <!-- Stats -->
+          <div class="p-6">
+             <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
+                   <div class="text-3xl font-black text-emerald-700">{{ projudiRelatorio?.processos_novos || 0 }}</div>
+                   <div class="text-xs font-bold text-emerald-600 mt-1 flex items-center justify-center gap-1"><FileText class="w-3 h-3" /> Processos Novos</div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
+                   <div class="text-3xl font-black text-blue-700">{{ projudiRelatorio?.processos_atualizados || 0 }}</div>
+                   <div class="text-xs font-bold text-blue-600 mt-1 flex items-center justify-center gap-1"><RefreshCw class="w-3 h-3" /> Atualizados</div>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-center">
+                   <div class="text-3xl font-black text-indigo-700">{{ projudiRelatorio?.clientes_criados || 0 }}</div>
+                   <div class="text-xs font-bold text-indigo-600 mt-1 flex items-center justify-center gap-1"><Users class="w-3 h-3" /> Clientes Criados</div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                   <div class="text-3xl font-black text-slate-700">{{ projudiRelatorio?.clientes_vinculados || 0 }}</div>
+                   <div class="text-xs font-bold text-slate-500 mt-1 flex items-center justify-center gap-1"><User class="w-3 h-3" /> Vinculados</div>
+                </div>
+             </div>
+
+             <!-- Merges Sugeridos -->
+             <div v-if="projudiRelatorio?.merges_sugeridos?.length" class="mb-4">
+                <h4 class="text-xs font-black text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                   <AlertTriangle class="w-3.5 h-3.5" /> Divergências de Nome Detectadas
+                </h4>
+                <div v-for="(m, i) in projudiRelatorio.merges_sugeridos" :key="i" 
+                     class="p-3 bg-amber-50 rounded-xl border border-amber-100 mb-2 text-xs">
+                   <div class="font-bold text-amber-800">CPF/CNPJ: {{ m.cpf_cnpj }}</div>
+                   <div class="text-amber-700">No sistema: <span class="font-bold">{{ m.nome_banco }}</span></div>
+                   <div class="text-amber-700">No PROJUDI: <span class="font-bold">{{ m.nome_projudi }}</span></div>
+                </div>
+             </div>
+
+             <!-- Erros -->
+             <div v-if="projudiRelatorio?.erros?.length" class="mb-4">
+                <h4 class="text-xs font-black text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                   <AlertCircle class="w-3.5 h-3.5" /> Erros
+                </h4>
+                <div v-for="(err, i) in projudiRelatorio.erros" :key="i" 
+                     class="p-3 bg-red-50 rounded-xl border border-red-100 mb-2 text-xs text-red-700">
+                   {{ err }}
+                </div>
+             </div>
+
+             <button @click="showProjudiRelatorio = false" class="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all mt-2">
+                Fechar
+             </button>
+          </div>
+       </div>
     </div>
     
   </div>

@@ -26,6 +26,7 @@ import {
 import GlobalClientSearch from '../components/GlobalClientSearch.vue'
 import { apiFetch } from '../utils/api'
 import Sidebar from '../components/Sidebar.vue'
+import DashboardMovimentacoes from '../components/DashboardMovimentacoes.vue'
 
 const router = useRouter() // Initialized useRouter
 
@@ -129,12 +130,7 @@ const stats = computed(() => [
   },
 ])
 
-const processos = [
-  { id: '0010234-55.2023.8.26.0100', cliente: 'TechCorp S.A.', tribunal: 'TJSP', status: 'Aguardando Prazo', date: 'Hoje, 14:30', badgeRef: 'bg-amber-50 text-amber-700 ring-amber-600/20' },
-  { id: '1053001-12.2024.8.26.0100', cliente: 'João da Silva', tribunal: 'TJSP', status: 'Petição Juntada', date: 'Ontem, 09:15', badgeRef: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' },
-  { id: '0812345-88.2022.4.03.6100', cliente: 'Construtora XYZ', tribunal: 'TRF3', status: 'Concluso p/ Sentença', date: '22/10/2023', badgeRef: 'bg-primary-50 text-primary-700 ring-primary-600/20' },
-  { id: '0000111-22.2021.5.02.0001', cliente: 'Maria Oliveira', tribunal: 'TRT2', status: 'Audiência Marcada', date: '15/10/2023', badgeRef: 'bg-purple-50 text-purple-700 ring-purple-600/20' },
-]
+// Movimentações removidas para usar componente dinâmico
 
 const tarefas = ref([])
 
@@ -299,45 +295,9 @@ onUnmounted(() => {
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          <!-- Recent Processes Table -->
-          <div class="lg:col-span-2 card p-0 animate-fade-in-up" style="animation-delay: 0.4s;">
-            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-white">
-              <h2 class="text-base font-semibold leading-6 text-slate-900">Últimas Movimentações DataJud</h2>
-              <button class="text-sm font-medium text-primary-600 hover:text-primary-700">Ver todas &rarr;</button>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                  <tr>
-                    <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Processo</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente / Tribunal</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Atual</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                    <th scope="col" class="relative py-3.5 pl-3 pr-6"><span class="sr-only">Ações</span></th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                  <tr v-for="proc in processos" :key="proc.id" class="hover:bg-slate-50 transition-colors">
-                    <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-slate-900">{{ proc.id }}</td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm">
-                      <div class="text-slate-900 font-medium">{{ proc.cliente }}</div>
-                      <div class="text-slate-500">{{ proc.tribunal }}</div>
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm">
-                      <span :class="[proc.badgeRef, 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset']">
-                        {{ proc.status }}
-                      </span>
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">{{ proc.date }}</td>
-                    <td class="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">
-                      <button class="text-slate-400 hover:text-slate-600">
-                        <MoreVertical class="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- Recent Movements dynamic component -->
+          <div class="lg:col-span-2">
+            <DashboardMovimentacoes />
           </div>
 
           <!-- Tasks / To-Dos Column -->

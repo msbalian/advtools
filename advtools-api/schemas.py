@@ -37,6 +37,8 @@ class UsuarioBase(BaseModel):
     tipo: str = "Humano"
     perfil: str = "Colaborador"
     cpf: Optional[str] = None
+    oab_numero: Optional[str] = None
+    oab_uf: Optional[str] = None
     ativo: bool = True
     is_admin: bool = False
 
@@ -51,6 +53,8 @@ class UsuarioUpdate(BaseModel):
     tipo: Optional[str] = None
     perfil: Optional[str] = None
     cpf: Optional[str] = None
+    oab_numero: Optional[str] = None
+    oab_uf: Optional[str] = None
     ativo: Optional[bool] = None
     is_admin: Optional[bool] = None
 
@@ -468,6 +472,7 @@ class ProcessoResponse(ProcessoBase):
     data_criacao: datetime
     data_atualizacao: datetime
     
+    cliente: Optional['Cliente'] = None
     partes: List[ProcessoParte] = []
     assuntos: List[ProcessoAssunto] = []
     movimentacoes: List[Movimentacao] = []
@@ -516,6 +521,24 @@ class MNIAnaliseResponse(BaseModel):
     textoRaw: Optional[str] = None
 
 # ==========================
+# IMPORTAÇÃO PROJUDI
+# ==========================
+class ImportacaoMerge(BaseModel):
+    nome_banco: str
+    nome_projudi: str
+    cpf_cnpj: str
+    cliente_id: int
+
+class ImportacaoRelatorio(BaseModel):
+    processos_novos: int = 0
+    processos_atualizados: int = 0
+    clientes_criados: int = 0
+    clientes_vinculados: int = 0
+    erros: List[str] = []
+    merges_sugeridos: List[ImportacaoMerge] = []
+    total_avisos: int = 0
+
+# ==========================
 # DASHBOARD SCHEMAS
 # ==========================
 class DashboardStats(BaseModel):
@@ -523,6 +546,8 @@ class DashboardStats(BaseModel):
     assinaturas_pendentes: int
     clientes_ativos: int
     receita_mes: float
+
+# (Movendo para baixo)
 
 # ==========================
 # TAREFAS
@@ -544,6 +569,19 @@ class ProcessoTarefaInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+class DashboardMovimentacaoResponse(BaseModel):
+    id: int
+    data_hora: datetime
+    nome_movimento: str
+    processo: ProcessoTarefaInfo
+    
+    class Config:
+        from_attributes = True
+
+class DashboardMovimentacaoPaginatedResponse(BaseModel):
+    items: List[DashboardMovimentacaoResponse]
+    total: int
 
 class TarefaBase(BaseModel):
     titulo: str

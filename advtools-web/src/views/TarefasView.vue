@@ -225,6 +225,24 @@ const toggleTarefaStatus = async (tarefa) => {
     }
 }
 
+const aprovarTarefaIA = async (tarefa) => {
+    try {
+        const res = await apiFetch(`/api/tarefas/${tarefa.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'Pendente' })
+        })
+        if (res.ok) {
+            tarefa.status = 'Pendente'
+            showMessage("Sugestão de tarefa aprovada com sucesso!")
+            await carregarTarefas()
+        } else {
+            showMessage("Erro ao aprovar tarefa.", "error")
+        }
+    } catch (e) {
+        showMessage("Erro de conexão.", "error")
+    }
+}
+
 onMounted(carregarDadosIniciais)
 
 const formatData = (data) => {
@@ -337,6 +355,8 @@ const formatData = (data) => {
             @edit="editarTarefa"
             @delete="deleteTarefa"
             @toggle-status="toggleTarefaStatus"
+            @aprovar-ia="aprovarTarefaIA"
+            @descartar-ia="deleteTarefa"
           />
         </div>
       </main>

@@ -652,12 +652,13 @@ async def get_processos(db: AsyncSession, escritorio_id: int):
     result = await db.execute(
         select(models.Processo)
         .options(
+            selectinload(models.Processo.cliente), # Injetado para satisfazer TarefaResponse -> ProcessoTarefaInfo -> cliente
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
-            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -669,12 +670,13 @@ async def get_processos_by_cliente(db: AsyncSession, cliente_id: int, escritorio
     result = await db.execute(
         select(models.Processo)
         .options(
+            selectinload(models.Processo.cliente),
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
-            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )
@@ -699,12 +701,13 @@ async def get_processo(db: AsyncSession, processo_id: int, escritorio_id: int):
     result = await db.execute(
         select(models.Processo)
         .options(
+            selectinload(models.Processo.cliente),
             selectinload(models.Processo.partes),
             selectinload(models.Processo.assuntos),
             selectinload(models.Processo.movimentacoes),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.responsavel),
             selectinload(models.Processo.tarefas).selectinload(models.Tarefa.cliente),
-            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo),
+            selectinload(models.Processo.tarefas).selectinload(models.Tarefa.processo).selectinload(models.Processo.cliente),
             selectinload(models.Processo.pasta_trabalho),
             selectinload(models.Processo.servico).selectinload(models.Servico.tipo_servico)
         )

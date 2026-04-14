@@ -32,6 +32,8 @@ class Usuario(Base):
     ativo = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     cpf = Column(String(20))
+    oab_numero = Column(String(20))
+    oab_uf = Column(String(5))
     reset_password_token = Column(String(64), index=True, nullable=True)
     reset_password_expires_at = Column(DateTime, nullable=True)
     data_criacao = Column(DateTime, default=func.now())
@@ -277,6 +279,8 @@ class Processo(Base):
     area_direito = Column(String(100))
     fase_processual = Column(String(100))
     polo = Column(String(50), default='Autor') # Polo que o escritório representa
+    origem = Column(String(50), default='Manual') # Manual, PROJUDI, DataJud
+    projudi_id = Column(String(50), nullable=True) # ID interno do PROJUDI
     
     # Persistência de Análise IA
     analise_ia = Column(Text) # JSON com a última análise gerada

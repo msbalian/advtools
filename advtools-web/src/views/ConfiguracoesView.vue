@@ -323,6 +323,8 @@ const openNewUsuario = () => {
         tipo: 'Humano', 
         perfil: 'Colaborador', 
         cpf: '', 
+        oab_numero: '',
+        oab_uf: 'GO',
         ativo: true, 
         is_admin: false,
         escritorio_id: currentUser.value?.escritorio_id
@@ -618,6 +620,7 @@ const sidebarOpen = ref(false)
                                     </div>
                                     <div class="text-slate-500">{{ user.email }}</div>
                                     <div v-if="user.cpf" class="text-xs text-slate-400">CPF: {{ user.cpf }}</div>
+                                    <div v-if="user.oab_numero" class="text-xs text-slate-400">OAB: {{ user.oab_numero }}/{{ user.oab_uf || '?' }}</div>
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                                     <div class="text-slate-900">{{ user.perfil }}</div>
@@ -836,6 +839,25 @@ const sidebarOpen = ref(false)
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1">CPF</label>
                                     <input v-model="formUsuario.cpf" type="text" v-maska data-maska="###.###.###-##" placeholder="000.000.000-00" class="input-field">
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">OAB (Número)</label>
+                                        <input v-model="formUsuario.oab_numero" type="text" placeholder="12345" class="input-field">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">UF</label>
+                                        <select v-model="formUsuario.oab_uf" class="input-field">
+                                            <option value="AC">AC</option><option value="AL">AL</option><option value="AM">AM</option><option value="AP">AP</option>
+                                            <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
+                                            <option value="GO">GO</option><option value="MA">MA</option><option value="MG">MG</option><option value="MS">MS</option>
+                                            <option value="MT">MT</option><option value="PA">PA</option><option value="PB">PB</option><option value="PE">PE</option>
+                                            <option value="PI">PI</option><option value="PR">PR</option><option value="RJ">RJ</option><option value="RN">RN</option>
+                                            <option value="RO">RO</option><option value="RR">RR</option><option value="RS">RS</option><option value="SC">SC</option>
+                                            <option value="SE">SE</option><option value="SP">SP</option><option value="TO">TO</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 
                                 <div>

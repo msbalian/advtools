@@ -367,6 +367,52 @@ def extrair_assuntos_mni(mni_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return []
 
 
+def listar_processos_advogado_mni() -> Dict[str, Any]:
+    """
+    Consulta avisos pendentes do PROJUDI via MNI e retorna lista de números de processo únicos.
+    Retorna: {"sucesso": bool, "numeros": [...], "total_avisos": int, "erro": str}
+    """
+    from zeep import Client
+    from zeep.settings import Settings
+
+    if not Config.PROJUDI_USER or not Config.PROJUDI_PASSWORD:
+        return {"sucesso": False, "numeros": [], "total_avisos": 0, "erro": "Credenciais do PROJUDI não configuradas."}
+
+    try:
+        settings = Settings(strict=False, xml_huge_tree=True)
+        client = Client(wsdl=WSDL_URL, settings=settings)
+
+        response = client.service.consultarAvisosPendentes(
+            idConsultante=Config.PROJUDI_USER,
+            senhaConsultante=Config.PROJUDI_PASSWORD,
+            idRepresentado=Config.PROJUDI_USER
+        )
+
+        if not response.sucesso:
+            return {"sucesso": False, "numeros": [], "total_avisos": 0, "erro": response.mensagem or "Falha ao consultar avisos."}
+
+        avisos = getattr(response, 'aviso', []) or []
+        numeros_unicos = set()
+
+        for aviso in avisos:
+            proc_aviso = getattr(aviso, 'processo', None)
+            if proc_aviso:
+                numero = getattr(proc_aviso, 'numero', None)
+                if numero:
+                    numeros_unicos.add(str(numero))
+
+        return {
+            "sucesso": True,
+            "numeros": list(numeros_unicos),
+            "total_avisos": len(avisos),
+            "erro": None
+        }
+
+    except Exception as e:
+        logger.exception(f"Erro ao listar processos via MNI: {e}")
+        return {"sucesso": False, "numeros": [], "total_avisos": 0, "erro": f"Erro na comunicação com o PROJUDI: {str(e)}"}
+
+
 def analisar_processo_com_ia(
     mni_data: Dict[str, Any],
     movimentacoes_db: list,

@@ -499,11 +499,14 @@ const tabs = [
                        <Gavel class="w-10 h-10" />
                     </div>
                     <div>
-                       <div class="flex items-center gap-3 mb-1">
-                          <span class="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{{ processo.status }}</span>
-                          <span class="text-[10px] bg-primary-50 text-primary-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">{{ processo.grau }}</span>
-                       </div>
-                       <h1 class="text-3xl font-black text-slate-900 leading-tight">{{ processo.titulo }}</h1>
+                        <div class="flex items-center gap-3 mb-1">
+                           <span class="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{{ processo.status }}</span>
+                           <span class="text-[10px] bg-primary-50 text-primary-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">{{ processo.grau }}</span>
+                           <span v-if="processo.cliente" class="text-[10px] bg-slate-900 text-white font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1">
+                              <User class="w-3 h-3" /> {{ processo.cliente.nome }}
+                           </span>
+                        </div>
+                        <h1 class="text-3xl font-black text-slate-900 leading-tight">{{ processo.titulo || 'Processo sem título' }}</h1>
                        <div class="flex items-center gap-2 mt-2">
                           <span class="text-primary-600 font-black tracking-tight text-lg">{{ processo.numero_processo || 'NÃO INFORMADO' }}</span>
                           <span class="text-slate-300">|</span>

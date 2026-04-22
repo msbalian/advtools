@@ -39,6 +39,12 @@ export default function Hero() {
                         Falar com Consultor
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </a>
+                    <a
+                        href="/roadmap"
+                        className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 transition-all w-full sm:w-auto"
+                    >
+                        Especificações Técnicas
+                    </a>
                 </div>
 
                 <div className="mt-14 flex flex-wrap justify-center gap-8 text-slate-400 text-sm font-medium">

@@ -1,16 +1,17 @@
-import Hero from './components/Hero';
-import Features from './components/Features';
-import Comparison from './components/Comparison';
-import FinalCTA from './components/FinalCTA';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
+import Roadmap from './pages/Roadmap';
 
 function App() {
   return (
-    <main className="min-h-screen font-sans selection:bg-brand-light selection:text-white">
-      <Hero />
-      <Features />
-      <Comparison />
-      <FinalCTA />
-    </main>
+    <Router>
+      <main className="min-h-screen font-sans selection:bg-brand-light selection:text-white">
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/roadmap" element={<Roadmap />} />
+        </Routes>
+      </main>
+    </Router>
   );
 }
 

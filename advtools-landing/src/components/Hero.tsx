@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { getWhatsAppLink } from '../utils/whatsapp';
+import { Link } from 'react-router-dom';
 
 export default function Hero() {
     const waLink = getWhatsAppLink('62981229004', 'Olá! Gostaria de falar com um consultor sobre como o ADVtools pode colocar meu escritório no próximo nível.');
@@ -39,12 +40,12 @@ export default function Hero() {
                         Falar com Consultor
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </a>
-                    <a
-                        href="/roadmap"
+                    <Link
+                        to="/roadmap"
                         className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 transition-all w-full sm:w-auto"
                     >
                         Especificações Técnicas
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="mt-14 flex flex-wrap justify-center gap-8 text-slate-400 text-sm font-medium">

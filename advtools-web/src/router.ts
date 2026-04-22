@@ -136,12 +136,7 @@ const router = createRouter({
             component: () => import('./views/ResetPasswordView.vue'),
             meta: { requiresAuth: false, publicRoute: true }
         },
-        {
-            path: '/roadmap',
-            name: 'technical_roadmap',
-            component: () => import('./views/TechnicalRoadmapView.vue'),
-            meta: { requiresAuth: false, publicRoute: true }
-        }
+
     ]
 })
 
